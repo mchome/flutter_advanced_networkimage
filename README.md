@@ -1,9 +1,13 @@
-# flutter_advanced_networkimage
+# Flutter Advanced Networkimage
 
-A new flutter package project.
+An advanced image provider for flutter.
 
 ## Getting Started
 
-For help getting started with Flutter, view our online [documentation](http://flutter.io/).
-
-For help on editing package code, view the [documentation](https://flutter.io/developing-packages/).
+### Example
+```dart
+new Image(
+  image: new AdvancedNetworkImage(url, header: header, useDiskCache: true),
+  fit: BoxFit.cover,
+)
+```
