@@ -1,4 +1,4 @@
-# Flutter Advanced Networkimage
+# Flutter Advanced Network Imageprovider
 
 An advanced image provider for flutter.
 

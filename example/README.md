@@ -1,6 +1,6 @@
 # flutter_advanced_networkimage_example
 
-A new Flutter project.
+Demonstrates how to use the flutter_advanced_networkimage plugin.
 
 ## Getting Started
 

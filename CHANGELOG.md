@@ -1,1 +1,1 @@
-## [0.0.1] - Memcache and diskcache.
+## [0.0.1] - Memory cache and Disk cache.
