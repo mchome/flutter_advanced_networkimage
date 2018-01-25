@@ -5,3 +5,4 @@
 .pub/
 packages
 pubspec.lock
+.vscode/
