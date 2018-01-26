@@ -26,26 +26,34 @@ class ZoomableWidget extends StatefulWidget {
 class ZoomableWidgetState extends State<ZoomableWidget> {
   double zoom = 1.0;
   double previewZoom = 1.0;
-  Offset offset = Offset.zero;
+  Offset zoomOffset = Offset.zero;
+  Offset previewPanOffset = Offset.zero;
+  Offset panOffset = Offset.zero;
 
-  _onScaleStart(ScaleStartDetails details) {
-    setState(() => offset = details.focalPoint);
-  }
+  _onScaleStart(ScaleStartDetails details) => setState(() {
+      zoomOffset = details.focalPoint / zoom;
+      previewPanOffset = details.focalPoint / zoom;
+    });
   _onScaleUpdate(ScaleUpdateDetails details) {
     if (details.scale != 1.0) {
-      setState(() => zoom = (previewZoom * details.scale).clamp(widget.minScale, widget.maxScale));
+      setState(() {
+        zoom = (previewZoom * details.scale).clamp(widget.minScale, widget.maxScale);
+        if (zoom > 1.0) {
+          panOffset = (details.focalPoint - previewPanOffset) / zoom;
+        } else {
+          panOffset = Offset.zero;
+        }
+      });
     }
   }
-  _onScaleEnd(ScaleEndDetails details) {
-    previewZoom = zoom;
-  }
-  _handleReset() {
-    setState(() {
+  _onScaleEnd(ScaleEndDetails details) => previewZoom = zoom;
+  _handleReset() => setState(() {
       zoom = 1.0;
       previewZoom = 1.0;
-      offset = Offset.zero;
+      zoomOffset = Offset.zero;
+      previewPanOffset = Offset.zero;
+      panOffset = Offset.zero;
     });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,15 +63,23 @@ class ZoomableWidgetState extends State<ZoomableWidget> {
       onScaleStart: widget.enableZoom ? _onScaleStart : null,
       onScaleUpdate: widget.enableZoom ? _onScaleUpdate : null,
       onScaleEnd: widget.enableZoom ? _onScaleEnd : null,
+      onDoubleTap: _handleReset,
     );
   }
 
   Widget _child(Widget child) {
-//    print('previewZoom: ' + previewZoom.toString());
-//    print('zoom: ' + zoom.toString());
+    print(panOffset);
     return new FractionallySizedBox(
-      widthFactor: zoom,
-      child: child,
+      alignment: Alignment.center,
+      widthFactor: (zoom <= 1.0) ? zoom : 1.0,
+      child: new Transform(
+        transform: (zoom > 1.0) ? (new Matrix4.identity()..scale(zoom, zoom)) : (new Matrix4.identity()..scale(1.0, 1.0)),
+        origin: new Offset(zoomOffset.dx, zoomOffset.dy),
+        child: new Transform(
+          transform: new Matrix4.translationValues(panOffset.dx, panOffset.dy, 0.0),
+          child: child,
+        )
+      )
     );
   }
 }
