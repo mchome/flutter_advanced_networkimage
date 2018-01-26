@@ -21,8 +21,8 @@ class MyApp extends StatelessWidget {
               tabs: <Widget>[
                 const Tab(text: 'image widget'),
                 const Tab(text: 'list widget')
-              ]
-            )
+              ],
+            ),
           ),
           body: new TabBarView(
             children: <Widget>[
@@ -31,9 +31,9 @@ class MyApp extends StatelessWidget {
                 maxScale: 2.0,
                 child: new Center(
                   child: new Image(
-                    image: new AdvancedNetworkImage('https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')
-                  )
-                )
+                      image: new AdvancedNetworkImage(
+                          'https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')),
+                ),
               ),
               new ZoomableWidget(
                 minScale: 0.8,
@@ -41,21 +41,21 @@ class MyApp extends StatelessWidget {
                 child: new ListView(
                   children: <Widget>[
                     new Image(
-                      image: new AdvancedNetworkImage('https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')
-                    ),
+                        image: new AdvancedNetworkImage(
+                            'https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')),
                     new Image(
-                      image: new AdvancedNetworkImage('https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')
-                    ),
+                        image: new AdvancedNetworkImage(
+                            'https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')),
                     new Image(
-                      image: new AdvancedNetworkImage('https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')
-                    )
-                  ]
-                )
-              )
-            ]
-          )
-        )
-      )
+                        image: new AdvancedNetworkImage(
+                            'https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

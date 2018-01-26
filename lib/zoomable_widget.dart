@@ -1,3 +1,5 @@
+library zoomable_widget;
+
 import 'package:flutter/material.dart';
 
 class ZoomableWidget extends StatefulWidget {
@@ -8,7 +10,8 @@ class ZoomableWidget extends StatefulWidget {
     this.enableZoom: true,
     this.enablePan: true,
     this.child,
-  }) : assert(minScale != null),
+  })
+      : assert(minScale != null),
         assert(maxScale != null),
         assert(enableZoom != null),
         assert(enablePan != null);
@@ -31,13 +34,14 @@ class ZoomableWidgetState extends State<ZoomableWidget> {
   Offset panOffset = Offset.zero;
 
   _onScaleStart(ScaleStartDetails details) => setState(() {
-      zoomOffset = details.focalPoint / zoom;
-      previewPanOffset = details.focalPoint / zoom;
-    });
+        zoomOffset = details.focalPoint / zoom;
+        previewPanOffset = details.focalPoint / zoom;
+      });
   _onScaleUpdate(ScaleUpdateDetails details) {
     if (details.scale != 1.0) {
       setState(() {
-        zoom = (previewZoom * details.scale).clamp(widget.minScale, widget.maxScale);
+        zoom = (previewZoom * details.scale)
+            .clamp(widget.minScale, widget.maxScale);
         if (zoom > 1.0) {
           panOffset = (details.focalPoint - previewPanOffset) / zoom;
         } else {
@@ -48,12 +52,12 @@ class ZoomableWidgetState extends State<ZoomableWidget> {
   }
   _onScaleEnd(ScaleEndDetails details) => previewZoom = zoom;
   _handleReset() => setState(() {
-      zoom = 1.0;
-      previewZoom = 1.0;
-      zoomOffset = Offset.zero;
-      previewPanOffset = Offset.zero;
-      panOffset = Offset.zero;
-    });
+        zoom = 1.0;
+        previewZoom = 1.0;
+        zoomOffset = Offset.zero;
+        previewPanOffset = Offset.zero;
+        panOffset = Offset.zero;
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -72,13 +76,16 @@ class ZoomableWidgetState extends State<ZoomableWidget> {
       alignment: Alignment.center,
       widthFactor: (zoom <= 1.0) ? zoom : 1.0,
       child: new Transform(
-        transform: (zoom > 1.0) ? (new Matrix4.identity()..scale(zoom, zoom)) : (new Matrix4.identity()..scale(1.0, 1.0)),
+        transform: (zoom > 1.0)
+            ? (new Matrix4.identity()..scale(zoom, zoom))
+            : (new Matrix4.identity()..scale(1.0, 1.0)),
         origin: new Offset(zoomOffset.dx, zoomOffset.dy),
         child: new Transform(
-          transform: new Matrix4.translationValues(panOffset.dx, panOffset.dy, 0.0),
+          transform:
+              new Matrix4.translationValues(panOffset.dx, panOffset.dy, 0.0),
           child: child,
-        )
-      )
+        ),
+      ),
     );
   }
 }
