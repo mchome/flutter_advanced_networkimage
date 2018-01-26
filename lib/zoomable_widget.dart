@@ -68,7 +68,6 @@ class ZoomableWidgetState extends State<ZoomableWidget> {
   }
 
   Widget _child(Widget child) {
-    print(panOffset);
     return new FractionallySizedBox(
       alignment: Alignment.center,
       widthFactor: (zoom <= 1.0) ? zoom : 1.0,
