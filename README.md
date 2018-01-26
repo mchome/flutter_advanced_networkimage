@@ -1,5 +1,7 @@
 # Flutter Advanced Network Imageprovider
 
+[![pub package](https://img.shields.io/pub/v/flutter_advanced_networkimage.svg)](https://pub.dartlang.org/packages/flutter_advanced_networkimage)
+
 An advanced image provider provides caching and retrying for flutter app.
 
 ## Getting Started
