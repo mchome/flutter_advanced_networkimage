@@ -10,7 +10,7 @@ An advanced image provider provides caching and retrying for flutter app.
 Add this to your pubspec.yaml (or create it):
 ```yaml
 dependencies:
-  advanced_imageprovider: any
+  flutter_advanced_networkimage: any
 ```
 Then run the flutter tooling:
 ```bash
