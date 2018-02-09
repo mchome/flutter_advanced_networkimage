@@ -1,6 +1,4 @@
-library zoomable_widget;
-
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class ZoomableWidget extends StatefulWidget {
   const ZoomableWidget({
@@ -29,63 +27,82 @@ class ZoomableWidget extends StatefulWidget {
 class ZoomableWidgetState extends State<ZoomableWidget> {
   double zoom = 1.0;
   double previewZoom = 1.0;
-  Offset zoomOffset = Offset.zero;
   Offset previewPanOffset = Offset.zero;
   Offset panOffset = Offset.zero;
+  Offset zoomOriginOffset = Offset.zero;
 
   _onScaleStart(ScaleStartDetails details) => setState(() {
-        zoomOffset = details.focalPoint / zoom;
-        previewPanOffset = details.focalPoint / zoom;
-      });
+    zoomOriginOffset = details.focalPoint;
+    previewPanOffset = panOffset;
+    previewZoom = zoom;
+  });
   _onScaleUpdate(ScaleUpdateDetails details) {
     if (details.scale != 1.0) {
       setState(() {
         zoom = (previewZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
-        if (zoom > 1.0) {
-          panOffset = (details.focalPoint - previewPanOffset) / zoom;
-        } else {
-          panOffset = Offset.zero;
-        }
+        panOffset = details.focalPoint - (zoomOriginOffset - previewPanOffset) / previewZoom * zoom;
       });
     }
   }
-  _onScaleEnd(ScaleEndDetails details) => previewZoom = zoom;
-  _handleReset() => setState(() {
-        zoom = 1.0;
-        previewZoom = 1.0;
-        zoomOffset = Offset.zero;
-        previewPanOffset = Offset.zero;
-        panOffset = Offset.zero;
-      });
+  _handleReset() {
+    setState(() {
+      zoom = 1.0;
+      previewZoom = 1.0;
+      zoomOriginOffset = Offset.zero;
+      previewPanOffset = Offset.zero;
+      panOffset = Offset.zero;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     if (widget.child == null) return new Container();
-    return new GestureDetector(
-      child: _child(widget.child),
-      onScaleStart: widget.enableZoom ? _onScaleStart : null,
-      onScaleUpdate: widget.enableZoom ? _onScaleUpdate : null,
-      onScaleEnd: widget.enableZoom ? _onScaleEnd : null,
-      onDoubleTap: _handleReset,
+    return new CustomMultiChildLayout(
+      delegate: new _ZoomableWidgetLayout(),
+      children: <Widget>[
+        new LayoutId(
+          id: _ZoomableWidgetLayout.painter,
+          child: _child(widget.child),
+        ),
+        new LayoutId(
+            id: _ZoomableWidgetLayout.gestureContainer,
+            child: new GestureDetector(
+              child: new Container(color: new Color(0)),
+              onScaleStart: widget.enableZoom ? _onScaleStart : null,
+              onScaleUpdate: widget.enableZoom ? _onScaleUpdate : null,
+              onDoubleTap: _handleReset,
+            )
+        ),
+      ]
     );
   }
 
   Widget _child(Widget child) {
-    return new FractionallySizedBox(
-      alignment: Alignment.center,
-      widthFactor: (zoom <= 1.0) ? zoom : 1.0,
+    return new Transform(
+      transform: new Matrix4.identity()..scale(zoom, zoom),
       child: new Transform(
-        transform: (zoom > 1.0)
-            ? (new Matrix4.identity()..scale(zoom, zoom))
-            : (new Matrix4.identity()..scale(1.0, 1.0)),
-        origin: new Offset(zoomOffset.dx, zoomOffset.dy),
-        child: new Transform(
-          transform:
-              new Matrix4.translationValues(panOffset.dx, panOffset.dy, 0.0),
-          child: child,
-        ),
+        transform: new Matrix4.translationValues(panOffset.dx, panOffset.dy, 0.0),
+        child: child,
       ),
     );
   }
+}
+
+class _ZoomableWidgetLayout extends MultiChildLayoutDelegate {
+  _ZoomableWidgetLayout();
+
+  static final String gestureContainer = 'gesturecontainer';
+  static final String painter = 'painter';
+
+  @override
+  void performLayout(Size size) {
+    layoutChild(gestureContainer, new BoxConstraints.tightFor(width: size.width, height: size.height));
+    positionChild(gestureContainer, Offset.zero);
+    layoutChild(painter, new BoxConstraints.tightFor(width: size.width, height: size.height));
+    positionChild(painter, Offset.zero);
+  }
+
+  @override
+  bool shouldRelayout(_ZoomableWidgetLayout oldDelegate) => false;
 }
