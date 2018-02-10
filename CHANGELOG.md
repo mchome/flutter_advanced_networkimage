@@ -1,10 +1,14 @@
+## [0.1.6]
+
+- Add animation to `ZoomableWidget`.
+
 ## [0.1.5]
 
-- Update ZoomableWidget
+- Update `ZoomableWidget`.
 
 ## [0.1.4]
 
-- Update example
+- Update example.
 
 ## [0.1.3]
 
