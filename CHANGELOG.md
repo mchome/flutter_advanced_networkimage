@@ -1,3 +1,7 @@
+## [0.1.6+1]
+
+- Upgrade the dart SDK version.
+
 ## [0.1.6]
 
 - Add animation to `ZoomableWidget`.
