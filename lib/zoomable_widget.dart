@@ -1,3 +1,5 @@
+library zoomable_widget;
+
 import 'package:flutter/widgets.dart';
 
 class _ZoomableWidgetLayout extends MultiChildLayoutDelegate {

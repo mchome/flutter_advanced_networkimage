@@ -1,3 +1,7 @@
+## [0.1.6+2]
+
+- Downgrade `http` version.
+
 ## [0.1.6+1]
 
 - Upgrade the dart SDK version.
