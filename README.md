@@ -33,12 +33,12 @@ new Image(
 ```
 
 ```dart
-// clean the disk cache
+// get the disk cache folder size
 bool isSucceed = await getDiskCachedImagesSize();
 ```
 
 ```dart
-// get the disk cache folder size
+// clean the disk cache
 int folderSize = await clearDiskCachedImages();
 ```
 
