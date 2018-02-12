@@ -3,21 +3,27 @@
 [![pub package](https://img.shields.io/pub/v/flutter_advanced_networkimage.svg)](https://pub.dartlang.org/packages/flutter_advanced_networkimage)
 
 An advanced image provider provides caching and retrying for flutter app.
+Now with zoomable widget and transition to image widget.
 
 ## Getting Started
 
 ### Installation
+
 Add this to your pubspec.yaml (or create it):
+
 ```yaml
 dependencies:
   flutter_advanced_networkimage: any
 ```
+
 Then run the flutter tooling:
+
 ```bash
 flutter packages get
 ```
 
 ### Example
+
 ```dart
 // using image provider
 new Image(
@@ -25,26 +31,39 @@ new Image(
   fit: BoxFit.cover,
 )
 ```
-```dart
-// get the disk cache folder size
-bool isSucceed = await getDiskCachedImagesSize();
-```
+
 ```dart
 // clean the disk cache
+bool isSucceed = await getDiskCachedImagesSize();
+```
+
+```dart
+// get the disk cache folder size
 int folderSize = await clearDiskCachedImages();
 ```
+
 ```dart
-// using zooming widget
+// using zooming widget & transitiontoimage widget
 new ZoomableWidget(
   minScale: 0.3,
   maxScale: 2.0,
-  child: new Container(...),
+  child: new Container(
+    child: new TranstionToImage(
+      new AdvancedNetworkImage(url),
+      // This is the default placeholder widget at loading status,
+      // you can write your own widget with CustomPainter.
+      placeholder: new CircularProgressIndicator(),
+      // This is default duration
+      duration: new Duration(milliseconds: 300),
+    ),
+  ),
 )
 ```
 
 Details in [example/](https://github.com/mchome/flutter_advanced_networkimage/tree/master/example) folder.
 
 ## Q&A
+
 - Q: Why the cached files stored in documents directory instead of temporary directory?  
   A: I think your cached fils should be a part of your app, and you can manual clear your cached files.
 

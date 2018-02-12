@@ -1,3 +1,7 @@
+## [0.1.7]
+
+- Add a `TransitionToImage` Widget, optimize `ZoomableWidget` and update example.
+
 ## [0.1.6+2]
 
 - Downgrade `http` version.

@@ -82,7 +82,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
         _zoom = (_previewZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
         _panOffset =
-            details.focalPoint - (_zoomOriginOffset - _previewPanOffset);
+            (details.focalPoint - (_zoomOriginOffset - _previewPanOffset)) / _zoom;
       });
     }
   }

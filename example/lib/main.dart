@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../lib/flutter_advanced_networkimage.dart';
 import '../../lib/zoomable_widget.dart';
+import '../../lib/transition_to_image.dart';
 
 void main() => runApp(new MyApp());
 
@@ -21,10 +22,9 @@ class MyApp extends StatelessWidget {
           body: new ZoomableWidget(
             minScale: 0.3,
             maxScale: 2.0,
-            child: new Center(
-              child: new Image(
-                  image: new AdvancedNetworkImage(
-                      'https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png')),
+            child: new TransitionToImage(
+              new AdvancedNetworkImage(
+                  'https://user-images.githubusercontent.com/1551736/28209258-53234bf0-68c4-11e7-9586-d4a3526f0f45.png'),
             ),
           ),
         ),
