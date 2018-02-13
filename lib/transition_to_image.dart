@@ -115,6 +115,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   _handleImageLoaded(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
     _resolveStatus();
+    _imageStream.removeListener(_handleImageLoaded);
   }
 
   @override

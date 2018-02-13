@@ -1,3 +1,7 @@
+## [0.1.8]
+
+- Fix the listener leak problem for the `TransitionToImage` widget.
+
 ## [0.1.7]
 
 - Add a `TransitionToImage` Widget, optimize `ZoomableWidget` and update example.
