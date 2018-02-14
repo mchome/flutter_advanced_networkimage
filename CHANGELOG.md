@@ -1,3 +1,7 @@
+## [0.1.9]
+
+- Add defalut blendmode to `TransitionToImage` widget.
+
 ## [0.1.8]
 
 - Fix the listener leak problem for the `TransitionToImage` widget.

@@ -66,12 +66,12 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   Future<ImageInfo> _loadAsync(AdvancedNetworkImage key) async {
     assert(key == this);
 
-    String uId = uid(key.url);
+    String uId = _uid(key.url);
     if (useMemoryCache &&
-        imageMemoryCache != null &&
-        imageMemoryCache.containsKey(uId)) {
+        _imageMemoryCache != null &&
+        _imageMemoryCache.containsKey(uId)) {
       if (useDiskCache) _loadFromDiskCache(key, uId);
-      return await _decodeImageData(imageMemoryCache[uId], key.scale);
+      return await _decodeImageData(_imageMemoryCache[uId], key.scale);
     }
     if (useDiskCache)
       return await _decodeImageData(
@@ -80,7 +80,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     Map imageInfo = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageInfo != null) {
-      if (useMemoryCache) imageMemoryCache[uId] = imageInfo['ImageData'];
+      if (useMemoryCache) _imageMemoryCache[uId] = imageInfo['ImageData'];
       return await _decodeImageData(imageInfo['ImageData'], key.scale);
     }
 
@@ -95,8 +95,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         new File(join(_cacheImagesDirectory.path, 'CachedImageInfo.json'));
     if (_cacheImagesDirectory.existsSync()) {
       if (_cacheImagesInfoFile.existsSync()) {
-        if (diskCacheInfo == null || diskCacheInfo.length == 0) {
-          diskCacheInfo = JSON
+        if (_diskCacheInfo == null || _diskCacheInfo.length == 0) {
+          _diskCacheInfo = JSON
               .decode(await _cacheImagesInfoFile.readAsString(encoding: utf8));
         }
         try {
@@ -104,8 +104,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
               (await http.head(url, headers: header)).headers;
           if (_responseHeaders.containsKey('etag')) {
             String _freshETag = _responseHeaders['etag'];
-            if (diskCacheInfo.containsKey(uId) &&
-                (diskCacheInfo[uId] == _freshETag)) {
+            if (_diskCacheInfo.containsKey(uId) &&
+                (_diskCacheInfo[uId] == _freshETag)) {
               return await (new File(join(_cacheImagesDirectory.path, uId)))
                   .readAsBytes();
             }
@@ -124,11 +124,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     Map imageInfo = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageInfo != null) {
-      diskCacheInfo[uId] = imageInfo['Etag'];
+      _diskCacheInfo[uId] = imageInfo['Etag'];
       await (new File(join(_cacheImagesDirectory.path, uId)))
           .writeAsBytes(imageInfo['ImageData']);
       await (new File(_cacheImagesInfoFile.path).writeAsString(
-          JSON.encode(diskCacheInfo),
+          JSON.encode(_diskCacheInfo),
           mode: FileMode.WRITE,
           encoding: utf8));
       return imageInfo['ImageData'];
@@ -178,13 +178,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         image: await decodeImageFromList(imageData), scale: scaleSize);
   }
 
-  String uid(String str) {
-    return md5
-        .convert(UTF8.encode(str))
-        .toString()
-        .toLowerCase()
-        .substring(0, 9);
-  }
+  String _uid(String str) =>
+      md5.convert(UTF8.encode(str)).toString().toLowerCase().substring(0, 9);
 
   @override
   bool operator ==(dynamic other) {
@@ -239,5 +234,5 @@ Future<int> getDiskCachedImagesSize() async {
   }
 }
 
-Map<String, String> diskCacheInfo = {};
-LruMap<String, Uint8List> imageMemoryCache = new LruMap(maximumSize: 128);
+Map<String, String> _diskCacheInfo = {};
+LruMap<String, Uint8List> _imageMemoryCache = new LruMap(maximumSize: 128);

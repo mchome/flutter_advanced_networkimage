@@ -83,6 +83,12 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   _resolveStatus() {
+    try {
+      setState(() {});
+    } catch (_) {
+      _imageStream?.removeListener(_handleImageLoaded);
+      return;
+    }
     setState(() {
       switch (_status) {
         case _TransitionStatus.loading:
@@ -125,9 +131,15 @@ class _TransitionToImageState extends State<TransitionToImage>
         : (widget.animationType == TransitionType.fade)
             ? new FadeTransition(
                 opacity: _tween.animate(_animation),
-                child: new RawImage(image: _imageInfo.image))
+                child: new RawImage(
+                  image: _imageInfo.image,
+                  colorBlendMode: BlendMode.modulate,
+                ))
             : new SlideTransition(
                 position: _tween.animate(_animation),
-                child: new RawImage(image: _imageInfo.image));
+                child: new RawImage(
+                  image: _imageInfo.image,
+                  colorBlendMode: BlendMode.modulate,
+                ));
   }
 }
