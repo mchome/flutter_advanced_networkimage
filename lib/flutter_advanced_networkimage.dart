@@ -73,9 +73,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       if (useDiskCache) _loadFromDiskCache(key, uId);
       return await _decodeImageData(_imageMemoryCache[uId], key.scale);
     }
-    if (useDiskCache)
-      return await _decodeImageData(
-          await _loadFromDiskCache(key, uId), key.scale);
+    try {
+      if (useDiskCache)
+        return await _decodeImageData(
+            await _loadFromDiskCache(key, uId), key.scale);
+    } catch (_) {}
 
     Map imageInfo = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);

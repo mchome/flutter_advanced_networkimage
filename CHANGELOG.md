@@ -1,6 +1,10 @@
+## [0.1.10]
+
+- Catch exception for file not found.
+
 ## [0.1.9]
 
-- Add defalut blendmode to `TransitionToImage` widget.
+- Add default blendmode to `TransitionToImage` widget.
 
 ## [0.1.8]
 
