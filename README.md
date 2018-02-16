@@ -66,6 +66,3 @@ Details in [example/](https://github.com/mchome/flutter_advanced_networkimage/tr
 
 - Q: Why the cached files stored in documents directory instead of temporary directory?  
   A: I think your cached fils should be a part of your app, and you can manual clear your cached files.
-
-- Q: Your zooming widget is weird while scrolling, will you improve it?  
-  A: Ummmmm, maybe.

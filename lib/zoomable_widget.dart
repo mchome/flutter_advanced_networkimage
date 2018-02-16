@@ -71,18 +71,23 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     super.dispose();
   }
 
-  _onScaleStart(ScaleStartDetails details) => setState(() {
-        _zoomOriginOffset = details.focalPoint;
-        _previewPanOffset = _panOffset;
-        _previewZoom = _zoom;
-      });
+  _onScaleStart(ScaleStartDetails details) {
+    setState(() {
+      _zoomOriginOffset = details.focalPoint;
+      _previewPanOffset = _panOffset;
+      _previewZoom = _zoom;
+    });
+  }
+
   _onScaleUpdate(ScaleUpdateDetails details) {
     if (details.scale != 1.0) {
       setState(() {
         _zoom = (_previewZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
-        _panOffset =
-            (details.focalPoint - (_zoomOriginOffset - _previewPanOffset)) / _zoom;
+        _panOffset = (details.focalPoint -
+                _zoomOriginOffset +
+                _previewPanOffset * _previewZoom) /
+            _zoom;
       });
     }
   }

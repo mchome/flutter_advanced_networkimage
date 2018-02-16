@@ -117,7 +117,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     _imageStream =
         _imageProvider.resolve(createLocalImageConfiguration(context));
     if (_imageStream.key != oldImageStream?.key) {
-      oldImageStream.removeListener(_updateImage);
+      oldImageStream?.removeListener(_updateImage);
       _imageStream.addListener(_updateImage);
     }
   }
