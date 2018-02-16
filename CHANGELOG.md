@@ -1,3 +1,9 @@
+## [0.2.0]
+
+- Add `timeoutDuration` parameter, make some tweaks and add some doc comments to `AdvancedNetworkImage` imageprovider.
+
+- Make some tweaks for `TransitionToImage` widget.
+
 ## [0.1.10]
 
 - Catch exception for file not found.

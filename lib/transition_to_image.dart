@@ -65,19 +65,19 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   didChangeDependencies() {
-    _resolveImage();
+    _getImage();
     super.didChangeDependencies();
   }
 
   @override
-  reassemble() {
-    _resolveImage();
-    super.reassemble();
+  void didUpdateWidget(TransitionToImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.image != oldWidget.image) _getImage();
   }
 
   @override
   dispose() {
-    _imageStream?.removeListener(_handleImageLoaded);
+    _imageStream.removeListener(_updateImage);
     _controller.dispose();
     super.dispose();
   }
@@ -86,7 +86,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     try {
       setState(() {});
     } catch (_) {
-      _imageStream?.removeListener(_handleImageLoaded);
+      _imageStream?.removeListener(_updateImage);
       return;
     }
     setState(() {
@@ -112,16 +112,19 @@ class _TransitionToImageState extends State<TransitionToImage>
     });
   }
 
-  _resolveImage() {
+  _getImage() {
+    final ImageStream oldImageStream = _imageStream;
     _imageStream =
         _imageProvider.resolve(createLocalImageConfiguration(context));
-    _imageStream.addListener(_handleImageLoaded);
+    if (_imageStream.key != oldImageStream?.key) {
+      oldImageStream.removeListener(_updateImage);
+      _imageStream.addListener(_updateImage);
+    }
   }
 
-  _handleImageLoaded(ImageInfo info, bool synchronousCall) {
+  _updateImage(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
     _resolveStatus();
-    _imageStream.removeListener(_handleImageLoaded);
   }
 
   @override
