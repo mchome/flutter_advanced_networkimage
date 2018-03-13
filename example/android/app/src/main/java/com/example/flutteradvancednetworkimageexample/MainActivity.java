@@ -1,4 +1,4 @@
-package com.yourcompany.flutteradvancednetworkimageexample;
+package com.example.flutteradvancednetworkimageexample;
 
 import android.os.Bundle;
 

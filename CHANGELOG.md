@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3]
+
+- Support fallback image after retrying failed.
+
 ## [0.2.0+1]
 
 - Cleanup example code.

@@ -65,4 +65,4 @@ Details in [example/](https://github.com/mchome/flutter_advanced_networkimage/tr
 ## Q&A
 
 - Q: Why the cached files stored in documents directory instead of temporary directory?  
-  A: I think your cached fils should be a part of your app, and you can manual clear your cached files.
+  A: I think your cached files should be a part of your app, and you can manual clear your cached files.

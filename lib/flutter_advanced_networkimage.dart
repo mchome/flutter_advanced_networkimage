@@ -34,9 +34,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.header,
     this.useMemoryCache: true,
     this.useDiskCache: false,
-    this.retryLimit: 20,
+    this.retryLimit: 5,
     this.retryDuration: const Duration(milliseconds: 500),
-    this.timeoutDuration: const Duration(seconds: 2),
+    this.timeoutDuration: const Duration(seconds: 5),
+    this.fallbackImageBytes,
   })
       : assert(url != null),
         assert(scale != null),
@@ -68,6 +69,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The timeout duration will give the timeout to a fetching function.
   final Duration timeoutDuration;
 
+  /// The image bytes will display when the network image failed to loaded.
+  final Uint8List fallbackImageBytes;
+
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return new SynchronousFuture<AdvancedNetworkImage>(this);
@@ -82,7 +86,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     });
   }
 
-  Future<ImageInfo> _loadAsync(AdvancedNetworkImage key) async {
+  Future _loadAsync(AdvancedNetworkImage key) async {
     assert(key == this);
 
     String uId = _uid(key.url);
@@ -103,6 +107,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     if (imageInfo != null) {
       if (useMemoryCache) _imageMemoryCache[uId] = imageInfo['ImageData'];
       return await _decodeImageData(imageInfo['ImageData'], key.scale);
+    }
+
+    if (key.fallbackImageBytes != null) {
+        return await _decodeImageData(key.fallbackImageBytes, key.scale);
     }
 
     return null;
