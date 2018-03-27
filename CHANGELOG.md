@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.3]
+## [0.2.2]
+
+- Adapt to dart 2 preview.
+
+## [0.2.1]
 
 - Support fallback image after retrying failed.
 

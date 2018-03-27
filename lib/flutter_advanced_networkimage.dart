@@ -101,8 +101,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     }
     try {
       if (useDiskCache)
-        return await ui.instantiateImageCodec(
-            await _loadFromDiskCache(key, uId));
+        return await ui
+            .instantiateImageCodec(await _loadFromDiskCache(key, uId));
     } catch (_) {}
 
     Map imageInfo = await _loadFromRemote(
@@ -226,12 +226,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     return null;
   }
-
-  // Future<ImageInfo> _decodeImageData(
-  //     Uint8List imageData, double scaleSize) async {
-  //   return new ImageInfo(
-  //       image: await decodeImageFromList(imageData), scale: scaleSize);
-  // }
 
   String _uid(String str) =>
       md5.convert(UTF8.encode(str)).toString().toLowerCase().substring(0, 9);

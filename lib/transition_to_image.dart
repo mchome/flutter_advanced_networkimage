@@ -10,13 +10,13 @@ class TransitionToImage extends StatefulWidget {
     this.duration: const Duration(milliseconds: 300),
     this.tween,
     this.curve: Curves.easeInOut,
-    this.animationType: TransitionType.fade,
+    this.transitionType: TransitionType.fade,
   })
       : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
         assert(curve != null),
-        assert(animationType != null),
+        assert(transitionType != null),
         super(key: key);
 
   final ImageProvider image;
@@ -24,7 +24,7 @@ class TransitionToImage extends StatefulWidget {
   final Duration duration;
   final Tween tween;
   final Curve curve;
-  final TransitionType animationType;
+  final TransitionType transitionType;
 
   @override
   _TransitionToImageState createState() => new _TransitionToImageState();
@@ -44,7 +44,8 @@ class _TransitionToImageState extends State<TransitionToImage>
     with TickerProviderStateMixin {
   AnimationController _controller;
   Animation _animation;
-  Tween _tween;
+  Tween<double> _fadeTween;
+  Tween<Offset> _slideTween;
 
   ImageStream _imageStream;
   ImageInfo _imageInfo;
@@ -58,8 +59,11 @@ class _TransitionToImageState extends State<TransitionToImage>
     _controller =
         new AnimationController(vsync: this, duration: widget.duration)
           ..addListener(() => setState(() {}));
-    _tween = widget.tween;
-    if (_tween == null) _tween = new Tween(begin: 0.0, end: 1.0);
+    _fadeTween = widget.tween;
+    _slideTween = widget.tween;
+    if (_fadeTween == null) _fadeTween = new Tween(begin: 0.0, end: 1.0);
+    if (_slideTween == null)
+      _slideTween = new Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
     super.initState();
   }
 
@@ -131,18 +135,16 @@ class _TransitionToImageState extends State<TransitionToImage>
   Widget build(BuildContext context) {
     return (_status == _TransitionStatus.loading)
         ? new Center(child: new CircularProgressIndicator())
-        : (widget.animationType == TransitionType.fade)
+        : (widget.transitionType == TransitionType.fade)
             ? new FadeTransition(
-                opacity: _tween.animate(_animation),
+                opacity: _fadeTween.animate(_animation),
                 child: new RawImage(
                   image: _imageInfo.image,
-                  colorBlendMode: BlendMode.modulate,
                 ))
             : new SlideTransition(
-                position: _tween.animate(_animation),
+                position: _slideTween.animate(_animation),
                 child: new RawImage(
                   image: _imageInfo.image,
-                  colorBlendMode: BlendMode.modulate,
                 ));
   }
 }
