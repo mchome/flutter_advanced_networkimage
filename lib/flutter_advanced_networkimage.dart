@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui show instantiateImageCodec, Codec;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -79,14 +80,16 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   @override
   ImageStreamCompleter load(AdvancedNetworkImage key) {
-    return new OneFrameImageStreamCompleter(_loadAsync(key),
+    return new MultiFrameImageStreamCompleter(
+        codec: _loadAsync(key),
+        scale: key.scale,
         informationCollector: (StringBuffer information) {
-      information.writeln('Image provider: $this');
-      information.write('Image provider: $key');
-    });
+          information.writeln('Image provider: $this');
+          information.write('Image provider: $key');
+        });
   }
 
-  Future _loadAsync(AdvancedNetworkImage key) async {
+  Future<ui.Codec> _loadAsync(AdvancedNetworkImage key) async {
     assert(key == this);
 
     String uId = _uid(key.url);
@@ -94,23 +97,23 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         _imageMemoryCache != null &&
         _imageMemoryCache.containsKey(uId)) {
       if (useDiskCache) _loadFromDiskCache(key, uId);
-      return await _decodeImageData(_imageMemoryCache[uId], key.scale);
+      return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
     }
     try {
       if (useDiskCache)
-        return await _decodeImageData(
-            await _loadFromDiskCache(key, uId), key.scale);
+        return await ui.instantiateImageCodec(
+            await _loadFromDiskCache(key, uId));
     } catch (_) {}
 
     Map imageInfo = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageInfo != null) {
       if (useMemoryCache) _imageMemoryCache[uId] = imageInfo['ImageData'];
-      return await _decodeImageData(imageInfo['ImageData'], key.scale);
+      return await ui.instantiateImageCodec(imageInfo['ImageData']);
     }
 
     if (key.fallbackImageBytes != null) {
-        return await _decodeImageData(key.fallbackImageBytes, key.scale);
+      return await ui.instantiateImageCodec(key.fallbackImageBytes);
     }
 
     return null;
@@ -224,11 +227,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     return null;
   }
 
-  Future<ImageInfo> _decodeImageData(
-      Uint8List imageData, double scaleSize) async {
-    return new ImageInfo(
-        image: await decodeImageFromList(imageData), scale: scaleSize);
-  }
+  // Future<ImageInfo> _decodeImageData(
+  //     Uint8List imageData, double scaleSize) async {
+  //   return new ImageInfo(
+  //       image: await decodeImageFromList(imageData), scale: scaleSize);
+  // }
 
   String _uid(String str) =>
       md5.convert(UTF8.encode(str)).toString().toLowerCase().substring(0, 9);

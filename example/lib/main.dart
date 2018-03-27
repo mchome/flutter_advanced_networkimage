@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../lib/flutter_advanced_networkimage.dart';
 import '../../lib/zoomable_widget.dart';
 import '../../lib/transition_to_image.dart';
@@ -25,7 +22,7 @@ class MyApp extends StatelessWidget {
           maxScale: 2.0,
           child: new TransitionToImage(
             new AdvancedNetworkImage(
-              'https://i.nhentai.net/galleries/1175501/3.jpg',
+              'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
             ),
           ),
         ),
