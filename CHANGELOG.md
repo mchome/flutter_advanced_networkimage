@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.2+1]
+
+- Update some dependencies.
+
 ## [0.2.2]
 
 - Adapt to dart 2 preview.
