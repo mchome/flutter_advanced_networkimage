@@ -48,7 +48,7 @@ new ZoomableWidget(
   minScale: 0.3,
   maxScale: 2.0,
   child: new Container(
-    child: new TranstionToImage(
+    child: new TransitionToImage(
       new AdvancedNetworkImage(url),
       // This is the default placeholder widget at loading status,
       // you can write your own widget with CustomPainter.
