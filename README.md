@@ -60,6 +60,21 @@ new ZoomableWidget(
 )
 ```
 
+```dart
+// using reload feature(you can use a `GestureDetector`
+// widget to wrap `TransitionToImage` widget)
+TransitionToImage imageWidget = new TransitionToImage(
+  new AdvancedNetworkImage(url),
+  useReload: true,
+);
+new ZoomableWidget(
+  minScale: 0.3,
+  maxScale: 2.0,
+  child: imageWidget,
+  tapCallback: imageWidget.reloadImage,
+),
+```
+
 Details in [example/](https://github.com/mchome/flutter_advanced_networkimage/tree/master/example) folder.
 
 ## Q&A

@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
       new AdvancedNetworkImage(
         'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
       ),
+      useReload: true,
     );
 
     return new MaterialApp(

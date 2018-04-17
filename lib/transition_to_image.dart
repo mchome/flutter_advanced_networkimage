@@ -11,6 +11,7 @@ class TransitionToImage extends StatefulWidget {
     this.tween,
     this.curve: Curves.easeInOut,
     this.transitionType: TransitionType.fade,
+    this.useReload: false,
   })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
@@ -24,6 +25,7 @@ class TransitionToImage extends StatefulWidget {
   final Tween tween;
   final Curve curve;
   final TransitionType transitionType;
+  final bool useReload;
 
   reloadImage() {
     imageCache.clear();
@@ -169,7 +171,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    if (needReload) {
+    if (needReload && widget.useReload) {
       return new Icon(Icons.replay);
     }
 
