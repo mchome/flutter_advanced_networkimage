@@ -30,8 +30,8 @@ class ZoomableWidget extends StatefulWidget {
     this.enableZoom: true,
     this.enablePan: true,
     this.child,
-  })
-      : assert(minScale != null),
+    this.tapCallback,
+  })  : assert(minScale != null),
         assert(maxScale != null),
         assert(enableZoom != null),
         assert(enablePan != null);
@@ -41,6 +41,7 @@ class ZoomableWidget extends StatefulWidget {
   final bool enableZoom;
   final bool enablePan;
   final Widget child;
+  final Function tapCallback;
 
   @override
   _ZoomableWidgetState createState() => new _ZoomableWidgetState();
@@ -130,6 +131,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
                 onScaleStart: widget.enableZoom ? _onScaleStart : null,
                 onScaleUpdate: widget.enableZoom ? _onScaleUpdate : null,
                 onDoubleTap: _handleReset,
+                onTap: widget.tapCallback,
               )),
         ]);
   }

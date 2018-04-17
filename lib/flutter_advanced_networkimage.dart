@@ -35,12 +35,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.header,
     this.useMemoryCache: true,
     this.useDiskCache: false,
-    this.retryLimit: 5,
+    this.retryLimit: 10,
     this.retryDuration: const Duration(milliseconds: 500),
     this.timeoutDuration: const Duration(seconds: 5),
     this.fallbackImageBytes,
-  })
-      : assert(url != null),
+  })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
         assert(retryLimit != null),
@@ -64,7 +63,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The retry limit will be used to limit the retry attempts.
   final int retryLimit;
 
-  /// The retry duration will give the interval between the retry.
+  /// The retry duration will give the interval between the retries.
   final Duration retryDuration;
 
   /// The timeout duration will give the timeout to a fetching function.
@@ -81,16 +80,20 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   @override
   ImageStreamCompleter load(AdvancedNetworkImage key) {
     return new MultiFrameImageStreamCompleter(
-        codec: _loadAsync(key),
-        scale: key.scale,
-        informationCollector: (StringBuffer information) {
-          information.writeln('Image provider: $this');
-          information.write('Image provider: $key');
-        });
+      codec: _loadAsync(key),
+      scale: key.scale,
+      informationCollector: (StringBuffer information) {
+        information.writeln('Image provider: $this');
+        information.write('Image provider: $key');
+      },
+    );
   }
 
   Future<ui.Codec> _loadAsync(AdvancedNetworkImage key) async {
     assert(key == this);
+
+    /// Minimum image.
+    Uint8List _minimumImage = Uint8List.fromList([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,2,0,0,0,144,119,83,222,0,0,0,1,115,82,71,66,0,174,206,28,233,0,0,0,4,103,65,77,65,0,0,177,143,11,252,97,5,0,0,0,9,112,72,89,115,0,0,14,195,0,0,14,195,1,199,111,168,100,0,0,0,12,73,68,65,84,24,87,99,248,255,255,63,0,5,254,2,254,167,53,129,132,0,0,0,0,73,69,78,68,174,66,96,130]);
 
     String uId = _uid(key.url);
     if (useMemoryCache &&
@@ -116,7 +119,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       return await ui.instantiateImageCodec(key.fallbackImageBytes);
     }
 
-    return null;
+    print('$url is an empty file.');
+    return await ui.instantiateImageCodec(_minimumImage);
   }
 
   /// Load the disk cache
@@ -139,7 +143,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     if (_cacheImagesDirectory.existsSync()) {
       if (_cacheImagesInfoFile.existsSync()) {
         if (_diskCacheInfo == null || _diskCacheInfo.length == 0) {
-          _diskCacheInfo = JSON.decode(
+          _diskCacheInfo = json.decode(
               (await _cacheImagesInfoFile.readAsString(encoding: utf8)) ?? {});
         }
         try {
@@ -180,7 +184,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       await (new File(join(_cacheImagesDirectory.path, uId)))
           .writeAsBytes(imageInfo['ImageData']);
       await (new File(_cacheImagesInfoFile.path).writeAsString(
-          JSON.encode(_diskCacheInfo),
+          json.encode(_diskCacheInfo),
           mode: FileMode.WRITE,
           encoding: utf8));
       return imageInfo['ImageData'];
@@ -202,7 +206,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
           await new Future.delayed(retryDuration);
         }
       }
-      print('retry failed');
+      print('Retry failed!');
       return null;
     }
 
@@ -228,7 +232,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   String _uid(String str) =>
-      md5.convert(UTF8.encode(str)).toString().toLowerCase().substring(0, 9);
+      md5.convert(utf8.encode(str)).toString().toLowerCase().substring(0, 9);
 
   @override
   bool operator ==(dynamic other) {

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.3]
+
+- Add a minimum png to avoid some issues.
+- Add a reload button to `TransitionToImage` widget to reload the image if fetching network image failed.
+
 ## [0.2.2+1]
 
 - Update some dependencies.

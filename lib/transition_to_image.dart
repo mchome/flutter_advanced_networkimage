@@ -11,8 +11,7 @@ class TransitionToImage extends StatefulWidget {
     this.tween,
     this.curve: Curves.easeInOut,
     this.transitionType: TransitionType.fade,
-  })
-      : assert(image != null),
+  })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
         assert(curve != null),
@@ -25,6 +24,15 @@ class TransitionToImage extends StatefulWidget {
   final Tween tween;
   final Curve curve;
   final TransitionType transitionType;
+
+  reloadImage() {
+    imageCache.clear();
+    _reloadListeners.forEach((listener) {
+      if (listener.keys.first == image.hashCode.toString()) {
+        (listener.values.first)();
+      }
+    });
+  }
 
   @override
   _TransitionToImageState createState() => new _TransitionToImageState();
@@ -49,6 +57,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   ImageStream _imageStream;
   ImageInfo _imageInfo;
+  bool needReload = false;
 
   _TransitionStatus _status = _TransitionStatus.loading;
 
@@ -64,6 +73,19 @@ class _TransitionToImageState extends State<TransitionToImage>
     if (_fadeTween == null) _fadeTween = new Tween(begin: 0.0, end: 1.0);
     if (_slideTween == null)
       _slideTween = new Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
+    _reloadListeners.forEach((listener) {
+      if (listener.keys.first == _imageProvider.hashCode.toString()) {
+        _reloadListeners.remove(listener);
+      }
+    });
+    _reloadListeners.add({
+      _imageProvider.hashCode.toString(): () {
+        if (needReload) {
+          print('Reloading image.');
+          _getImage();
+        }
+      }
+    });
     super.initState();
   }
 
@@ -74,7 +96,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   @override
-  void didUpdateWidget(TransitionToImage oldWidget) {
+  didUpdateWidget(TransitionToImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.image != oldWidget.image) _getImage();
   }
@@ -83,6 +105,11 @@ class _TransitionToImageState extends State<TransitionToImage>
   dispose() {
     _imageStream.removeListener(_updateImage);
     _controller.dispose();
+    _reloadListeners.forEach((listener) {
+      if (listener.keys.first == _imageProvider.hashCode.toString()) {
+        _reloadListeners.remove(listener);
+      }
+    });
     super.dispose();
   }
 
@@ -117,7 +144,11 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   _getImage() {
+    setState(() {
+      needReload = false;
+    });
     final ImageStream oldImageStream = _imageStream;
+    _status = _TransitionStatus.loading;
     _imageStream =
         _imageProvider.resolve(createLocalImageConfiguration(context));
     if (_imageStream.key != oldImageStream?.key) {
@@ -128,11 +159,20 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   _updateImage(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
+    if (_imageInfo.image.toString() == '[1×1]') {
+      setState(() {
+        needReload = true;
+      });
+    }
     _resolveStatus();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (needReload) {
+      return new Icon(Icons.replay);
+    }
+
     return (_status == _TransitionStatus.loading)
         ? new Center(child: new CircularProgressIndicator())
         : (widget.transitionType == TransitionType.fade)
@@ -148,3 +188,5 @@ class _TransitionToImageState extends State<TransitionToImage>
                 ));
   }
 }
+
+List<Map<String, Function>> _reloadListeners = new List<Map<String, Function>>();
