@@ -55,6 +55,7 @@ new ZoomableWidget(
       placeholder: new CircularProgressIndicator(),
       // This is default duration
       duration: new Duration(milliseconds: 300),
+      fallbackWidget: new DecoratedBox(...),
     ),
   ),
 )
@@ -66,6 +67,7 @@ new ZoomableWidget(
 TransitionToImage imageWidget = new TransitionToImage(
   new AdvancedNetworkImage(url),
   useReload: true,
+  reloadWidget: new Icon(Icons.replay),
 );
 new ZoomableWidget(
   minScale: 0.3,

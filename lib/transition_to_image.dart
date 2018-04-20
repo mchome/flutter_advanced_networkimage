@@ -12,6 +12,8 @@ class TransitionToImage extends StatefulWidget {
     this.curve: Curves.easeInOut,
     this.transitionType: TransitionType.fade,
     this.useReload: false,
+    this.reloadWidget,
+    this.fallbackWidget,
   })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
@@ -26,6 +28,8 @@ class TransitionToImage extends StatefulWidget {
   final Curve curve;
   final TransitionType transitionType;
   final bool useReload;
+  final Widget reloadWidget;
+  final Widget fallbackWidget;
 
   reloadImage() {
     imageCache.clear();
@@ -59,7 +63,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   ImageStream _imageStream;
   ImageInfo _imageInfo;
-  bool needReload = false;
+  bool _loadFailed = false;
 
   _TransitionStatus _status = _TransitionStatus.loading;
 
@@ -82,7 +86,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     });
     _reloadListeners.add({
       _imageProvider.hashCode.toString(): () {
-        if (needReload) {
+        if (_loadFailed) {
           print('Reloading image.');
           _getImage();
         }
@@ -147,7 +151,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   _getImage() {
     setState(() {
-      needReload = false;
+      _loadFailed = false;
     });
     final ImageStream oldImageStream = _imageStream;
     _status = _TransitionStatus.loading;
@@ -163,7 +167,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     _imageInfo = info;
     if (_imageInfo.image.toString() == '[1×1]') {
       setState(() {
-        needReload = true;
+        _loadFailed = true;
       });
     }
     _resolveStatus();
@@ -171,8 +175,12 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    if (needReload && widget.useReload) {
-      return new Icon(Icons.replay);
+    if (_loadFailed) {
+      if (widget.useReload) {
+        return widget.reloadWidget ?? new Icon(Icons.replay);
+      } else if (widget.fallbackWidget != null) {
+        return widget.fallbackWidget;
+      }
     }
 
     return (_status == _TransitionStatus.loading)
@@ -191,4 +199,5 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 }
 
-List<Map<String, Function>> _reloadListeners = new List<Map<String, Function>>();
+List<Map<String, Function>> _reloadListeners =
+    new List<Map<String, Function>>();

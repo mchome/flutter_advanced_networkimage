@@ -1,5 +1,5 @@
 name: flutter_advanced_networkimage_example
-description: A new Flutter project.
+description: Demonstrates how to use the flutter_advanced_networkimage_example plugin.
 
 dependencies:
   flutter:

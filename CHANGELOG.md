@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.4]
+
+- Add `reloadWidget` and `fallbackWidget` to `TransitionToImage` widget.
+
 ## [0.2.3]
 
 - Add a minimum png to avoid some issues.
