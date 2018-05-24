@@ -80,8 +80,3 @@ new ZoomableWidget(
 Details in [example/](https://github.com/mchome/flutter_advanced_networkimage/tree/master/example) folder.
 
 ![demo gif](https://user-images.githubusercontent.com/7392658/38853766-db25add4-4250-11e8-9f6e-af550e43ef9a.gif)
-
-## Q&A
-
-- Q: Why the cached files stored in documents directory instead of temporary directory?  
-  A: I think your cached files should be a part of your app, and you can manual clear your cached files.

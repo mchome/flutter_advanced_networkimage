@@ -137,7 +137,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   Future<Uint8List> _loadFromDiskCache(
       AdvancedNetworkImage key, String uId) async {
     Directory _cacheImagesDirectory = new Directory(
-        join((await getApplicationDocumentsDirectory()).path, 'imagecache'));
+        join((await getTemporaryDirectory()).path, 'imagecache'));
     File _cacheImagesInfoFile =
         new File(join(_cacheImagesDirectory.path, 'CachedImageInfo.json'));
     if (_cacheImagesDirectory.existsSync()) {
@@ -185,7 +185,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
           .writeAsBytes(imageInfo['ImageData']);
       await (new File(_cacheImagesInfoFile.path).writeAsString(
           json.encode(_diskCacheInfo),
-          mode: FileMode.WRITE,
+          mode: FileMode.write,
           encoding: utf8));
       return imageInfo['ImageData'];
     }
@@ -278,7 +278,7 @@ Future<bool> clearDiskCachedImages() async {
 /// Return the disk cache directory size.
 Future<int> getDiskCachedImagesSize() async {
   Directory _cacheImagesDirectory = new Directory(
-      join((await getApplicationDocumentsDirectory()).path, 'imagecache'));
+      join((await getTemporaryDirectory()).path, 'imagecache'));
   int size = 0;
   try {
     _cacheImagesDirectory

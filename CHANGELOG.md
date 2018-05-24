@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.5]
+
+- Move the cache files from app folder to temporary folder.
+
 ## [0.2.4]
 
 - Add `reloadWidget` and `fallbackWidget` to `TransitionToImage` widget.

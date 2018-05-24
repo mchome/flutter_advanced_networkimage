@@ -1,6 +1,6 @@
 name: flutter_advanced_networkimage
 description: An advanced image provider for flutter.
-version: 0.2.4
+version: 0.2.5
 author: "fuyumi <fnatic.roach@gmail.com>"
 homepage: https://github.com/mchome/flutter_advanced_networkimage
 
@@ -11,7 +11,8 @@ dependencies:
   path_provider: "^0.4.0"
   quiver: ">=0.29.0 <0.30.0"
   path: "^1.5.1"
-  crypto: "^2.0.2"
+  crypto: "^2.0.3"
 
 environment:
-    sdk: ">=1.8.0 <2.0.0"
+  sdk: ">=2.0.0-dev.28.0 <3.0.0"
+  flutter: ">=0.1.4 <2.0.0"
