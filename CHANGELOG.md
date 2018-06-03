@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.6]
+
+- Fix an issue that causes a ConcurrentModificationError.
+
 ## [0.2.5]
 
 - Move the cache files from app folder to temporary folder.

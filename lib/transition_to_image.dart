@@ -111,11 +111,8 @@ class _TransitionToImageState extends State<TransitionToImage>
   dispose() {
     _imageStream.removeListener(_updateImage);
     _controller.dispose();
-    _reloadListeners.forEach((listener) {
-      if (listener.keys.first == _imageProvider.hashCode.toString()) {
-        _reloadListeners.remove(listener);
-      }
-    });
+    _reloadListeners.removeWhere((listener) =>
+        listener.keys.first == _imageProvider.hashCode.toString());
     super.dispose();
   }
 
