@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.7]
+
+- Drop support for ETag checking.
+
 ## [0.2.6]
 
 - Fix an issue that causes a ConcurrentModificationError.

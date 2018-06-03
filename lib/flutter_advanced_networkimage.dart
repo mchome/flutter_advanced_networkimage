@@ -14,19 +14,13 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:quiver/collection.dart';
 
+
 /// NOTE: memory cache: LruMap(maximumSize: 128)
 ///  {
 ///    '$uid(image_url)': '$ImageData',
 ///    ...
 ///  }
 
-/// NOTE: disk cache
-/// CachedImageFilename: uid(part of hash hexString with imageUrl)
-/// MetaDataFilename: getApplicationDocumentsDirectory + '/imagecache/' + 'CachedImageInfo.json'
-///  {
-///    '$uid(image_url)': '$etag',
-///    ...
-///  }
 
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   const AdvancedNetworkImage(
@@ -127,51 +121,16 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   ///
   /// Check the following condition:
   /// 1. Check if cache directory exist. If not exist, create it.
-  /// 2. Check if cache metadata file exist. If not exist, go to download step.
-  /// 3. Check if [_diskCacheInfo] is empty. If is, load it.
-  /// 4. Check if [_diskCacheInfo] contains [uId]. If not, go to download step.
-  /// 5. Check if [_diskCacheInfo][uId] is empty. If is, load the cache.
-  /// 6. Check if [_responseHeaders] contains eTag. If not, load the cache.
-  /// 7. Check if [_responseHeaders] match with [_diskCacheInfo][uId]. If yes,
-  ///   load the cache, otherwise got to download step.
+  /// 2. Check if cached file([uId]) exist. If yes, load the cache,
+  ///   otherwise go to download step.
   Future<Uint8List> _loadFromDiskCache(
       AdvancedNetworkImage key, String uId) async {
     Directory _cacheImagesDirectory = new Directory(
         join((await getTemporaryDirectory()).path, 'imagecache'));
-    File _cacheImagesInfoFile =
-        new File(join(_cacheImagesDirectory.path, 'CachedImageInfo.json'));
     if (_cacheImagesDirectory.existsSync()) {
-      if (_cacheImagesInfoFile.existsSync()) {
-        if (_diskCacheInfo == null || _diskCacheInfo.length == 0) {
-          _diskCacheInfo = json.decode(
-              (await _cacheImagesInfoFile.readAsString(encoding: utf8)) ?? {});
-        }
-        try {
-          if (_diskCacheInfo.containsKey(uId)) {
-            if (_diskCacheInfo[uId].length > 0) {
-              Map<String, String> _responseHeaders = (await http
-                      .head(url, headers: header)
-                      .timeout(const Duration(milliseconds: 500)))
-                  .headers;
-              if (_responseHeaders.containsKey('etag')) {
-                String _freshETag = _responseHeaders['etag'];
-                if (_diskCacheInfo[uId] == _freshETag) {
-                  return await (new File(join(_cacheImagesDirectory.path, uId)))
-                      .readAsBytes();
-                }
-              } else {
-                return await (new File(join(_cacheImagesDirectory.path, uId)))
-                    .readAsBytes();
-              }
-            } else {
-              return await (new File(join(_cacheImagesDirectory.path, uId)))
-                  .readAsBytes();
-            }
-          }
-        } catch (_) {
-          return await (new File(join(_cacheImagesDirectory.path, uId)))
-              .readAsBytes();
-        }
+      File _cacheImageFile = new File(join(_cacheImagesDirectory.path, uId));
+      if (_cacheImageFile.existsSync()) {
+        return await _cacheImageFile.readAsBytes();
       }
     } else {
       await _cacheImagesDirectory.create();
@@ -183,10 +142,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       _diskCacheInfo[uId] = imageInfo['Etag'];
       await (new File(join(_cacheImagesDirectory.path, uId)))
           .writeAsBytes(imageInfo['ImageData']);
-      await (new File(_cacheImagesInfoFile.path).writeAsString(
-          json.encode(_diskCacheInfo),
-          mode: FileMode.write,
-          encoding: utf8));
       return imageInfo['ImageData'];
     }
 
@@ -266,7 +221,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 /// Clear the disk cache directory then return if it succeed.
 Future<bool> clearDiskCachedImages() async {
   Directory _cacheImagesDirectory = new Directory(
-      join((await getApplicationDocumentsDirectory()).path, 'imagecache'));
+      join((await getTemporaryDirectory()).path, 'imagecache'));
   try {
     await _cacheImagesDirectory.delete(recursive: true);
   } catch (_) {
