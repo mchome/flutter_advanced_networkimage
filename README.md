@@ -26,8 +26,8 @@ flutter packages get
 
 ```dart
 // using image provider
-new Image(
-  image: new AdvancedNetworkImage(url, header: header, useDiskCache: true),
+Image(
+  image: AdvancedNetworkImage(url, header: header, useDiskCache: true),
   fit: BoxFit.cover,
 )
 ```
@@ -44,18 +44,20 @@ bool isSucceed = await clearDiskCachedImages();
 
 ```dart
 // using zooming widget & transitiontoimage widget
-new ZoomableWidget(
+ZoomableWidget(
   minScale: 0.3,
   maxScale: 2.0,
-  child: new Container(
-    child: new TransitionToImage(
-      new AdvancedNetworkImage(url),
+  // default factor is 1.0, use 0.0 to disable boundary
+  panClampFactor: 0.8,
+  child: Container(
+    child: TransitionToImage(
+      AdvancedNetworkImage(url, timeoutDuration: Duration(minutes: 1)),
       // This is the default placeholder widget at loading status,
       // you can write your own widget with CustomPainter.
-      placeholder: new CircularProgressIndicator(),
+      placeholder: CircularProgressIndicator(),
       // This is default duration
-      duration: new Duration(milliseconds: 300),
-      fallbackWidget: new DecoratedBox(...),
+      duration: Duration(milliseconds: 300),
+      fallbackWidget: DecoratedBox(...),
     ),
   ),
 )
@@ -64,12 +66,12 @@ new ZoomableWidget(
 ```dart
 // using reload feature(you can use a `GestureDetector`
 // widget to wrap `TransitionToImage` widget)
-TransitionToImage imageWidget = new TransitionToImage(
-  new AdvancedNetworkImage(url),
+TransitionToImage imageWidget = TransitionToImage(
+  AdvancedNetworkImage(url),
   useReload: true,
-  reloadWidget: new Icon(Icons.replay),
+  reloadWidget: Icon(Icons.replay),
 );
-new ZoomableWidget(
+ZoomableWidget(
   minScale: 0.3,
   maxScale: 2.0,
   child: imageWidget,

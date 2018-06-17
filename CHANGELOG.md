@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.8]
+
+- `ZoomableWidget` support boundary for now.
+
 ## [0.2.7]
 
 - Drop support for ETag checking.

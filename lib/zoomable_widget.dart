@@ -11,10 +11,10 @@ class _ZoomableWidgetLayout extends MultiChildLayoutDelegate {
   @override
   void performLayout(Size size) {
     layoutChild(gestureContainer,
-        new BoxConstraints.tightFor(width: size.width, height: size.height));
+        BoxConstraints.tightFor(width: size.width, height: size.height));
     positionChild(gestureContainer, Offset.zero);
     layoutChild(painter,
-        new BoxConstraints.tightFor(width: size.width, height: size.height));
+        BoxConstraints.tightFor(width: size.width, height: size.height));
     positionChild(painter, Offset.zero);
   }
 
@@ -23,12 +23,13 @@ class _ZoomableWidgetLayout extends MultiChildLayoutDelegate {
 }
 
 class ZoomableWidget extends StatefulWidget {
-  const ZoomableWidget({
+  ZoomableWidget({
     Key key,
     this.minScale: 0.7,
     this.maxScale: 1.4,
     this.enableZoom: true,
     this.enablePan: true,
+    this.panClampFactor: 1.0,
     this.child,
     this.tapCallback,
   })  : assert(minScale != null),
@@ -40,11 +41,12 @@ class ZoomableWidget extends StatefulWidget {
   final double minScale;
   final bool enableZoom;
   final bool enablePan;
+  final double panClampFactor;
   final Widget child;
   final Function tapCallback;
 
   @override
-  _ZoomableWidgetState createState() => new _ZoomableWidgetState();
+  _ZoomableWidgetState createState() => _ZoomableWidgetState();
 }
 
 class _ZoomableWidgetState extends State<ZoomableWidget>
@@ -55,14 +57,19 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   Offset _panOffset = Offset.zero;
   Offset _zoomOriginOffset = Offset.zero;
 
+  Map<String, double> _containerSize = {
+    'height': 0.0,
+    'width': 0.0,
+  };
+
   AnimationController _controller;
   Animation<double> _zoomAnimation;
   Animation<Offset> _panOffsetAnimation;
 
   @override
   initState() {
-    _controller = new AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 100));
+    _controller =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     super.initState();
   }
 
@@ -81,25 +88,41 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   }
 
   _onScaleUpdate(ScaleUpdateDetails details) {
+    Map<String, double> _boundarySize = {
+      'height': _containerSize['height'] / 2,
+      'width': _containerSize['width'] / 2,
+    };
     if (details.scale != 1.0) {
       setState(() {
         _zoom = (_previewZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
-        _panOffset = (details.focalPoint -
+
+        _boundarySize = {
+          'height': _boundarySize['height'] / _zoom * widget.panClampFactor,
+          'width': _boundarySize['width'] / _zoom * widget.panClampFactor,
+        };
+
+        Offset tmpOffset = (details.focalPoint -
                 _zoomOriginOffset +
                 _previewPanOffset * _previewZoom) /
             _zoom;
+        _panOffset = widget.panClampFactor != 0.0
+            ? Offset(
+                tmpOffset.dx
+                    .clamp(-_boundarySize['width'], _boundarySize['width']),
+                tmpOffset.dy
+                    .clamp(-_boundarySize['height'], _boundarySize['height']))
+            : tmpOffset;
       });
     }
   }
 
   _handleReset() {
-    _zoomAnimation = new Tween(begin: 1.0, end: _zoom).animate(
-        new CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
-      ..addListener(() => setState(() => _zoom = _zoomAnimation.value));
-    _panOffsetAnimation = new Tween(begin: Offset.zero, end: _panOffset)
-        .animate(
-            new CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
+    _zoomAnimation = Tween(begin: 1.0, end: _zoom)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
+          ..addListener(() => setState(() => _zoom = _zoomAnimation.value));
+    _panOffsetAnimation = Tween(begin: Offset.zero, end: _panOffset)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
           ..addListener(
               () => setState(() => _panOffset = _panOffsetAnimation.value));
     if (_zoom < 0)
@@ -116,33 +139,40 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.child == null) return new Container();
-    return new CustomMultiChildLayout(
-        delegate: new _ZoomableWidgetLayout(),
+    if (widget.child == null) return Container();
+    return CustomMultiChildLayout(
+        delegate: _ZoomableWidgetLayout(),
         children: <Widget>[
-          new LayoutId(
+          LayoutId(
             id: _ZoomableWidgetLayout.painter,
-            child: _child(widget.child),
+            child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints box) {
+              _containerSize = {
+                'height': box.maxHeight,
+                'width': box.maxWidth,
+              };
+              return _child(widget.child);
+            }),
           ),
-          new LayoutId(
-              id: _ZoomableWidgetLayout.gestureContainer,
-              child: new GestureDetector(
-                child: new Container(color: new Color(0)),
-                onScaleStart: widget.enableZoom ? _onScaleStart : null,
-                onScaleUpdate: widget.enableZoom ? _onScaleUpdate : null,
-                onDoubleTap: _handleReset,
-                onTap: widget.tapCallback,
-              )),
+          LayoutId(
+            id: _ZoomableWidgetLayout.gestureContainer,
+            child: GestureDetector(
+              child: Container(color: Color(0)),
+              onScaleStart: widget.enableZoom ? _onScaleStart : null,
+              onScaleUpdate: widget.enableZoom ? _onScaleUpdate : null,
+              onDoubleTap: _handleReset,
+              onTap: widget.tapCallback,
+            ),
+          ),
         ]);
   }
 
   Widget _child(Widget _child) {
-    return new Transform(
+    return Transform(
       alignment: Alignment.center,
-      transform: new Matrix4.identity()..scale(_zoom, _zoom),
-      child: new Transform(
-        transform: new Matrix4.identity()
-          ..translate(_panOffset.dx, _panOffset.dy),
+      transform: Matrix4.identity()..scale(_zoom, _zoom),
+      child: Transform(
+        transform: Matrix4.identity()..translate(_panOffset.dx, _panOffset.dy),
         child: _child,
       ),
     );
