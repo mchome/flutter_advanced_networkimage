@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.9+1]
+
+- Change dependencies version.
+
 ## [0.2.9]
 
 - Fix ConcurrentModificationError again.
