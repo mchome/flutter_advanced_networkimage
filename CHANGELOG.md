@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.9]
+
+- Fix ConcurrentModificationError again.
+
 ## [0.2.8]
 
 - `ZoomableWidget` support boundary for now.
