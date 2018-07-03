@@ -41,7 +41,7 @@ class TransitionToImage extends StatefulWidget {
   }
 
   @override
-  _TransitionToImageState createState() => new _TransitionToImageState();
+  _TransitionToImageState createState() => _TransitionToImageState();
 }
 
 enum _TransitionStatus {
@@ -71,19 +71,15 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   initState() {
-    _controller =
-        new AnimationController(vsync: this, duration: widget.duration)
-          ..addListener(() => setState(() {}));
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..addListener(() => setState(() {}));
     _fadeTween = widget.tween;
     _slideTween = widget.tween;
-    if (_fadeTween == null) _fadeTween = new Tween(begin: 0.0, end: 1.0);
+    if (_fadeTween == null) _fadeTween = Tween(begin: 0.0, end: 1.0);
     if (_slideTween == null)
-      _slideTween = new Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
-    _reloadListeners.forEach((listener) {
-      if (listener.keys.first == _imageProvider.hashCode.toString()) {
-        _reloadListeners.remove(listener);
-      }
-    });
+      _slideTween = Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
+    _reloadListeners.removeWhere((listener) =>
+        listener.keys.first == _imageProvider.hashCode.toString());
     _reloadListeners.add({
       _imageProvider.hashCode.toString(): () {
         if (_loadFailed) {
@@ -128,7 +124,7 @@ class _TransitionToImageState extends State<TransitionToImage>
         case _TransitionStatus.loading:
           if (_imageInfo != null) {
             _controller.duration = widget.duration;
-            _animation = new CurvedAnimation(
+            _animation = CurvedAnimation(
               parent: _controller,
               curve: widget.curve,
             );
@@ -174,27 +170,26 @@ class _TransitionToImageState extends State<TransitionToImage>
   Widget build(BuildContext context) {
     if (_loadFailed) {
       if (widget.useReload) {
-        return widget.reloadWidget ?? new Icon(Icons.replay);
+        return widget.reloadWidget ?? Icon(Icons.replay);
       } else if (widget.fallbackWidget != null) {
         return widget.fallbackWidget;
       }
     }
 
     return (_status == _TransitionStatus.loading)
-        ? new Center(child: new CircularProgressIndicator())
+        ? Center(child: CircularProgressIndicator())
         : (widget.transitionType == TransitionType.fade)
-            ? new FadeTransition(
+            ? FadeTransition(
                 opacity: _fadeTween.animate(_animation),
-                child: new RawImage(
+                child: RawImage(
                   image: _imageInfo.image,
                 ))
-            : new SlideTransition(
+            : SlideTransition(
                 position: _slideTween.animate(_animation),
-                child: new RawImage(
+                child: RawImage(
                   image: _imageInfo.image,
                 ));
   }
 }
 
-List<Map<String, Function>> _reloadListeners =
-    new List<Map<String, Function>>();
+List<Map<String, Function>> _reloadListeners = List<Map<String, Function>>();
