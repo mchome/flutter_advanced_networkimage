@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
         'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
       ),
       useReload: true,
+      fit: BoxFit.contain,
     );
 
     return MaterialApp(

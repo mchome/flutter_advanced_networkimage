@@ -6,6 +6,7 @@ class TransitionToImage extends StatefulWidget {
   const TransitionToImage(
     this.image, {
     Key key,
+    this.fit: BoxFit.contain,
     this.placeholder: const CircularProgressIndicator(),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -22,6 +23,7 @@ class TransitionToImage extends StatefulWidget {
         super(key: key);
 
   final ImageProvider image;
+  final BoxFit fit;
   final Widget placeholder;
   final Duration duration;
   final Tween tween;
@@ -183,11 +185,13 @@ class _TransitionToImageState extends State<TransitionToImage>
                 opacity: _fadeTween.animate(_animation),
                 child: RawImage(
                   image: _imageInfo.image,
+                  fit: widget.fit,
                 ))
             : SlideTransition(
                 position: _slideTween.animate(_animation),
                 child: RawImage(
                   image: _imageInfo.image,
+                  fit: widget.fit,
                 ));
   }
 }

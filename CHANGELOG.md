@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.10]
+
+- Add image fit option to TransitionToImage.
+
 ## [0.2.9+1]
 
 - Change dependencies version.
