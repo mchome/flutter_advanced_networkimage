@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.11]
+
+- Update placeholder in TransitionToImage.
+
 ## [0.2.10]
 
 - Add image fit option to TransitionToImage.
