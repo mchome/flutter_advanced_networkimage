@@ -179,7 +179,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     }
 
     return (_status == _TransitionStatus.loading)
-        ? Center(child: CircularProgressIndicator())
+        ? Center(child: widget.placeholder)
         : (widget.transitionType == TransitionType.fade)
             ? FadeTransition(
                 opacity: _fadeTween.animate(_animation),
