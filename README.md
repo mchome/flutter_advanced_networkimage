@@ -57,7 +57,6 @@ ZoomableWidget(
       placeholder: CircularProgressIndicator(),
       // This is default duration
       duration: Duration(milliseconds: 300),
-      fallbackWidget: DecoratedBox(...),
     ),
   ),
 )

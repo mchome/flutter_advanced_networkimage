@@ -102,11 +102,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
             .instantiateImageCodec(await _loadFromDiskCache(key, uId));
     } catch (_) {}
 
-    Map imageInfo = await _loadFromRemote(
+    Uint8List imageData = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
-    if (imageInfo != null) {
-      if (useMemoryCache) _imageMemoryCache[uId] = imageInfo['ImageData'];
-      return await ui.instantiateImageCodec(imageInfo['ImageData']);
+    if (imageData != null) {
+      if (useMemoryCache) _imageMemoryCache[uId] = imageData;
+      return await ui.instantiateImageCodec(imageData);
     }
 
     if (key.fallbackImageBytes != null) {
@@ -136,20 +136,19 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       await _cacheImagesDirectory.create();
     }
 
-    Map imageInfo = await _loadFromRemote(
+    Uint8List imageData = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
-    if (imageInfo != null) {
-      _diskCacheInfo[uId] = imageInfo['Etag'];
+    if (imageData != null) {
       await (new File(join(_cacheImagesDirectory.path, uId)))
-          .writeAsBytes(imageInfo['ImageData']);
-      return imageInfo['ImageData'];
+          .writeAsBytes(imageData);
+      return imageData;
     }
 
     return null;
   }
 
   /// Fetch the image from network.
-  Future<Map> _loadFromRemote(String url, Map<String, String> header,
+  Future<Uint8List> _loadFromRemote(String url, Map<String, String> header,
       int retryLimit, Duration retryDuration) async {
     /// Retry mechanism.
     Future<T> retry<T>(
@@ -174,12 +173,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     }, retryLimit, retryDuration);
     if (_response != null) {
       if (_response.statusCode == 200) {
-        return {
-          'ImageData': _response.bodyBytes,
-          'Etag': _response.headers.containsKey('etag')
-              ? _response.headers['etag']
-              : ''
-        };
+        return _response.bodyBytes;
       }
     }
 
@@ -244,9 +238,6 @@ Future<int> getDiskCachedImagesSize() async {
     return null;
   }
 }
-
-/// Disk cache info value.
-Map<String, String> _diskCacheInfo = {};
 
 /// Use a [LruMap] to store the memory cache.
 LruMap<String, Uint8List> _imageMemoryCache = new LruMap(maximumSize: 128);

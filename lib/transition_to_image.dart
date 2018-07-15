@@ -6,32 +6,116 @@ class TransitionToImage extends StatefulWidget {
   const TransitionToImage(
     this.image, {
     Key key,
-    this.fit: BoxFit.contain,
-    this.placeholder: const CircularProgressIndicator(),
+    this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
     this.curve: Curves.easeInOut,
     this.transitionType: TransitionType.fade,
-    this.useReload: false,
-    this.reloadWidget,
-    this.fallbackWidget,
+    this.width,
+    this.height,
+    this.fit: BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.repeat = ImageRepeat.noRepeat,
+    this.matchTextDirection = false,
+    this.loadingWidget = const CircularProgressIndicator(),
   })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
         assert(curve != null),
         assert(transitionType != null),
+        assert(loadingWidget != null),
+        assert(fit != null),
+        assert(alignment != null),
+        assert(repeat != null),
+        assert(matchTextDirection != null),
         super(key: key);
 
+  /// The target image that is displayed.
   final ImageProvider image;
-  final BoxFit fit;
+
+  /// Widget displayed while the target [image] failed to load.
   final Widget placeholder;
+
+  /// The duration of the fade-out animation for the result.
   final Duration duration;
+
+  /// The tween of the fade-out animation for the result.
   final Tween tween;
+
+  /// The curve of the fade-out animation for the result.
   final Curve curve;
+
+  /// The transition type of the fade-out animation for the result.
   final TransitionType transitionType;
-  final bool useReload;
-  final Widget reloadWidget;
-  final Widget fallbackWidget;
+
+  /// If non-null, require the image to have this width.
+  ///
+  /// If null, the image will pick a size that best preserves its intrinsic
+  /// aspect ratio. This may result in a sudden change if the size of the
+  /// placeholder image does not match that of the target image. The size is
+  /// also affected by the scale factor.
+  final double width;
+
+  /// If non-null, require the image to have this height.
+  ///
+  /// If null, the image will pick a size that best preserves its intrinsic
+  /// aspect ratio. This may result in a sudden change if the size of the
+  /// placeholder image does not match that of the target image. The size is
+  /// also affected by the scale factor.
+  final double height;
+
+  /// How to inscribe the image into the space allocated during layout.
+  ///
+  /// The default varies based on the other fields. See the discussion at
+  /// [paintImage].
+  final BoxFit fit;
+
+  /// How to align the image within its bounds.
+  ///
+  /// The alignment aligns the given position in the image to the given position
+  /// in the layout bounds. For example, a [Alignment] alignment of (-1.0,
+  /// -1.0) aligns the image to the top-left corner of its layout bounds, while a
+  /// [Alignment] alignment of (1.0, 1.0) aligns the bottom right of the
+  /// image with the bottom right corner of its layout bounds. Similarly, an
+  /// alignment of (0.0, 1.0) aligns the bottom middle of the image with the
+  /// middle of the bottom edge of its layout bounds.
+  ///
+  /// If the [alignment] is [TextDirection]-dependent (i.e. if it is a
+  /// [AlignmentDirectional]), then an ambient [Directionality] widget
+  /// must be in scope.
+  ///
+  /// Defaults to [Alignment.center].
+  ///
+  /// See also:
+  ///
+  ///  * [Alignment], a class with convenient constants typically used to
+  ///    specify an [AlignmentGeometry].
+  ///  * [AlignmentDirectional], like [Alignment] for specifying alignments
+  ///    relative to text direction.
+  final Alignment alignment;
+
+  /// How to paint any portions of the layout bounds not covered by the image.
+  final ImageRepeat repeat;
+
+  /// Whether to paint the image in the direction of the [TextDirection].
+  ///
+  /// If this is true, then in [TextDirection.ltr] contexts, the image will be
+  /// drawn with its origin in the top left (the "normal" painting direction for
+  /// images); and in [TextDirection.rtl] contexts, the image will be drawn with
+  /// a scaling factor of -1 in the horizontal direction so that the origin is
+  /// in the top right.
+  ///
+  /// This is occasionally used with images in right-to-left environments, for
+  /// images that were designed for left-to-right locales. Be careful, when
+  /// using this, to not flip images with integral shadows, text, or other
+  /// effects that will look incorrect when flipped.
+  ///
+  /// If this is true, there must be an ambient [Directionality] widget in
+  /// scope.
+  final bool matchTextDirection;
+
+  /// Widget displayed while the target [image] is loading.
+  final Widget loadingWidget;
 
   reloadImage() {
     imageCache.clear();
@@ -60,8 +144,9 @@ class _TransitionToImageState extends State<TransitionToImage>
     with TickerProviderStateMixin {
   AnimationController _controller;
   Animation _animation;
-  Tween<double> _fadeTween;
-  Tween<Offset> _slideTween;
+  Tween<double> _fadeTween = Tween(begin: 0.0, end: 1.0);
+  Tween<Offset> _slideTween =
+      Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
 
   ImageStream _imageStream;
   ImageInfo _imageInfo;
@@ -75,11 +160,12 @@ class _TransitionToImageState extends State<TransitionToImage>
   initState() {
     _controller = AnimationController(vsync: this, duration: widget.duration)
       ..addListener(() => setState(() {}));
-    _fadeTween = widget.tween;
-    _slideTween = widget.tween;
-    if (_fadeTween == null) _fadeTween = Tween(begin: 0.0, end: 1.0);
-    if (_slideTween == null)
-      _slideTween = Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
+    if (widget.transitionType == TransitionType.fade) {
+      _fadeTween = widget.tween ?? Tween(begin: 0.0, end: 1.0);
+    } else if (widget.transitionType == TransitionType.slide) {
+      _slideTween = widget.tween ??
+          Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
+    }
     _reloadListeners.removeWhere((listener) =>
         listener.keys.first == _imageProvider.hashCode.toString());
     _reloadListeners.add({
@@ -158,6 +244,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     }
   }
 
+  // TODO: better bad image detection
   _updateImage(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
     if (_imageInfo.image.toString() == '[1×1]') {
@@ -170,16 +257,10 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    if (_loadFailed) {
-      if (widget.useReload) {
-        return widget.reloadWidget ?? Icon(Icons.replay);
-      } else if (widget.fallbackWidget != null) {
-        return widget.fallbackWidget;
-      }
-    }
+    if (_loadFailed) return widget.placeholder;
 
     return (_status == _TransitionStatus.loading)
-        ? Center(child: widget.placeholder)
+        ? Center(child: widget.loadingWidget)
         : (widget.transitionType == TransitionType.fade)
             ? FadeTransition(
                 opacity: _fadeTween.animate(_animation),
@@ -196,4 +277,5 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 }
 
+/// Store reload listeners
 List<Map<String, Function>> _reloadListeners = List<Map<String, Function>>();

@@ -140,6 +140,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   @override
   Widget build(BuildContext context) {
     if (widget.child == null) return Container();
+
     return CustomMultiChildLayout(
         delegate: _ZoomableWidgetLayout(),
         children: <Widget>[
