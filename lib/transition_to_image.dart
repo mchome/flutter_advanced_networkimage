@@ -241,6 +241,8 @@ class _TransitionToImageState extends State<TransitionToImage>
     if (_imageStream.key != oldImageStream?.key) {
       oldImageStream?.removeListener(_updateImage);
       _imageStream.addListener(_updateImage);
+    } else {
+      _status = _TransitionStatus.completed;
     }
   }
 
