@@ -12,21 +12,30 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
+import 'package:quiver/collection.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:flutter_advanced_networkimage/utils.dart';
+
+/// NOTE: memory cache: LruMap(maximumSize: 128)
+///  {
+///    '$uid(image_url)': '$ImageData',
+///    ...
+///  }
 
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   const AdvancedNetworkImage(
     this.url, {
     this.scale: 1.0,
     this.header,
+    this.useMemoryCache: true,
     this.useDiskCache: false,
-    this.retryLimit: 10,
+    this.retryLimit: 1,
     this.retryDuration: const Duration(milliseconds: 500),
     this.timeoutDuration: const Duration(seconds: 5),
-    this.fallbackImageBytes,
   })  : assert(url != null),
         assert(scale != null),
+        assert(useMemoryCache != null),
         assert(useDiskCache != null),
         assert(retryLimit != null),
         assert(retryDuration != null);
@@ -40,6 +49,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The HTTP headers that will be used with [http] to fetch image from network.
   final Map<String, String> header;
 
+  /// The flag control the memory cache will be used or not.
+  final bool useMemoryCache;
+
   /// The flag control the disk cache will be used or not.
   final bool useDiskCache;
 
@@ -52,9 +64,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The timeout duration will give the timeout to a fetching function.
   final Duration timeoutDuration;
 
-  /// The image bytes will display when the network image failed to loaded.
-  final Uint8List fallbackImageBytes;
-
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return new SynchronousFuture<AdvancedNetworkImage>(this);
@@ -62,43 +71,43 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   @override
   ImageStreamCompleter load(AdvancedNetworkImage key) {
-    if (_loadAsync(key) == null) {
-      throw Exception('Failed to load file.');
-    } else {
-      return MultiFrameImageStreamCompleter(
-        codec: _loadAsync(key),
-        scale: key.scale,
-        informationCollector: (StringBuffer information) {
-          information.writeln('Image provider: $this');
-          information.write('Image provider: $key');
-        },
-      );
-    }
+    return MultiFrameImageStreamCompleter(
+      codec: _loadAsync(key),
+      scale: key.scale,
+      informationCollector: (StringBuffer information) {
+        information.writeln('Image provider: $this');
+        information.write('Image provider: $key');
+      },
+    );
   }
 
   Future<ui.Codec> _loadAsync(AdvancedNetworkImage key) async {
     assert(key == this);
 
     String uId = _uid(key.url);
-
+    if (useMemoryCache &&
+        _imageMemoryCache != null &&
+        _imageMemoryCache.containsKey(uId)) {
+      if (useDiskCache) _loadFromDiskCache(key, uId);
+      return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
+    }
     try {
-      if (useDiskCache)
-        return await ui
-            .instantiateImageCodec(await _loadFromDiskCache(key, uId));
+      if (useDiskCache) {
+        Uint8List _diskCache = await _loadFromDiskCache(key, uId);
+        if (useMemoryCache) _imageMemoryCache[uId] = _diskCache;
+        return await ui.instantiateImageCodec(_diskCache);
+      }
     } catch (_) {}
 
     Uint8List imageData = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageData != null) {
+      if (useMemoryCache) _imageMemoryCache[uId] = imageData;
       return await ui.instantiateImageCodec(imageData);
     }
 
-    if (key.fallbackImageBytes != null) {
-      return await ui.instantiateImageCodec(key.fallbackImageBytes);
-    }
-
     print('Failed to load $url.');
-    return null;
+    return await ui.instantiateImageCodec(featureImage);
   }
 
   /// Load the disk cache
@@ -109,8 +118,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   ///   otherwise go to download step.
   Future<Uint8List> _loadFromDiskCache(
       AdvancedNetworkImage key, String uId) async {
-    Directory _cacheImagesDirectory = new Directory(
-        join((await getTemporaryDirectory()).path, 'imagecache'));
+    Directory _cacheImagesDirectory =
+        new Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
     if (_cacheImagesDirectory.existsSync()) {
       File _cacheImageFile = new File(join(_cacheImagesDirectory.path, uId));
       if (_cacheImageFile.existsSync()) {
@@ -180,8 +189,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   @override
-  int get hashCode => hashValues(url, scale, header,
-      useDiskCache, retryLimit, retryDuration, timeoutDuration);
+  int get hashCode => hashValues(url, scale, header, useDiskCache, retryLimit,
+      retryDuration, timeoutDuration);
   @override
   String toString() => '$runtimeType('
       '"$url",'
@@ -196,8 +205,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
 /// Clear the disk cache directory then return if it succeed.
 Future<bool> clearDiskCachedImages() async {
-  Directory _cacheImagesDirectory = new Directory(
-      join((await getTemporaryDirectory()).path, 'imagecache'));
+  Directory _cacheImagesDirectory =
+      new Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
   try {
     await _cacheImagesDirectory.delete(recursive: true);
   } catch (_) {
@@ -208,8 +217,8 @@ Future<bool> clearDiskCachedImages() async {
 
 /// Return the disk cache directory size.
 Future<int> getDiskCachedImagesSize() async {
-  Directory _cacheImagesDirectory = new Directory(
-      join((await getTemporaryDirectory()).path, 'imagecache'));
+  Directory _cacheImagesDirectory =
+      new Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
   int size = 0;
   try {
     _cacheImagesDirectory
@@ -220,3 +229,6 @@ Future<int> getDiskCachedImagesSize() async {
     return null;
   }
 }
+
+/// Use a [LruMap] to store the memory cache.
+LruMap<String, Uint8List> _imageMemoryCache = new LruMap(maximumSize: 128);

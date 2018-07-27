@@ -1,9 +1,15 @@
 library transition_to_image;
 
+import 'dart:typed_data';
+import 'dart:ui';
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
+import 'package:flutter_advanced_networkimage/utils.dart';
+
 class TransitionToImage extends StatefulWidget {
-  TransitionToImage(
+  const TransitionToImage(
     this.image, {
     Key key,
     this.placeholder: const Icon(Icons.clear),
@@ -117,15 +123,18 @@ class TransitionToImage extends StatefulWidget {
   /// Widget displayed while the target [image] is loading.
   final Widget loadingWidget;
 
-  _TransitionToImageState _state = _TransitionToImageState();
-
   reloadImage() {
     print('Reloading image.');
-    _state.getImage();
+    imageCache.clear();
+    _reloadListeners.forEach((listener) {
+      if (listener.keys.first == image.hashCode.toString()) {
+        (listener.values.first)();
+      }
+    });
   }
 
   @override
-  _TransitionToImageState createState() => _state;
+  _TransitionToImageState createState() => _TransitionToImageState();
 }
 
 enum _TransitionStatus {
@@ -164,25 +173,37 @@ class _TransitionToImageState extends State<TransitionToImage>
       _slideTween = widget.tween ??
           Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
     }
+    _reloadListeners.removeWhere((listener) =>
+        listener.keys.first == _imageProvider.hashCode.toString());
+    _reloadListeners.add({
+      _imageProvider.hashCode.toString(): () {
+        if (_loadFailed) {
+          print('Reloading image.');
+          _getImage();
+        }
+      }
+    });
     super.initState();
   }
 
   @override
   didChangeDependencies() {
-    getImage();
+    _getImage();
     super.didChangeDependencies();
   }
 
   @override
   didUpdateWidget(TransitionToImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.image != oldWidget.image) getImage();
+    if (widget.image != oldWidget.image) _getImage();
   }
 
   @override
   dispose() {
     _imageStream.removeListener(_updateImage);
     _controller.dispose();
+    _reloadListeners.removeWhere((listener) =>
+        listener.keys.first == _imageProvider.hashCode.toString());
     super.dispose();
   }
 
@@ -216,30 +237,33 @@ class _TransitionToImageState extends State<TransitionToImage>
     });
   }
 
-  getImage() {
+  _getImage({bool reload: false}) {
     setState(() {
       _loadFailed = false;
     });
     final ImageStream oldImageStream = _imageStream;
     _status = _TransitionStatus.loading;
-    try {
-      _imageStream =
-          _imageProvider.resolve(createLocalImageConfiguration(context));
-      if (_imageStream.key != oldImageStream?.key) {
-        oldImageStream?.removeListener(_updateImage);
-        _imageStream.addListener(_updateImage);
-      } else {
-        _status = _TransitionStatus.completed;
-      }
-    } catch (_) {
-      setState(() {
-        _loadFailed = true;
-      });
+    _imageStream =
+        _imageProvider.resolve(createLocalImageConfiguration(context));
+    if (!reload && (_imageStream.key == oldImageStream?.key)) {
+      _status = _TransitionStatus.completed;
+    } else {
+      oldImageStream?.removeListener(_updateImage);
+      _imageStream.addListener(_updateImage);
     }
   }
 
   _updateImage(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
+    _imageInfo.image
+        .toByteData(format: ImageByteFormat.png)
+        .then((ByteData data) {
+      if (ListEquality().equals(data.buffer.asUint8List(), featureImage)) {
+        setState(() {
+          _loadFailed = true;
+        });
+      }
+    });
     _resolveStatus();
   }
 
@@ -264,3 +288,6 @@ class _TransitionToImageState extends State<TransitionToImage>
                 ));
   }
 }
+
+/// Store reload listeners
+List<Map<String, Function>> _reloadListeners = List<Map<String, Function>>();
