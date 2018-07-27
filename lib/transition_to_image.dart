@@ -117,17 +117,15 @@ class TransitionToImage extends StatefulWidget {
   /// Widget displayed while the target [image] is loading.
   final Widget loadingWidget;
 
+  _TransitionToImageState get _state => _TransitionToImageState();
+
   reloadImage() {
-    imageCache.clear();
-    _reloadListeners.forEach((listener) {
-      if (listener.keys.first == image.hashCode.toString()) {
-        (listener.values.first)();
-      }
-    });
+    print('Reloading image.');
+    _state.getImage();
   }
 
   @override
-  _TransitionToImageState createState() => _TransitionToImageState();
+  _TransitionToImageState createState() => _state;
 }
 
 enum _TransitionStatus {
@@ -166,37 +164,25 @@ class _TransitionToImageState extends State<TransitionToImage>
       _slideTween = widget.tween ??
           Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
     }
-    _reloadListeners.removeWhere((listener) =>
-        listener.keys.first == _imageProvider.hashCode.toString());
-    _reloadListeners.add({
-      _imageProvider.hashCode.toString(): () {
-        if (_loadFailed) {
-          print('Reloading image.');
-          _getImage();
-        }
-      }
-    });
     super.initState();
   }
 
   @override
   didChangeDependencies() {
-    _getImage();
+    getImage();
     super.didChangeDependencies();
   }
 
   @override
   didUpdateWidget(TransitionToImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.image != oldWidget.image) _getImage();
+    if (widget.image != oldWidget.image) getImage();
   }
 
   @override
   dispose() {
     _imageStream.removeListener(_updateImage);
     _controller.dispose();
-    _reloadListeners.removeWhere((listener) =>
-        listener.keys.first == _imageProvider.hashCode.toString());
     super.dispose();
   }
 
@@ -230,30 +216,30 @@ class _TransitionToImageState extends State<TransitionToImage>
     });
   }
 
-  _getImage() {
+  getImage() {
     setState(() {
       _loadFailed = false;
     });
     final ImageStream oldImageStream = _imageStream;
     _status = _TransitionStatus.loading;
-    _imageStream =
-        _imageProvider.resolve(createLocalImageConfiguration(context));
-    if (_imageStream.key != oldImageStream?.key) {
-      oldImageStream?.removeListener(_updateImage);
-      _imageStream.addListener(_updateImage);
-    } else {
-      _status = _TransitionStatus.completed;
-    }
-  }
-
-  // TODO: better bad image detection
-  _updateImage(ImageInfo info, bool synchronousCall) {
-    _imageInfo = info;
-    if (_imageInfo.image.toString() == '[1×1]') {
+    try {
+      _imageStream =
+          _imageProvider.resolve(createLocalImageConfiguration(context));
+      if (_imageStream.key != oldImageStream?.key) {
+        oldImageStream?.removeListener(_updateImage);
+        _imageStream.addListener(_updateImage);
+      } else {
+        _status = _TransitionStatus.completed;
+      }
+    } catch (_) {
       setState(() {
         _loadFailed = true;
       });
     }
+  }
+
+  _updateImage(ImageInfo info, bool synchronousCall) {
+    _imageInfo = info;
     _resolveStatus();
   }
 
@@ -278,6 +264,3 @@ class _TransitionToImageState extends State<TransitionToImage>
                 ));
   }
 }
-
-/// Store reload listeners
-List<Map<String, Function>> _reloadListeners = List<Map<String, Function>>();
