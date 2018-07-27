@@ -3,7 +3,7 @@ library transition_to_image;
 import 'package:flutter/material.dart';
 
 class TransitionToImage extends StatefulWidget {
-  const TransitionToImage(
+  TransitionToImage(
     this.image, {
     Key key,
     this.placeholder: const Icon(Icons.clear),
@@ -117,7 +117,7 @@ class TransitionToImage extends StatefulWidget {
   /// Widget displayed while the target [image] is loading.
   final Widget loadingWidget;
 
-  _TransitionToImageState get _state => _TransitionToImageState();
+  _TransitionToImageState _state = _TransitionToImageState();
 
   reloadImage() {
     print('Reloading image.');
