@@ -134,8 +134,9 @@ class _ZoomableWidgetListState extends State<ZoomableWidgetList>
         _containerSize = box.size;
       }
     }
-    Size _boundarySize = Size(_containerSize.width / 2 * widget.panClampFactor,
-        _containerSize.height * widget.panClampFactor);
+    Size _boundarySize = Size(
+        _containerSize.width / 2 * widget.panClampFactor + 10.0,
+        _containerSize.height * widget.panClampFactor + 10.0);
     if (widget.enableZoom) {
       setState(() {
         if (details.scale != 1.0) {
@@ -202,7 +203,7 @@ class _ZoomableWidgetListState extends State<ZoomableWidgetList>
         _widgetSize = Size(box.minWidth, box.minHeight);
         return Transform(
           origin: Offset(_containerSize.width / 2 - _panOffset.dx,
-              _containerSize.height / 4 - _panOffset.dy),
+          _widgetSize.height / 2 -_panOffset.dy),
           transform: Matrix4.identity()
             ..translate(_panOffset.dx, _panOffset.dy)
             ..scale(_zoom, _zoom),
