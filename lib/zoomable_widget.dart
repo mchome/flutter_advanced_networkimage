@@ -29,7 +29,7 @@ class ZoomableWidget extends StatefulWidget {
     this.maxScale: 1.4,
     this.enableZoom: true,
     this.enablePan: true,
-    this.panClampFactor: 1.0,
+    this.panLimit: 1.0,
     this.child,
     this.onTap,
   })  : assert(minScale != null),
@@ -41,7 +41,7 @@ class ZoomableWidget extends StatefulWidget {
   final double minScale;
   final bool enableZoom;
   final bool enablePan;
-  final double panClampFactor;
+  final double panLimit;
   final Widget child;
   final Function onTap;
 
@@ -98,15 +98,15 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
             .clamp(widget.minScale, widget.maxScale);
 
         _boundarySize = {
-          'height': _boundarySize['height'] / _zoom * widget.panClampFactor,
-          'width': _boundarySize['width'] / _zoom * widget.panClampFactor,
+          'height': _boundarySize['height'] / _zoom * widget.panLimit,
+          'width': _boundarySize['width'] / _zoom * widget.panLimit,
         };
 
         Offset tmpOffset = (details.focalPoint -
                 _zoomOriginOffset +
                 _previewPanOffset * _previewZoom) /
             _zoom;
-        _panOffset = widget.panClampFactor != 0.0
+        _panOffset = widget.panLimit != 0.0
             ? Offset(
                 tmpOffset.dx
                     .clamp(-_boundarySize['width'], _boundarySize['width']),

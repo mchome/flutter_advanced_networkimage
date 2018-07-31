@@ -30,7 +30,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.header,
     this.useMemoryCache: true,
     this.useDiskCache: false,
-    this.retryLimit: 1,
+    this.retryLimit: 5,
     this.retryDuration: const Duration(milliseconds: 500),
     this.timeoutDuration: const Duration(seconds: 5),
   })  : assert(url != null),
@@ -106,7 +106,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       return await ui.instantiateImageCodec(imageData);
     }
 
-    print('Failed to load $url.');
+    debugPrint('Failed to load $url.');
     return await ui.instantiateImageCodec(featureImage);
   }
 
@@ -153,7 +153,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
           await new Future.delayed(retryDuration);
         }
       }
-      print('Retry failed!');
+      debugPrint('Retry failed!');
       return null;
     }
 
@@ -230,5 +230,5 @@ Future<int> getDiskCachedImagesSize() async {
   }
 }
 
-/// Use a [LruMap] to store the memory cache.
-LruMap<String, Uint8List> _imageMemoryCache = new LruMap(maximumSize: 128);
+/// Use a [LruMap] to store the custom memory cache.
+LruMap<String, Uint8List> _imageMemoryCache = new LruMap(maximumSize: 1024);

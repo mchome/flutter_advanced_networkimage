@@ -19,6 +19,7 @@ class TransitionToImage extends StatefulWidget {
     this.transitionType: TransitionType.fade,
     this.width,
     this.height,
+    this.blendMode,
     this.fit: BoxFit.contain,
     this.alignment = Alignment.center,
     this.repeat = ImageRepeat.noRepeat,
@@ -74,6 +75,12 @@ class TransitionToImage extends StatefulWidget {
   ///
   /// The default varies based on the other fields. See the discussion at
   /// [paintImage].
+  final BlendMode blendMode;
+
+  /// How to inscribe the image into the space allocated during layout.
+  ///
+  /// The default varies based on the other fields. See the discussion at
+  /// [paintImage].
   final BoxFit fit;
 
   /// How to align the image within its bounds.
@@ -123,16 +130,6 @@ class TransitionToImage extends StatefulWidget {
   /// Widget displayed while the target [image] is loading.
   final Widget loadingWidget;
 
-  reloadImage() {
-    print('Reloading image.');
-    imageCache.clear();
-    _reloadListeners.forEach((listener) {
-      if (listener.keys.first == image.hashCode.toString()) {
-        (listener.values.first)();
-      }
-    });
-  }
-
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
 }
@@ -177,10 +174,8 @@ class _TransitionToImageState extends State<TransitionToImage>
         listener.keys.first == _imageProvider.hashCode.toString());
     _reloadListeners.add({
       _imageProvider.hashCode.toString(): () {
-        if (_loadFailed) {
-          print('Reloading image.');
-          _getImage();
-        }
+        debugPrint('Reloading image.');
+        _getImage(reload: true);
       }
     });
     super.initState();
@@ -238,16 +233,19 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   _getImage({bool reload: false}) {
-    setState(() {
-      _loadFailed = false;
-    });
     final ImageStream oldImageStream = _imageStream;
-    _status = _TransitionStatus.loading;
     _imageStream =
         _imageProvider.resolve(createLocalImageConfiguration(context));
     if (!reload && (_imageStream.key == oldImageStream?.key)) {
-      _status = _TransitionStatus.completed;
+      setState(() {
+        _status = _TransitionStatus.completed;
+      });
     } else {
+      if (reload) imageCache.clear();
+      setState(() {
+        _status = _TransitionStatus.loading;
+        _loadFailed = false;
+      });
       oldImageStream?.removeListener(_updateImage);
       _imageStream.addListener(_updateImage);
     }
@@ -269,23 +267,43 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    if (_loadFailed) return widget.placeholder;
+    return GestureDetector(
+      onTap: () {
+        if (_loadFailed) {
+          debugPrint('Reloading image.');
+          _getImage(reload: true);
+        }
+      },
+      child: Container(
+        width: widget.width,
+        height: widget.height,
+        child: Center(
+          child: (_loadFailed)
+          ? widget.placeholder
+          : (_status == _TransitionStatus.loading)
+              ? widget.loadingWidget
+              : (widget.transitionType == TransitionType.fade)
+                  ? FadeTransition(
+                      opacity: _fadeTween.animate(_animation), child: _child())
+                  : SlideTransition(
+                      position: _slideTween.animate(_animation),
+                      child: _child()),
+        ),
+      ),
+    );
+  }
 
-    return (_status == _TransitionStatus.loading)
-        ? Center(child: widget.loadingWidget)
-        : (widget.transitionType == TransitionType.fade)
-            ? FadeTransition(
-                opacity: _fadeTween.animate(_animation),
-                child: RawImage(
-                  image: _imageInfo.image,
-                  fit: widget.fit,
-                ))
-            : SlideTransition(
-                position: _slideTween.animate(_animation),
-                child: RawImage(
-                  image: _imageInfo.image,
-                  fit: widget.fit,
-                ));
+  Widget _child() {
+    return RawImage(
+      image: _imageInfo.image,
+      width: widget.width,
+      height: widget.height,
+      colorBlendMode: widget.blendMode,
+      fit: widget.fit,
+      alignment: widget.alignment,
+      repeat: widget.repeat,
+      matchTextDirection: widget.matchTextDirection,
+    );
   }
 }
 

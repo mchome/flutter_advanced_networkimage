@@ -5,8 +5,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-class _ZoomableWidgetListLayout extends MultiChildLayoutDelegate {
-  _ZoomableWidgetListLayout();
+class _ZoomableListLayout extends MultiChildLayoutDelegate {
+  _ZoomableListLayout();
 
   static final String gestureContainer = 'gesturecontainer';
   static final String painter = 'painter';
@@ -22,17 +22,17 @@ class _ZoomableWidgetListLayout extends MultiChildLayoutDelegate {
   }
 
   @override
-  bool shouldRelayout(_ZoomableWidgetListLayout oldDelegate) => false;
+  bool shouldRelayout(_ZoomableListLayout oldDelegate) => false;
 }
 
-class ZoomableWidgetList extends StatefulWidget {
-  ZoomableWidgetList({
+class ZoomableList extends StatefulWidget {
+  ZoomableList({
     Key key,
     this.minScale: 0.7,
     this.maxScale: 1.4,
     this.enablePan: true,
     this.enableZoom: true,
-    this.panClampFactor: 1.0,
+    this.panLimit: 1.0,
     this.maxWidth,
     this.maxHeight: double.infinity,
     @required this.child,
@@ -48,7 +48,7 @@ class ZoomableWidgetList extends StatefulWidget {
   final double minScale;
   final bool enableZoom;
   final bool enablePan;
-  final double panClampFactor;
+  final double panLimit;
   final double maxWidth;
   final double maxHeight;
   final Widget child;
@@ -56,10 +56,10 @@ class ZoomableWidgetList extends StatefulWidget {
   final Function onTap;
 
   @override
-  _ZoomableWidgetListState createState() => _ZoomableWidgetListState();
+  _ZoomableListState createState() => _ZoomableListState();
 }
 
-class _ZoomableWidgetListState extends State<ZoomableWidgetList>
+class _ZoomableListState extends State<ZoomableList>
     with TickerProviderStateMixin {
   double _zoom = 1.0;
   double _previewZoom = 1.0;
@@ -96,10 +96,10 @@ class _ZoomableWidgetListState extends State<ZoomableWidgetList>
   }
 
   _handleReset() {
-    _zoomAnimation = Tween(begin: 1.0, end: _zoom)
+    _zoomAnimation = Tween<double>(begin: 1.0, end: _zoom)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
           ..addListener(() => setState(() => _zoom = _zoomAnimation.value));
-    _panOffsetAnimation = Tween(
+    _panOffsetAnimation = Tween<Offset>(
             begin: Offset(0.0, _panOffset.dy), end: _panOffset)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
           ..addListener(
@@ -134,20 +134,16 @@ class _ZoomableWidgetListState extends State<ZoomableWidgetList>
         _containerSize = box.size;
       }
     }
-    Size _boundarySize = Size(
-        _containerSize.width / 2 * widget.panClampFactor + 10.0,
-        _containerSize.height * widget.panClampFactor + 10.0);
+    Size _boundarySize = Size(_containerSize.width / 2 * widget.panLimit,
+        _containerSize.height * widget.panLimit);
     if (widget.enableZoom) {
       setState(() {
-        if (details.scale != 1.0) {
-          _zoom = (_previewZoom * details.scale)
-              .clamp(widget.minScale, widget.maxScale);
-        } else {
+        if (details.scale == 1.0) {
           Offset _tmpOffset = (details.focalPoint -
                   _startTouchOriginOffset +
                   _previewPanOffset * _previewZoom) /
               _zoom;
-          _panOffset = widget.panClampFactor != 0.0
+          _panOffset = widget.panLimit != 0.0
               ? Offset(
                   _zoom == 1.0
                       ? _tmpOffset.dx.clamp(0.0, 0.0)
@@ -157,35 +153,35 @@ class _ZoomableWidgetListState extends State<ZoomableWidgetList>
                       ? _tmpOffset.dy
                           .clamp(_widgetSize.height - _boundarySize.height, 0.0)
                       : _tmpOffset.dy.clamp(
-                          _widgetSize.height / 2 * widget.panClampFactor -
+                          _widgetSize.height / 2 * widget.panLimit -
                               _boundarySize.height,
-                          _widgetSize.height / 2 * widget.panClampFactor))
+                          _widgetSize.height / 2 * widget.panLimit))
               : _tmpOffset;
+        } else {
+          _zoom = (_previewZoom * details.scale)
+              .clamp(widget.minScale, widget.maxScale);
         }
       });
     }
   }
-
-  _onScaleEnd(ScaleEndDetails details) {}
 
   @override
   Widget build(BuildContext context) {
     if (widget.child == null) return Container();
 
     return CustomMultiChildLayout(
-      delegate: _ZoomableWidgetListLayout(),
+      delegate: _ZoomableListLayout(),
       children: <Widget>[
         LayoutId(
-          id: _ZoomableWidgetListLayout.painter,
+          id: _ZoomableListLayout.painter,
           child: _child(widget.child),
         ),
         LayoutId(
-          id: _ZoomableWidgetListLayout.gestureContainer,
+          id: _ZoomableListLayout.gestureContainer,
           child: GestureDetector(
             child: Container(color: Color(0)),
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,
-            onScaleEnd: _onScaleEnd,
             onDoubleTap: _handleReset,
             onTap: widget.onTap,
           ),
@@ -203,7 +199,7 @@ class _ZoomableWidgetListState extends State<ZoomableWidgetList>
         _widgetSize = Size(box.minWidth, box.minHeight);
         return Transform(
           origin: Offset(_containerSize.width / 2 - _panOffset.dx,
-          _widgetSize.height / 2 -_panOffset.dy),
+              _widgetSize.height / 2 - _panOffset.dy),
           transform: Matrix4.identity()
             ..translate(_panOffset.dx, _panOffset.dy)
             ..scale(_zoom, _zoom),
