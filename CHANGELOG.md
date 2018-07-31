@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0+1]
+
+- Update README.md.
+
+## [0.3.0]
+
+- Add ZoomableList.
+
 ## [0.2.11]
 
 - Update placeholder in TransitionToImage.

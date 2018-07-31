@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_advanced_networkimage/flutter_advanced_networkimage.dart';
 import 'package:flutter_advanced_networkimage/transition_to_image.dart';
 import 'package:flutter_advanced_networkimage/zoomable_list.dart';
+import 'package:flutter_advanced_networkimage/zoomable_widget.dart';
 
 main() => runApp(MyApp());
 
@@ -15,13 +16,14 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Scaffold(
           appBar: AppBar(
             title: Text('Flutter Advanced Network Image Example'),
             bottom: TabBar(
               tabs: <Widget>[
                 Tab(text: 'load image'),
+                Tab(text: 'zooming'),
                 Tab(text: 'widget list'),
               ],
             ),
@@ -37,6 +39,16 @@ class MyApp extends StatelessWidget {
                 placeholder: const Icon(Icons.refresh),
                 width: 400.0,
                 height: 300.0,
+              ),
+              ZoomableWidget(
+                panLimit: 1.0,
+                maxScale: 2.0,
+                minScale: 0.5,
+                child: Image(
+                  image: AdvancedNetworkImage(
+                    'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                  ),
+                ),
               ),
               Builder(builder: (BuildContext context) {
                 GlobalKey _key = GlobalKey();

@@ -48,7 +48,7 @@ ZoomableWidget(
   minScale: 0.3,
   maxScale: 2.0,
   // default factor is 1.0, use 0.0 to disable boundary
-  panClampFactor: 0.8,
+  panLimit: 0.8,
   child: Container(
     child: TransitionToImage(
       AdvancedNetworkImage(url, timeoutDuration: Duration(minutes: 1)),
@@ -63,18 +63,26 @@ ZoomableWidget(
 ```
 
 ```dart
-// using reload feature(you can use a `GestureDetector`
-// widget to wrap `TransitionToImage` widget)
-TransitionToImage imageWidget = TransitionToImage(
+// Reload feature included
+TransitionToImage(
   AdvancedNetworkImage(url),
-  useReload: true,
-  reloadWidget: Icon(Icons.replay),
+  loadingWidget: const CircularProgressIndicator(),
+  fit: BoxFit.contain,
+  placeholder: const Icon(Icons.refresh),
+  width: 400.0,
+  height: 300.0,
 );
+```
+
+```dart
+// Scale the widget size
 ZoomableWidget(
-  minScale: 0.3,
+  panLimit: 1.0,
   maxScale: 2.0,
-  child: imageWidget,
-  tapCallback: imageWidget.reloadImage,
+  minScale: 0.5,
+  child: Image(
+    image: AssetImage('graphics/background.png'),
+  ),
 ),
 ```
 
