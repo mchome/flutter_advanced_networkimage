@@ -75,11 +75,12 @@ TransitionToImage(
 ```
 
 ```dart
-// Scale the widget size
+// Scale the widget size. (Origin point was fixed to center)
 ZoomableWidget(
   panLimit: 1.0,
   maxScale: 2.0,
   minScale: 0.5,
+  singleFingerPan: true,
   child: Image(
     image: AssetImage('graphics/background.png'),
   ),

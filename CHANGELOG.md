@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1]
+
+- Now allow `ZoomableWidget` to pan with single finger.
+
 ## [0.3.0+1]
 
 - Update README.md.
