@@ -81,6 +81,7 @@ ZoomableWidget(
   maxScale: 2.0,
   minScale: 0.5,
   singleFingerPan: true,
+  multiFingersPan: true,
   child: Image(
     image: AssetImage('graphics/background.png'),
   ),

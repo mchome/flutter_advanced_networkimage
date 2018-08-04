@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.2]
+
+- Add `multiFingersPan` and remove `enablePan`.
+
 ## [0.3.1]
 
 - Now allow `ZoomableWidget` to pan with single finger.

@@ -28,21 +28,20 @@ class ZoomableWidget extends StatefulWidget {
     this.minScale: 0.7,
     this.maxScale: 1.4,
     this.enableZoom: true,
-    this.enablePan: true,
     this.panLimit: 1.0,
     this.singleFingerPan: true,
+    this.multiFingersPan: true,
     this.child,
     this.onTap,
   })  : assert(minScale != null),
         assert(maxScale != null),
-        assert(enableZoom != null),
-        assert(enablePan != null);
+        assert(enableZoom != null);
 
   final double maxScale;
   final double minScale;
   final bool enableZoom;
-  final bool enablePan;
   final bool singleFingerPan;
+  final bool multiFingersPan;
   final double panLimit;
   final Widget child;
   final Function onTap;
@@ -106,7 +105,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
       });
     }
     if ((widget.singleFingerPan && details.scale == 1.0) ||
-        (!widget.singleFingerPan && details.scale != 1.0)) {
+        (widget.multiFingersPan && details.scale != 1.0)) {
       setState(() {
         Offset tmpOffset = (details.focalPoint -
                 _zoomOriginOffset +
