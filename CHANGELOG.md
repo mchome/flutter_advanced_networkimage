@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.3]
+
+- Move the `ZoomableWidget`'s origin point to screen's center.
+
 ## [0.3.2]
 
 - Add `multiFingersPan` and remove `enablePan`.

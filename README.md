@@ -75,7 +75,7 @@ TransitionToImage(
 ```
 
 ```dart
-// Scale the widget size. (Origin point was fixed to center)
+// Scale the widget size. (Origin point was fixed to screen's center)
 ZoomableWidget(
   panLimit: 1.0,
   maxScale: 2.0,

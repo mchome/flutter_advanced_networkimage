@@ -58,10 +58,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   Offset _panOffset = Offset.zero;
   Offset _zoomOriginOffset = Offset.zero;
 
-  Map<String, double> _containerSize = {
-    'height': 0.0,
-    'width': 0.0,
-  };
+  Size _containerSize = Size.zero;
 
   AnimationController _controller;
   Animation<double> _zoomAnimation;
@@ -89,19 +86,13 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   }
 
   _onScaleUpdate(ScaleUpdateDetails details) {
-    Map<String, double> _boundarySize = {
-      'height': _containerSize['height'] / 2,
-      'width': _containerSize['width'] / 2,
-    };
-    if (details.scale != 1.0) {
+    Size _boundarySize = Size(
+        _containerSize.width / 2 / _zoom * widget.panLimit,
+        _containerSize.height / 2 / _zoom * widget.panLimit);
+    if (widget.enableZoom && details.scale != 1.0) {
       setState(() {
         _zoom = (_previewZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
-
-        _boundarySize = {
-          'height': _boundarySize['height'] / _zoom * widget.panLimit,
-          'width': _boundarySize['width'] / _zoom * widget.panLimit,
-        };
       });
     }
     if ((widget.singleFingerPan && details.scale == 1.0) ||
@@ -113,10 +104,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
             _zoom;
         _panOffset = widget.panLimit != 0.0
             ? Offset(
-                tmpOffset.dx
-                    .clamp(-_boundarySize['width'], _boundarySize['width']),
-                tmpOffset.dy
-                    .clamp(-_boundarySize['height'], _boundarySize['height']))
+                tmpOffset.dx.clamp(-_boundarySize.width, _boundarySize.width),
+                tmpOffset.dy.clamp(-_boundarySize.height, _boundarySize.height))
             : tmpOffset;
       });
     }
@@ -153,10 +142,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
             id: _ZoomableWidgetLayout.painter,
             child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints box) {
-              _containerSize = {
-                'height': box.maxHeight,
-                'width': box.maxWidth,
-              };
+              _containerSize = Size(box.minWidth, box.minHeight);
               return _child(widget.child);
             }),
           ),
@@ -164,8 +150,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
             id: _ZoomableWidgetLayout.gestureContainer,
             child: GestureDetector(
               child: Container(color: Color(0)),
-              onScaleStart: widget.enableZoom ? _onScaleStart : null,
-              onScaleUpdate: widget.enableZoom ? _onScaleUpdate : null,
+              onScaleStart: _onScaleStart,
+              onScaleUpdate: _onScaleUpdate,
               onDoubleTap: _handleReset,
               onTap: widget.onTap,
             ),
@@ -176,11 +162,11 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   Widget _child(Widget _child) {
     return Transform(
       alignment: Alignment.center,
-      transform: Matrix4.identity()..scale(_zoom, _zoom),
-      child: Transform(
-        transform: Matrix4.identity()..translate(_panOffset.dx, _panOffset.dy),
-        child: _child,
-      ),
+      origin: Offset(-_panOffset.dx, -_panOffset.dy),
+      transform: Matrix4.identity()
+        ..translate(_panOffset.dx, _panOffset.dy)
+        ..scale(_zoom, _zoom),
+      child: _child,
     );
   }
 }

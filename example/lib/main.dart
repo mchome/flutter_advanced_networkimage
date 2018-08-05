@@ -44,6 +44,7 @@ class MyApp extends StatelessWidget {
                 panLimit: 1.0,
                 maxScale: 2.0,
                 minScale: 0.5,
+                multiFingersPan: false,
                 child: Image(
                   image: AdvancedNetworkImage(
                     'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
