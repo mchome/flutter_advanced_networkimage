@@ -33,6 +33,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.retryLimit: 5,
     this.retryDuration: const Duration(milliseconds: 500),
     this.timeoutDuration: const Duration(seconds: 5),
+    this.loadedCallback,
+    this.loadFailedCallback,
   })  : assert(url != null),
         assert(scale != null),
         assert(useMemoryCache != null),
@@ -64,6 +66,12 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The timeout duration will give the timeout to a fetching function.
   final Duration timeoutDuration;
 
+  /// The callback will be executed when the image loaded.
+  final Function loadedCallback;
+
+  /// The callback will be executed when the iamge failed to load.
+  final Function loadFailedCallback;
+
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return new SynchronousFuture<AdvancedNetworkImage>(this);
@@ -89,24 +97,30 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         _imageMemoryCache != null &&
         _imageMemoryCache.containsKey(uId)) {
       if (useDiskCache) _loadFromDiskCache(key, uId);
+      if (key.loadedCallback != null) key.loadedCallback();
       return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
     }
     try {
       if (useDiskCache) {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
         if (useMemoryCache) _imageMemoryCache[uId] = _diskCache;
+        if (key.loadedCallback != null) key.loadedCallback();
         return await ui.instantiateImageCodec(_diskCache);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint(e);
+    }
 
     Uint8List imageData = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageData != null) {
       if (useMemoryCache) _imageMemoryCache[uId] = imageData;
+      if (key.loadedCallback != null) key.loadedCallback();
       return await ui.instantiateImageCodec(imageData);
     }
 
     debugPrint('Failed to load $url.');
+    if (key.loadFailedCallback != null) key.loadFailedCallback();
     return await ui.instantiateImageCodec(featureImage);
   }
 
