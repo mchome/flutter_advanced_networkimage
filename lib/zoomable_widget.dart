@@ -66,20 +66,23 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
 
   Size _containerSize = Size.zero;
 
-  AnimationController _controller;
+  AnimationController _resetController;
+  AnimationController _bounceController;
   Animation<double> _zoomAnimation;
   Animation<Offset> _panOffsetAnimation;
+  Animation<Offset> _bounceAnimation;
 
   @override
   initState() {
-    _controller =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _resetController = AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _bounceController = AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     super.initState();
   }
 
   @override
   dispose() {
-    _controller.dispose();
+    _resetController.dispose();
+    _bounceController.dispose();
     super.dispose();
   }
 
@@ -141,7 +144,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     Size _boundarySize =
         Size(_containerSize.width / 2, _containerSize.height / 2);
     Animation _animation =
-        CurvedAnimation(parent: _controller, curve: Curves.bounceInOut);
+        CurvedAnimation(parent: _bounceController, curve: Curves.bounceInOut);
     Offset _borderOffset = Offset(
       _panOffset.dx.clamp(
         -_boundarySize.width / _zoom * widget.panLimit,
@@ -152,17 +155,16 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
         _boundarySize.height / _zoom * widget.panLimit,
       ),
     );
-    _panOffsetAnimation = Tween(begin: _panOffset, end: _borderOffset)
-        .animate(_animation)
-          ..addListener(
-              () => setState(() => _panOffset = _panOffsetAnimation.value));
-    _controller.forward(from: 0.0);
+    _bounceAnimation = Tween(begin: _panOffset, end: _borderOffset).animate(
+        _animation)
+      ..addListener(() => setState(() => _panOffset = _bounceAnimation.value));
+    _bounceController.forward(from: 0.0);
   }
 
   _handleDoubleTap() {
     double _stepLength;
     Animation _animation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+        CurvedAnimation(parent: _resetController, curve: Curves.easeInOut);
 
     widget.zoomSteps > 0
         ? _stepLength = widget.maxScale / widget.zoomSteps
@@ -177,9 +179,9 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
               () => setState(() => _panOffset = _panOffsetAnimation.value));
 
     if (_zoom < 0)
-      _controller.forward(from: 1.0);
+      _resetController.forward(from: 1.0);
     else
-      _controller.reverse(from: 1.0);
+      _resetController.reverse(from: 1.0);
 
     setState(() {
       _previewZoom = 1.0;
