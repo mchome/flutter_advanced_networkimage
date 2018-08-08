@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.4]
+
+- Add callback on `AdvancedNetworkImage`.
+- Add a bounce back boundary.
+
 ## [0.3.3]
 
 - Move the `ZoomableWidget`'s origin point to screen's center.

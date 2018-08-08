@@ -34,14 +34,20 @@ class MyApp extends StatelessWidget {
               TransitionToImage(
                 AdvancedNetworkImage(
                   'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                  loadedCallback: () {
+                    print('It works!');
+                  },
+                  loadFailedCallback: () {
+                    print('Oh, no!');
+                  },
                 ),
                 fit: BoxFit.contain,
                 placeholder: const Icon(Icons.refresh),
-                width: 400.0,
+                width: 300.0,
                 height: 300.0,
               ),
               ZoomableWidget(
-                panLimit: 1.0,
+                panLimit: 0.7,
                 maxScale: 2.0,
                 minScale: 0.5,
                 multiFingersPan: false,
