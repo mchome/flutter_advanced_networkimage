@@ -12,6 +12,7 @@ dependencies:
   quiver: ">=2.0.0 <3.0.0"
   path: "^1.6.0"
   crypto: "^2.0.5"
+  collection: "^1.14.0"
 
 environment:
   sdk: ">=2.0.0-dev.28.0 <3.0.0"

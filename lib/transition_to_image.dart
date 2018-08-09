@@ -3,7 +3,7 @@ library transition_to_image;
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:collection/collection.dart';
+import 'package:collection/collection.dart' show ListEquality;
 import 'package:flutter/material.dart';
 
 import 'package:flutter_advanced_networkimage/utils.dart';
