@@ -67,6 +67,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   Size _containerSize = Size.zero;
 
   AnimationController _resetController;
+  AnimationController _resetController2;
   AnimationController _bounceController;
   Animation<double> _zoomAnimation;
   Animation<Offset> _panOffsetAnimation;
@@ -74,14 +75,19 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
 
   @override
   initState() {
-    _resetController = AnimationController(vsync: this, duration: Duration(milliseconds: 100));
-    _bounceController = AnimationController(vsync: this, duration: Duration(milliseconds: 300));
+    _resetController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _resetController2 =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _bounceController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     super.initState();
   }
 
   @override
   dispose() {
     _resetController.dispose();
+    _resetController2.dispose();
     _bounceController.dispose();
     super.dispose();
   }
@@ -162,21 +168,26 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   }
 
   _handleDoubleTap() {
-    double _stepLength;
+    double _stepLength = 0.0;
     Animation _animation =
         CurvedAnimation(parent: _resetController, curve: Curves.easeInOut);
+    Animation _animation2 =
+        CurvedAnimation(parent: _resetController2, curve: Curves.easeInOut);
 
-    widget.zoomSteps > 0
-        ? _stepLength = widget.maxScale / widget.zoomSteps
-        : _stepLength = 0.0;
+    if (widget.zoomSteps > 0)
+      _stepLength = (widget.maxScale - 1.0) / widget.zoomSteps;
 
-    // TODO: step zoom
-    _zoomAnimation = Tween(begin: 1.0, end: _zoom).animate(_animation)
+    double _tmpZoom = _zoom + _stepLength;
+    if (_tmpZoom > widget.maxScale || _stepLength == 0.0) _tmpZoom = 1.0;
+    _zoomAnimation = Tween(begin: _tmpZoom, end: _zoom).animate(_animation)
       ..addListener(() => setState(() => _zoom = _zoomAnimation.value));
-    _panOffsetAnimation = Tween(begin: Offset.zero, end: _panOffset)
-        .animate(_animation)
-          ..addListener(
-              () => setState(() => _panOffset = _panOffsetAnimation.value));
+    if (_tmpZoom == 1.0) {
+      _panOffsetAnimation = Tween(begin: Offset.zero, end: _panOffset)
+          .animate(_animation2)
+            ..addListener(
+                () => setState(() => _panOffset = _panOffsetAnimation.value));
+      _resetController2.reverse(from: 1.0);
+    }
 
     if (_zoom < 0)
       _resetController.forward(from: 1.0);
@@ -184,10 +195,11 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
       _resetController.reverse(from: 1.0);
 
     setState(() {
-      _previewZoom = 1.0;
-      _zoomOriginOffset = Offset.zero;
-      _previewPanOffset = Offset.zero;
-      _panOffset = Offset.zero;
+      _previewZoom = _tmpZoom;
+      if (_tmpZoom == 1.0) {
+        _zoomOriginOffset = Offset.zero;
+        _previewPanOffset = Offset.zero;
+      }
     });
   }
 

@@ -4,6 +4,7 @@
 
 - Add callback on `AdvancedNetworkImage`.
 - Add a bounce back boundary.
+- Add double tap step zoom.
 
 ## [0.3.3]
 
