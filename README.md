@@ -65,7 +65,13 @@ ZoomableWidget(
 ```dart
 // Reload feature included
 TransitionToImage(
-  AdvancedNetworkImage(url),
+  AdvancedNetworkImage(url,
+    loadedCallback: () {
+      print('It works!');
+    },
+    loadFailedCallback: () {
+      print('Oh, no!');
+    }),
   loadingWidget: const CircularProgressIndicator(),
   fit: BoxFit.contain,
   placeholder: const Icon(Icons.refresh),
@@ -85,6 +91,7 @@ ZoomableWidget(
   child: Image(
     image: AssetImage('graphics/background.png'),
   ),
+  zoomSteps: 3,
 ),
 ```
 
