@@ -12,6 +12,7 @@ class TransitionToImage extends StatefulWidget {
   const TransitionToImage(
     this.image, {
     Key key,
+    this.onError,
     this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -130,6 +131,9 @@ class TransitionToImage extends StatefulWidget {
   /// Widget displayed while the target [image] is loading.
   final Widget loadingWidget;
 
+  /// onError callback when the image load fails
+  final Function(ImageController controller) onError;
+
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
 }
@@ -160,6 +164,8 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   ImageProvider get _imageProvider => widget.image;
 
+  final ImageController imageController = new ImageController();
+
   @override
   initState() {
     _controller = AnimationController(vsync: this, duration: widget.duration)
@@ -178,6 +184,14 @@ class _TransitionToImageState extends State<TransitionToImage>
         _getImage(reload: true);
       }
     });
+
+    imageController.addListener(() {
+      if (mounted && imageController.value == ImageLoadState.shouldRefresh) {
+        debugPrint('Reloading image.');
+        _getImage(reload: true);
+      }
+    });
+
     super.initState();
   }
 
@@ -259,6 +273,8 @@ class _TransitionToImageState extends State<TransitionToImage>
       if (ListEquality().equals(data.buffer.asUint8List(), featureImage)) {
         setState(() {
           _loadFailed = true;
+          imageController.value = ImageLoadState.loadFailed;
+          null != widget.onError ? widget.onError(imageController) : null;
         });
       }
     });
@@ -267,28 +283,21 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (_loadFailed) {
-          debugPrint('Reloading image.');
-          _getImage(reload: true);
-        }
-      },
-      child: Container(
-        width: widget.width,
-        height: widget.height,
-        child: Center(
-          child: (_loadFailed)
-          ? widget.placeholder
-          : (_status == _TransitionStatus.loading)
-              ? widget.loadingWidget
-              : (widget.transitionType == TransitionType.fade)
-                  ? FadeTransition(
-                      opacity: _fadeTween.animate(_animation), child: _child())
-                  : SlideTransition(
-                      position: _slideTween.animate(_animation),
-                      child: _child()),
-        ),
+    return Container(
+      width: widget.width,
+      height: widget.height,
+      child: Center(
+        child: (_loadFailed)
+            ? widget.placeholder
+            : (_status == _TransitionStatus.loading)
+                ? widget.loadingWidget
+                : (widget.transitionType == TransitionType.fade)
+                    ? FadeTransition(
+                        opacity: _fadeTween.animate(_animation),
+                        child: _child())
+                    : SlideTransition(
+                        position: _slideTween.animate(_animation),
+                        child: _child()),
       ),
     );
   }
@@ -309,3 +318,19 @@ class _TransitionToImageState extends State<TransitionToImage>
 
 /// Store reload listeners
 List<Map<String, Function>> _reloadListeners = List<Map<String, Function>>();
+
+enum ImageLoadState {
+  idle,
+  loading,
+  loaded,
+  loadFailed,
+  shouldRefresh,
+}
+
+class ImageController extends ValueNotifier<ImageLoadState> {
+  ImageController() : super(ImageLoadState.idle);
+
+  void setState(ImageLoadState state) {
+    value = state;
+  }
+}
