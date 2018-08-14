@@ -12,6 +12,7 @@ class TransitionToImage extends StatefulWidget {
   const TransitionToImage(
     this.image, {
     Key key,
+    this.isRefreshEnabled: true,
     this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -129,6 +130,9 @@ class TransitionToImage extends StatefulWidget {
 
   /// Widget displayed while the target [image] is loading.
   final Widget loadingWidget;
+
+  /// enable or disable GestureDetector
+  final bool isRefreshEnabled;
 
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
@@ -267,30 +271,37 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (_loadFailed) {
-          debugPrint('Reloading image.');
-          _getImage(reload: true);
-        }
-      },
-      child: Container(
-        width: widget.width,
-        height: widget.height,
-        child: Center(
-          child: (_loadFailed)
-          ? widget.placeholder
-          : (_status == _TransitionStatus.loading)
-              ? widget.loadingWidget
-              : (widget.transitionType == TransitionType.fade)
-                  ? FadeTransition(
-                      opacity: _fadeTween.animate(_animation), child: _child())
-                  : SlideTransition(
-                      position: _slideTween.animate(_animation),
-                      child: _child()),
-        ),
+    Widget child = Container(
+      width: widget.width,
+      height: widget.height,
+      child: Center(
+        child: (_loadFailed)
+            ? widget.placeholder
+            : (_status == _TransitionStatus.loading)
+                ? widget.loadingWidget
+                : (widget.transitionType == TransitionType.fade)
+                    ? FadeTransition(
+                        opacity: _fadeTween.animate(_animation),
+                        child: _child())
+                    : SlideTransition(
+                        position: _slideTween.animate(_animation),
+                        child: _child()),
       ),
     );
+
+    if (widget.isRefreshEnabled) {
+      return GestureDetector(
+        onTap: () {
+          if (_loadFailed) {
+            debugPrint('Reloading image.');
+            _getImage(reload: true);
+          }
+        },
+        child: child,
+      );
+    } else {
+      return child;
+    }
   }
 
   Widget _child() {
