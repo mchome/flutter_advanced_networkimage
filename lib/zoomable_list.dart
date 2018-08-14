@@ -1,4 +1,4 @@
-library advanced_transform_widget;
+library zoomable_list;
 
 import 'dart:async';
 

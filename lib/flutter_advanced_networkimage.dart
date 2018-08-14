@@ -17,7 +17,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_advanced_networkimage/utils.dart';
 
-/// NOTE: memory cache: LruMap(maximumSize: 128)
+/// NOTE: memory cache: LruMap(maximumSize: 1024)
 ///  {
 ///    '$uid(image_url)': '$ImageData',
 ///    ...

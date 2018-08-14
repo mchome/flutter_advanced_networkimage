@@ -4,26 +4,6 @@ import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 
-class _ZoomableWidgetLayout extends MultiChildLayoutDelegate {
-  _ZoomableWidgetLayout();
-
-  static final String gestureContainer = 'gesturecontainer';
-  static final String painter = 'painter';
-
-  @override
-  performLayout(Size size) {
-    layoutChild(gestureContainer,
-        BoxConstraints.tightFor(width: size.width, height: size.height));
-    positionChild(gestureContainer, Offset.zero);
-    layoutChild(painter,
-        BoxConstraints.tightFor(width: size.width, height: size.height));
-    positionChild(painter, Offset.zero);
-  }
-
-  @override
-  bool shouldRelayout(_ZoomableWidgetLayout oldDelegate) => false;
-}
-
 class ZoomableWidget extends StatefulWidget {
   ZoomableWidget({
     Key key,
@@ -41,15 +21,34 @@ class ZoomableWidget extends StatefulWidget {
         assert(maxScale != null),
         assert(enableZoom != null);
 
-  final double maxScale;
+  /// The minimum size for scaling.
   final double minScale;
+
+  /// The maximum size for scaling.
+  final double maxScale;
+
+  /// Allow zooming the child widget.
   final bool enableZoom;
+
+  /// Allow panning with one finger.
   final bool singleFingerPan;
+
+  /// Allow panning with more than one finger.
   final bool multiFingersPan;
+
+  /// Create a boundary with the factor.
   final double panLimit;
+
+  /// The child widget that is display.
   final Widget child;
+
+  /// Tap callback for this widget.
   final Function onTap;
+
+  /// Allow users to zoom with double tap steps by steps.
   final int zoomSteps;
+
+  /// Enable the bounce-back boundary.
   final bool bounceBackBoundary;
 
   @override
@@ -66,8 +65,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
 
   Size _containerSize = Size.zero;
 
-  AnimationController _resetController;
-  AnimationController _resetController2;
+  AnimationController _resetZoomController;
+  AnimationController _resetPanController;
   AnimationController _bounceController;
   Animation<double> _zoomAnimation;
   Animation<Offset> _panOffsetAnimation;
@@ -75,9 +74,9 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
 
   @override
   initState() {
-    _resetController =
+    _resetZoomController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
-    _resetController2 =
+    _resetPanController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     _bounceController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
@@ -86,8 +85,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
 
   @override
   dispose() {
-    _resetController.dispose();
-    _resetController2.dispose();
+    _resetZoomController.dispose();
+    _resetPanController.dispose();
     _bounceController.dispose();
     super.dispose();
   }
@@ -170,9 +169,9 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   _handleDoubleTap() {
     double _stepLength = 0.0;
     Animation _animation =
-        CurvedAnimation(parent: _resetController, curve: Curves.easeInOut);
+        CurvedAnimation(parent: _resetZoomController, curve: Curves.easeInOut);
     Animation _animation2 =
-        CurvedAnimation(parent: _resetController2, curve: Curves.easeInOut);
+        CurvedAnimation(parent: _resetPanController, curve: Curves.easeInOut);
 
     if (widget.zoomSteps > 0)
       _stepLength = (widget.maxScale - 1.0) / widget.zoomSteps;
@@ -186,13 +185,13 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
           .animate(_animation2)
             ..addListener(
                 () => setState(() => _panOffset = _panOffsetAnimation.value));
-      _resetController2.reverse(from: 1.0);
+      _resetPanController.reverse(from: 1.0);
     }
 
     if (_zoom < 0)
-      _resetController.forward(from: 1.0);
+      _resetZoomController.forward(from: 1.0);
     else
-      _resetController.reverse(from: 1.0);
+      _resetZoomController.reverse(from: 1.0);
 
     setState(() {
       _previewZoom = _tmpZoom;
@@ -243,4 +242,24 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
       child: _child,
     );
   }
+}
+
+class _ZoomableWidgetLayout extends MultiChildLayoutDelegate {
+  _ZoomableWidgetLayout();
+
+  static final String gestureContainer = 'gesturecontainer';
+  static final String painter = 'painter';
+
+  @override
+  performLayout(Size size) {
+    layoutChild(gestureContainer,
+        BoxConstraints.tightFor(width: size.width, height: size.height));
+    positionChild(gestureContainer, Offset.zero);
+    layoutChild(painter,
+        BoxConstraints.tightFor(width: size.width, height: size.height));
+    positionChild(painter, Offset.zero);
+  }
+
+  @override
+  bool shouldRelayout(_ZoomableWidgetLayout oldDelegate) => false;
 }
