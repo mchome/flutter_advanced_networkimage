@@ -275,7 +275,8 @@ class _TransitionToImageState extends State<TransitionToImage>
       width: widget.width,
       height: widget.height,
       child: Center(
-        child: (_loadFailed)
+        child: (true == _loadFailed ||
+                (null == _imageInfo && _status != _TransitionStatus.loading))
             ? widget.placeholder
             : (_status == _TransitionStatus.loading)
                 ? widget.loadingWidget
