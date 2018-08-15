@@ -108,7 +108,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         return await ui.instantiateImageCodec(_diskCache);
       }
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     }
 
     Uint8List imageData = await _loadFromRemote(
