@@ -128,14 +128,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     } catch (e) {
       debugPrint(e.toString());
     }
-
-    try {
-      debugPrint('Failed to load $url.');
-      if (key.loadFailedCallback != null) key.loadFailedCallback();
-      return await ui.instantiateImageCodec(featureImage);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+    
+    debugPrint('Failed to load $url.');
+    if (key.loadFailedCallback != null) key.loadFailedCallback();
+    return await ui.instantiateImageCodec(featureImage);
   }
 
   /// Load the disk cache
