@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.5]
+
+- Add a flag to disable interior `GestureDetector` in `TransitionToImage`.
+- Fix bug on printing error.
+
 ## [0.3.4]
 
 - Add callback on `AdvancedNetworkImage`.
