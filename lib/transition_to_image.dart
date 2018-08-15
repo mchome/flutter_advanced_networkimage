@@ -12,7 +12,6 @@ class TransitionToImage extends StatefulWidget {
   const TransitionToImage(
     this.image, {
     Key key,
-    this.isRefreshEnabled: true,
     this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -26,6 +25,7 @@ class TransitionToImage extends StatefulWidget {
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
     this.loadingWidget = const CircularProgressIndicator(),
+    this.enableRefresh: true,
   })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
@@ -131,8 +131,8 @@ class TransitionToImage extends StatefulWidget {
   /// Widget displayed while the target [image] is loading.
   final Widget loadingWidget;
 
-  /// enable or disable GestureDetector
-  final bool isRefreshEnabled;
+  /// Enable a interior  [GestureDetector] for manually refreshing.
+  final bool enableRefresh;
 
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
@@ -289,7 +289,7 @@ class _TransitionToImageState extends State<TransitionToImage>
       ),
     );
 
-    if (widget.isRefreshEnabled) {
+    if (widget.enableRefresh) {
       return GestureDetector(
         onTap: () {
           if (_loadFailed) {
