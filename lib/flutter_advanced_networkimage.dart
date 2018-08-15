@@ -93,13 +93,19 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     assert(key == this);
 
     String uId = _uid(key.url);
-    if (useMemoryCache &&
-        _imageMemoryCache != null &&
-        _imageMemoryCache.containsKey(uId)) {
-      if (useDiskCache) _loadFromDiskCache(key, uId);
-      if (key.loadedCallback != null) key.loadedCallback();
-      return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
+    try {
+      if (useMemoryCache &&
+          _imageMemoryCache != null &&
+          _imageMemoryCache.containsKey(uId)) {
+        if (useDiskCache) _loadFromDiskCache(key, uId);
+        if (key.loadedCallback != null) key.loadedCallback();
+
+        return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
     }
+
     try {
       if (useDiskCache) {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
@@ -111,14 +117,18 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       debugPrint(e.toString());
     }
 
-    Uint8List imageData = await _loadFromRemote(
-        key.url, key.header, key.retryLimit, key.retryDuration);
-    if (imageData != null) {
-      if (useMemoryCache) _imageMemoryCache[uId] = imageData;
-      if (key.loadedCallback != null) key.loadedCallback();
-      return await ui.instantiateImageCodec(imageData);
+    try {
+      Uint8List imageData = await _loadFromRemote(
+          key.url, key.header, key.retryLimit, key.retryDuration);
+      if (imageData != null) {
+        if (useMemoryCache) _imageMemoryCache[uId] = imageData;
+        if (key.loadedCallback != null) key.loadedCallback();
+        return await ui.instantiateImageCodec(imageData);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
     }
-
+    
     debugPrint('Failed to load $url.');
     if (key.loadFailedCallback != null) key.loadFailedCallback();
     return await ui.instantiateImageCodec(featureImage);
