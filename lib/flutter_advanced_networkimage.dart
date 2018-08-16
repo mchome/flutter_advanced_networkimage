@@ -161,6 +161,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Fetch the image from network.
   Future<Uint8List> _loadFromRemote(String url, Map<String, String> header,
       int retryLimit, Duration retryDuration) async {
+    if (retryLimit < 1) retryLimit = 1;
+
     /// Retry mechanism.
     Future<T> retry<T>(
         Future f(), int retryLimit, Duration retryDuration) async {

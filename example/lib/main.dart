@@ -34,12 +34,8 @@ class MyApp extends StatelessWidget {
               TransitionToImage(
                 AdvancedNetworkImage(
                   'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
-                  loadedCallback: () {
-                    print('It works!');
-                  },
-                  loadFailedCallback: () {
-                    print('Oh, no!');
-                  },
+                  loadedCallback: () => print('It works!'),
+                  loadFailedCallback: () => print('Oh, no!'),
                 ),
                 fit: BoxFit.contain,
                 placeholder: const Icon(Icons.refresh),
