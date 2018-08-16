@@ -134,6 +134,14 @@ class TransitionToImage extends StatefulWidget {
   /// Enable a interior  [GestureDetector] for manually refreshing.
   final bool enableRefresh;
 
+  reloadImage() {
+    _reloadListeners.forEach((listener) {
+      if (listener.keys.first == image.hashCode.toString()) {
+        (listener.values.first)();
+      }
+    });
+  }
+
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
 }
@@ -176,12 +184,8 @@ class _TransitionToImageState extends State<TransitionToImage>
     }
     _reloadListeners.removeWhere((listener) =>
         listener.keys.first == _imageProvider.hashCode.toString());
-    _reloadListeners.add({
-      _imageProvider.hashCode.toString(): () {
-        debugPrint('Reloading image.');
-        _getImage(reload: true);
-      }
-    });
+    _reloadListeners.add(
+        {_imageProvider.hashCode.toString(): () => _getImage(reload: true)});
     super.initState();
   }
 
@@ -245,7 +249,10 @@ class _TransitionToImageState extends State<TransitionToImage>
         _status = _TransitionStatus.completed;
       });
     } else {
-      if (reload) imageCache.clear();
+      if (reload) {
+        imageCache.clear();
+        debugPrint('Reloading image.');
+      }
       setState(() {
         _status = _TransitionStatus.loading;
         _loadFailed = false;
@@ -271,12 +278,23 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    Widget child = Container(
+    return Container(
       width: widget.width,
       height: widget.height,
+      color: Color(0),
       child: Center(
         child: (_loadFailed)
-            ? widget.placeholder
+            ? (widget.enableRefresh)
+                ? GestureDetector(
+                    onTap: () => _getImage(reload: true),
+                    child: Container(
+                      width: widget.width,
+                      height: widget.height,
+                      color: Color(0),
+                      child: widget.placeholder,
+                    ),
+                  )
+                : widget.placeholder
             : (_status == _TransitionStatus.loading)
                 ? widget.loadingWidget
                 : (widget.transitionType == TransitionType.fade)
@@ -288,20 +306,6 @@ class _TransitionToImageState extends State<TransitionToImage>
                         child: _child()),
       ),
     );
-
-    if (widget.enableRefresh) {
-      return GestureDetector(
-        onTap: () {
-          if (_loadFailed) {
-            debugPrint('Reloading image.');
-            _getImage(reload: true);
-          }
-        },
-        child: child,
-      );
-    } else {
-      return child;
-    }
   }
 
   Widget _child() {
