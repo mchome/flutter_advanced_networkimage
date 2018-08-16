@@ -35,12 +35,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.timeoutDuration: const Duration(seconds: 5),
     this.loadedCallback,
     this.loadFailedCallback,
-    this.fallbackImage,
   })  : assert(url != null),
         assert(scale != null),
         assert(useMemoryCache != null),
         assert(useDiskCache != null),
-        assert(retryLimit != null),
+        assert(retryLimit != null && retryLimit != 0),
         assert(retryDuration != null);
 
   /// The URL from which the image will be fetched.
@@ -70,15 +69,12 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The callback will be executed when the image loaded.
   final Function loadedCallback;
 
-  /// The callback will be executed when the image failed to load.
+  /// The callback will be executed when the iamge failed to load.
   final Function loadFailedCallback;
-
-  /// The image will be displayed when the image failed to load.
-  final Uint8List fallbackImage;
 
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
-    return SynchronousFuture<AdvancedNetworkImage>(this);
+    return new SynchronousFuture<AdvancedNetworkImage>(this);
   }
 
   @override
@@ -97,13 +93,19 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     assert(key == this);
 
     String uId = _uid(key.url);
-    if (useMemoryCache &&
-        _imageMemoryCache != null &&
-        _imageMemoryCache.containsKey(uId)) {
-      if (useDiskCache) _loadFromDiskCache(key, uId);
-      if (key.loadedCallback != null) key.loadedCallback();
-      return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
+
+    try {
+      if (useMemoryCache &&
+          _imageMemoryCache != null &&
+          _imageMemoryCache.containsKey(uId)) {
+        if (useDiskCache) _loadFromDiskCache(key, uId);
+        if (key.loadedCallback != null) key.loadedCallback();
+        return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
+      }
+    } catch (e) {
+      debugPrint('useMemoryCache: ' + e.toString());
     }
+
     try {
       if (useDiskCache) {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
@@ -112,20 +114,24 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         return await ui.instantiateImageCodec(_diskCache);
       }
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint('useDiskCache: ' + e.toString());
     }
 
-    Uint8List imageData = await _loadFromRemote(
-        key.url, key.header, key.retryLimit, key.retryDuration);
-    if (imageData != null) {
-      if (useMemoryCache) _imageMemoryCache[uId] = imageData;
-      if (key.loadedCallback != null) key.loadedCallback();
-      return await ui.instantiateImageCodec(imageData);
+    try {
+      Uint8List imageData = await _loadFromRemote(
+          key.url, key.header, key.retryLimit, key.retryDuration);
+      if (imageData != null) {
+        if (useMemoryCache) _imageMemoryCache[uId] = imageData;
+        if (key.loadedCallback != null) key.loadedCallback();
+        return await ui.instantiateImageCodec(imageData);
+      }
+    } catch (e) {
+      debugPrint('remote: ' + e.toString());
     }
 
     debugPrint('Failed to load $url.');
     if (key.loadFailedCallback != null) key.loadFailedCallback();
-    return await ui.instantiateImageCodec(key.fallbackImage ?? featureImage);
+    return await ui.instantiateImageCodec(featureImage);
   }
 
   /// Load the disk cache
@@ -137,9 +143,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   Future<Uint8List> _loadFromDiskCache(
       AdvancedNetworkImage key, String uId) async {
     Directory _cacheImagesDirectory =
-        Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+        new Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
     if (_cacheImagesDirectory.existsSync()) {
-      File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
+      File _cacheImageFile = new File(join(_cacheImagesDirectory.path, uId));
       if (_cacheImageFile.existsSync()) {
         return await _cacheImageFile.readAsBytes();
       }
@@ -150,7 +156,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     Uint8List imageData = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageData != null) {
-      await (File(join(_cacheImagesDirectory.path, uId)))
+      await (new File(join(_cacheImagesDirectory.path, uId)))
           .writeAsBytes(imageData);
       return imageData;
     }
@@ -168,7 +174,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         try {
           return await f();
         } catch (_) {
-          await Future.delayed(retryDuration);
+          await new Future.delayed(retryDuration);
         }
       }
       debugPrint('Retry failed!');
@@ -224,7 +230,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 /// Clear the disk cache directory then return if it succeed.
 Future<bool> clearDiskCachedImages() async {
   Directory _cacheImagesDirectory =
-      Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+      new Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
   try {
     await _cacheImagesDirectory.delete(recursive: true);
   } catch (_) {
@@ -236,7 +242,7 @@ Future<bool> clearDiskCachedImages() async {
 /// Return the disk cache directory size.
 Future<int> getDiskCachedImagesSize() async {
   Directory _cacheImagesDirectory =
-      Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+      new Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
   int size = 0;
   try {
     _cacheImagesDirectory
@@ -249,4 +255,4 @@ Future<int> getDiskCachedImagesSize() async {
 }
 
 /// Use a [LruMap] to store the custom memory cache.
-LruMap<String, Uint8List> _imageMemoryCache = LruMap(maximumSize: 1024);
+LruMap<String, Uint8List> _imageMemoryCache = new LruMap(maximumSize: 1024);
