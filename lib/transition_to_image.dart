@@ -250,8 +250,10 @@ class _TransitionToImageState extends State<TransitionToImage>
       });
     } else {
       if (reload) {
-        imageCache.clear();
         debugPrint('Reloading image.');
+        imageCache.clear();
+        _imageStream =
+            _imageProvider.resolve(createLocalImageConfiguration(context));
       }
       setState(() {
         _status = _TransitionStatus.loading;

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.6]
+
+- Add `fallbackImage` in `AdvancedNetworkImage`.
+- Fix bug on `retryLimit`.
+- Tweek the `GestureDetector` in `TransitionToImage`.
+
 ## [0.3.5]
 
 - Add a flag to disable interior `GestureDetector` in `TransitionToImage`.
