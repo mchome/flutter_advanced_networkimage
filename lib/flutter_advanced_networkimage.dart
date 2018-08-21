@@ -76,6 +76,16 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The image will be displayed when the image failed to load.
   final Uint8List fallbackImage;
 
+  Future<String> get cachedPath async {
+    Directory _cacheImagesDirectory =
+        Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+    String uId = _uid(url);
+
+    return useDiskCache
+        ? File(join(_cacheImagesDirectory.path, uId)).path
+        : null;
+  }
+
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return SynchronousFuture<AdvancedNetworkImage>(this);
