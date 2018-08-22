@@ -251,7 +251,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     } else {
       if (reload) {
         debugPrint('Reloading image.');
-        imageCache.clear();
+        _imageProvider.evict();
         _imageStream =
             _imageProvider.resolve(createLocalImageConfiguration(context));
       }

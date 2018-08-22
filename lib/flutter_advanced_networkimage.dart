@@ -12,23 +12,15 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
-import 'package:quiver/collection.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_advanced_networkimage/utils.dart';
-
-/// NOTE: memory cache: LruMap(maximumSize: 1024)
-///  {
-///    '$uid(image_url)': '$ImageData',
-///    ...
-///  }
 
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   const AdvancedNetworkImage(
     this.url, {
     this.scale: 1.0,
     this.header,
-    this.useMemoryCache: true,
     this.useDiskCache: false,
     this.retryLimit: 5,
     this.retryDuration: const Duration(milliseconds: 500),
@@ -38,7 +30,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.fallbackImage,
   })  : assert(url != null),
         assert(scale != null),
-        assert(useMemoryCache != null),
         assert(useDiskCache != null),
         assert(retryLimit != null),
         assert(retryDuration != null);
@@ -51,9 +42,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   /// The HTTP headers that will be used with [http] to fetch image from network.
   final Map<String, String> header;
-
-  /// The flag control the memory cache will be used or not.
-  final bool useMemoryCache;
 
   /// The flag control the disk cache will be used or not.
   final bool useDiskCache;
@@ -107,17 +95,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     assert(key == this);
 
     String uId = _uid(key.url);
-    if (useMemoryCache &&
-        _imageMemoryCache != null &&
-        _imageMemoryCache.containsKey(uId)) {
-      if (useDiskCache) _loadFromDiskCache(key, uId);
-      if (key.loadedCallback != null) key.loadedCallback();
-      return await ui.instantiateImageCodec(_imageMemoryCache[uId]);
-    }
+
     try {
       if (useDiskCache) {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
-        if (useMemoryCache) _imageMemoryCache[uId] = _diskCache;
         if (key.loadedCallback != null) key.loadedCallback();
         return await ui.instantiateImageCodec(_diskCache);
       }
@@ -128,7 +109,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     Uint8List imageData = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageData != null) {
-      if (useMemoryCache) _imageMemoryCache[uId] = imageData;
       if (key.loadedCallback != null) key.loadedCallback();
       return await ui.instantiateImageCodec(imageData);
     }
@@ -259,6 +239,3 @@ Future<int> getDiskCachedImagesSize() async {
     return null;
   }
 }
-
-/// Use a [LruMap] to store the custom memory cache.
-LruMap<String, Uint8List> _imageMemoryCache = LruMap(maximumSize: 1024);
