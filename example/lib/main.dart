@@ -33,7 +33,7 @@ class Example extends State<MyApp> {
         primarySwatch: Colors.blue,
       ),
       home: DefaultTabController(
-        length: 5,
+        length: 4,
         child: Scaffold(
           appBar: AppBar(
             title: Text('Flutter Advanced Network Image Example'),
@@ -43,7 +43,7 @@ class Example extends State<MyApp> {
                 Tab(text: 'zooming'),
                 Tab(text: 'widget list'),
                 Tab(text: 'crop image'),
-                Tab(text: 'cropped image'),
+                // Tab(text: 'cropped image'),
               ],
             ),
           ),
@@ -107,16 +107,16 @@ class Example extends State<MyApp> {
                   'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
                 ),
                 onImageCropperChanged: cropImage,
-                cropperSize: Size(200.0, 200.0),
               ),
-              Center(
-                child: Container(
-                  color: Colors.limeAccent,
-                  child: imageCropperData != null
-                      ? Image.memory(Uint8List.view(imageCropperData.buffer))
-                      : Container(),
-                ),
-              ),
+              // Container(
+              //   color: Colors.limeAccent,
+              //   child: imageCropperData != null
+              //       ? Image.memory(
+              //           Uint8List.view(imageCropperData.buffer),
+              //           fit: BoxFit.contain,
+              //         )
+              //       : Container(),
+              // ),
             ],
           ),
         ),

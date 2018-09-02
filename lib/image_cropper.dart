@@ -9,7 +9,6 @@ class ImageCropper extends StatefulWidget {
   ImageCropper(
     this.image, {
     Key key,
-    this.cropperSize,
     this.minScale: 0.7,
     this.maxScale: 1.4,
     this.enableRotate: false,
@@ -19,9 +18,6 @@ class ImageCropper extends StatefulWidget {
 
   /// The target image that is cropped.
   final ImageProvider image;
-
-  /// The size of cropper.
-  final Size cropperSize;
 
   /// The minimum size for scaling.
   final double minScale;
@@ -143,10 +139,8 @@ class _ImageCropperState extends State<ImageCropper>
         });
       },
       child: CustomPaint(
-        size: widget.cropperSize,
         painter: _GesturePainter(
           _image,
-          widget.cropperSize,
           _zoom,
           _panOffset,
           widget.onImageCropperChanged,
@@ -159,7 +153,6 @@ class _ImageCropperState extends State<ImageCropper>
 class _GesturePainter extends CustomPainter {
   const _GesturePainter(
     this.image,
-    this.outputSize,
     this.zoom,
     this.offset,
     this.onImageCropperChanged,
@@ -168,16 +161,14 @@ class _GesturePainter extends CustomPainter {
         assert(offset != null);
 
   final ui.Image image;
-  final Size outputSize;
   final double zoom;
   final Offset offset;
   final ValueChanged<ByteData> onImageCropperChanged;
 
   @override
   paint(Canvas canvas, Size size) {
-    Size _outputSize = outputSize ?? size;
     Rect displayRect = offset & (size * zoom);
-    Rect cropRect = (offset - Offset(0.0, 0.0)) & (size * zoom);
+    Rect cropRect = (offset + Offset(100.0, 0.0)) & (size * zoom);
 
     final _recorder = ui.PictureRecorder();
     final cropperCanvas = Canvas(_recorder);
@@ -197,7 +188,7 @@ class _GesturePainter extends CustomPainter {
 
     _recorder
         .endRecording()
-        .toImage(_outputSize.width.toInt(), _outputSize.height.toInt())
+        .toImage(image.width.toInt(), image.height.toInt())
         .toByteData(format: ui.ImageByteFormat.png)
         .then((data) => onImageCropperChanged(data));
   }
