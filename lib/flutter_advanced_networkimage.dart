@@ -106,21 +106,16 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       debugPrint(e.toString());
     }
 
-    try {
-      Uint8List imageData = await _loadFromRemote(
-          key.url, key.header, key.retryLimit, key.retryDuration);
-      if (imageData != null) {
-        if (key.loadedCallback != null) key.loadedCallback();
-        return await ui.instantiateImageCodec(imageData);
-      }
-
-      debugPrint('Failed to load $url.');
-      if (key.loadFailedCallback != null) key.loadFailedCallback();
-      return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
-    } catch (e) {
-      print("Error when requesting remote: " + e.message);
-      return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
+    Uint8List imageData = await _loadFromRemote(
+        key.url, key.header, key.retryLimit, key.retryDuration);
+    if (imageData != null) {
+      if (key.loadedCallback != null) key.loadedCallback();
+      return await ui.instantiateImageCodec(imageData);
     }
+
+    debugPrint('Failed to load $url.');
+    if (key.loadFailedCallback != null) key.loadFailedCallback();
+    return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
   }
 
   /// Load the disk cache
@@ -156,34 +151,31 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Fetch the image from network.
   Future<Uint8List> _loadFromRemote(String url, Map<String, String> header,
       int retryLimit, Duration retryDuration) async {
-    if (retryLimit < 1) retryLimit = 1;
+    if (retryLimit < 0) retryLimit = 0;
 
     /// Retry mechanism.
-    Future<T> retry<T>(
+    Future<http.Response> run<T>(
         Future f(), int retryLimit, Duration retryDuration) async {
-      for (int t = 0; t < retryLimit; t++) {
+      for (int t = 0; t < retryLimit + 1; t++) {
         try {
-          return await f();
-        } catch (_) {
-          await Future.delayed(retryDuration);
-        }
+          http.Response res = await f();
+          if (res != null && res.statusCode == 200) return res;
+        } catch (_) {}
+        await Future.delayed(retryDuration);
       }
-      debugPrint('Retry failed!');
+
+      if (retryLimit > 0) debugPrint('Retry failed!');
       return null;
     }
 
     http.Response _response;
-    _response = await retry(() async {
+    _response = await run(() async {
       if (header != null)
         return await http.get(url, headers: header).timeout(timeoutDuration);
       else
         return await http.get(url).timeout(timeoutDuration);
     }, retryLimit, retryDuration);
-    if (_response != null) {
-      if (_response.statusCode == 200) {
-        return _response.bodyBytes;
-      }
-    }
+    if (_response != null) return _response.bodyBytes;
 
     return null;
   }
