@@ -106,16 +106,21 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       debugPrint(e.toString());
     }
 
-    Uint8List imageData = await _loadFromRemote(
-        key.url, key.header, key.retryLimit, key.retryDuration);
-    if (imageData != null) {
-      if (key.loadedCallback != null) key.loadedCallback();
-      return await ui.instantiateImageCodec(imageData);
-    }
+    try {
+      Uint8List imageData = await _loadFromRemote(
+          key.url, key.header, key.retryLimit, key.retryDuration);
+      if (imageData != null) {
+        if (key.loadedCallback != null) key.loadedCallback();
+        return await ui.instantiateImageCodec(imageData);
+      }
 
-    debugPrint('Failed to load $url.');
-    if (key.loadFailedCallback != null) key.loadFailedCallback();
-    return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
+      debugPrint('Failed to load $url.');
+      if (key.loadFailedCallback != null) key.loadFailedCallback();
+      return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
+    } catch (e) {
+      print("Error when requesting remote: " + e.message);
+      return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
+    }
   }
 
   /// Load the disk cache
