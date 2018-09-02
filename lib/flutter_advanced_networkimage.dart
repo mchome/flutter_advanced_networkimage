@@ -115,7 +115,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     debugPrint('Failed to load $url.');
     if (key.loadFailedCallback != null) key.loadFailedCallback();
-    return await ui.instantiateImageCodec(key.fallbackImage ?? featureImage);
+    return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
   }
 
   /// Load the disk cache

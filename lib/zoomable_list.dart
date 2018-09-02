@@ -1,7 +1,5 @@
 library zoomable_list;
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
@@ -79,13 +77,6 @@ class _ZoomableListState extends State<ZoomableList>
   initState() {
     _controller =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Timer(const Duration(microseconds: 10), () {
-        setState(() {});
-        final RenderBox box = widget.childKey.currentContext.findRenderObject();
-        _containerSize = box.size;
-      });
-    });
     super.initState();
   }
 

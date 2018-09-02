@@ -269,10 +269,9 @@ class _TransitionToImageState extends State<TransitionToImage>
     _imageInfo.image
         .toByteData(format: ImageByteFormat.png)
         .then((ByteData data) {
-      if (ListEquality().equals(data.buffer.asUint8List(), featureImage)) {
-        setState(() {
-          _loadFailed = true;
-        });
+      if (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
+          ListEquality().equals(data.buffer.asUint8List(), emptyImage2)) {
+        setState(() => _loadFailed = true);
       }
     });
     _resolveStatus();
