@@ -42,7 +42,7 @@ class Example extends State<MyApp> {
                 Tab(text: 'load image'),
                 Tab(text: 'zooming'),
                 Tab(text: 'widget list'),
-                Tab(text: 'crop image'),
+                Tab(text: 'crop image(WIP)'),
                 // Tab(text: 'cropped image'),
               ],
             ),
