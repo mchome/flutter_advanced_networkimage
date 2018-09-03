@@ -266,15 +266,17 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   _updateImage(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
-    _imageInfo.image
-        .toByteData(format: ImageByteFormat.png)
-        .then((ByteData data) {
-      if (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
-          ListEquality().equals(data.buffer.asUint8List(), emptyImage2)) {
-        setState(() => _loadFailed = true);
-      }
-    });
-    _resolveStatus();
+    if (_imageInfo != null) {
+      _imageInfo.image
+          .toByteData(format: ImageByteFormat.png)
+          .then((ByteData data) {
+        if (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
+            ListEquality().equals(data.buffer.asUint8List(), emptyImage2)) {
+          setState(() => _loadFailed = true);
+        }
+      });
+      _resolveStatus();
+    }
   }
 
   @override
