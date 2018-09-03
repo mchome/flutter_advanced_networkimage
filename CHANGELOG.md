@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.8]
+
+- Check if `_imageInfo is null.
+
 ## [0.3.7]
 
 - Give the cache file path.

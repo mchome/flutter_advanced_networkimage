@@ -244,7 +244,9 @@ class _TransitionToImageState extends State<TransitionToImage>
     final ImageStream oldImageStream = _imageStream;
     _imageStream =
         _imageProvider.resolve(createLocalImageConfiguration(context));
-    if (_imageInfo != null && !reload && (_imageStream.key == oldImageStream?.key)) {
+    if (_imageInfo != null &&
+        !reload &&
+        (_imageStream.key == oldImageStream?.key)) {
       setState(() => _status = _TransitionStatus.completed);
     } else {
       if (reload) {
