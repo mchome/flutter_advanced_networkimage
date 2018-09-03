@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7]
+
+- Give the cache file path.
+- Fix `TransitionToImage` BoxFit behaves.
+- Better impl on retry feature.
+- Remove quiver dependency.
+
 ## [0.3.6]
 
 - Add `fallbackImage` in `AdvancedNetworkImage`.
