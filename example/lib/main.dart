@@ -8,7 +8,11 @@ import 'package:flutter_advanced_networkimage/zoomable_widget.dart';
 import 'package:flutter_advanced_networkimage/zoomable_list.dart';
 import 'package:flutter_advanced_networkimage/image_cropper.dart';
 
-main() => runApp(MyApp());
+main() => runApp(MaterialApp(
+      title: 'Flutter Example',
+      theme: ThemeData(primaryColor: Colors.blue),
+      home: MyApp(),
+    ));
 
 class MyApp extends StatefulWidget {
   @override
@@ -19,20 +23,11 @@ class Example extends State<MyApp> {
   ByteData imageCropperData;
   ValueChanged<ByteData> onImageCropperChanged;
 
-  cropImage(ByteData data) {
-    setState(() {
-      imageCropperData = data;
-    });
-  }
+  cropImage(ByteData data) => setState(() => imageCropperData = data);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: DefaultTabController(
+    return DefaultTabController(
         length: 4,
         child: Scaffold(
           appBar: AppBar(
@@ -120,7 +115,6 @@ class Example extends State<MyApp> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

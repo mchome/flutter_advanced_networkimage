@@ -160,8 +160,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         try {
           http.Response res = await f();
           if (res != null) {
-            if (res.statusCode == 200) return res;
-            else debugPrint('Load error, response status code: ' + res.statusCode.toString());
+            if (res.statusCode == 200)
+              return res;
+            else
+              debugPrint('Load error, response status code: ' +
+                  res.statusCode.toString());
           }
         } catch (_) {}
         await Future.delayed(retryDuration);
