@@ -2,9 +2,14 @@
 
 library disk_cache;
 
-class Cache {
-  bool simpleCache = true;
-  Map cacheConfig = {};
+class DiskCache {
+  bool simpleCache = false;
+  Map cacheConfig = {
+    'maxSize': null,
+    'maxEntries': null,
+    'maxAge': null,
+    'compress': false,
+  };
   List cachedFiles = [];
 
   getFiles(List key) {}
@@ -14,4 +19,4 @@ class Cache {
   removeFiles(List key) {}
 }
 
-Cache cache = Cache();
+DiskCache diskCache = DiskCache();

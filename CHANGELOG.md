@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.9]
+
+- Update http dependency.
+- Catch the bad images from remote
+
 ## [0.3.8]
 
 - Check if `_imageInfo` is null.

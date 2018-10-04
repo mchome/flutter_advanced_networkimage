@@ -8,3 +8,4 @@ packages
 pubspec.lock
 .vscode/
 *.log
+tmp/
