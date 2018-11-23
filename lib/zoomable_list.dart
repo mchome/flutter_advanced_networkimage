@@ -3,26 +3,6 @@ library zoomable_list;
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-class _ZoomableListLayout extends MultiChildLayoutDelegate {
-  _ZoomableListLayout();
-
-  static final String gestureContainer = 'gesturecontainer';
-  static final String painter = 'painter';
-
-  @override
-  void performLayout(Size size) {
-    layoutChild(gestureContainer,
-        BoxConstraints.tightFor(width: size.width, height: size.height));
-    positionChild(gestureContainer, Offset.zero);
-    layoutChild(painter,
-        BoxConstraints.tightFor(width: size.width, height: size.height));
-    positionChild(painter, Offset.zero);
-  }
-
-  @override
-  bool shouldRelayout(_ZoomableListLayout oldDelegate) => false;
-}
-
 class ZoomableList extends StatefulWidget {
   ZoomableList({
     Key key,
@@ -199,4 +179,24 @@ class _ZoomableListState extends State<ZoomableList>
       }),
     );
   }
+}
+
+class _ZoomableListLayout extends MultiChildLayoutDelegate {
+  _ZoomableListLayout();
+
+  static final String gestureContainer = 'gesturecontainer';
+  static final String painter = 'painter';
+
+  @override
+  void performLayout(Size size) {
+    layoutChild(gestureContainer,
+        BoxConstraints.tightFor(width: size.width, height: size.height));
+    positionChild(gestureContainer, Offset.zero);
+    layoutChild(painter,
+        BoxConstraints.tightFor(width: size.width, height: size.height));
+    positionChild(painter, Offset.zero);
+  }
+
+  @override
+  bool shouldRelayout(_ZoomableListLayout oldDelegate) => false;
 }
