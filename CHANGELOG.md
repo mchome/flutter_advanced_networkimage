@@ -1,9 +1,14 @@
 # Changelog
 
+## [0.3.10]
+
+- Improve zoomable_widget's bounce animation.
+- Fix the placeholder stretched issue.
+
 ## [0.3.9]
 
 - Update http dependency.
-- Catch the bad images from remote
+- Catch the bad images from remote.
 
 ## [0.3.8]
 

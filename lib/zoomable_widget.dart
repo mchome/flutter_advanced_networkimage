@@ -136,8 +136,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
           double _heightFactor =
               sqrt(_marginOffset.dy.abs()) / _marginSize.height;
           _marginOffset = Offset(
-            _marginOffset.dx * _widthFactor,
-            _marginOffset.dy * _heightFactor,
+            _marginOffset.dx * _widthFactor * 2,
+            _marginOffset.dy * _heightFactor * 2,
           );
           _panOffset = _baseOffset + _marginOffset;
         }
@@ -149,7 +149,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     Size _boundarySize =
         Size(_containerSize.width / 2, _containerSize.height / 2);
     Animation _animation =
-        CurvedAnimation(parent: _bounceController, curve: Curves.bounceInOut);
+        CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut);
     Offset _borderOffset = Offset(
       _panOffset.dx.clamp(
         -_boundarySize.width / _zoom * widget.panLimit,
