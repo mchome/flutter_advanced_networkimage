@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.11]
+
+- Fix `TransitionToImage` BoxFit again.
+
 ## [0.3.10]
 
 - Improve zoomable_widget's bounce animation.
@@ -17,7 +21,7 @@
 ## [0.3.7]
 
 - Give the cache file path.
-- Fix `TransitionToImage` BoxFit behaves.
+- Fix `TransitionToImage` BoxFit behavior.
 - Better impl on retry feature.
 - Remove quiver dependency.
 

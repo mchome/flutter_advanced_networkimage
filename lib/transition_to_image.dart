@@ -285,26 +285,24 @@ class _TransitionToImageState extends State<TransitionToImage>
       width: widget.width,
       height: widget.height,
       color: Color(0),
-      child: Center(
-        child: (_loadFailed)
-            ? (widget.enableRefresh)
-                ? GestureDetector(
-                    onTap: () => _getImage(reload: true),
-                    child: widget.placeholder,
-                  )
-                : widget.placeholder
-            : (_status == _TransitionStatus.loading)
-                ? widget.loadingWidget
-                : (widget.transitionType == TransitionType.fade)
-                    ? FadeTransition(
-                        opacity: _fadeTween.animate(_animation),
-                        child: _child(),
-                      )
-                    : SlideTransition(
-                        position: _slideTween.animate(_animation),
-                        child: _child(),
-                      ),
-      ),
+      child: (_loadFailed)
+          ? (widget.enableRefresh)
+              ? GestureDetector(
+                  onTap: () => _getImage(reload: true),
+                  child: Center(child: widget.placeholder),
+                )
+              : Center(child: widget.placeholder)
+          : (_status == _TransitionStatus.loading)
+              ? Center(child: widget.loadingWidget)
+              : (widget.transitionType == TransitionType.fade)
+                  ? FadeTransition(
+                      opacity: _fadeTween.animate(_animation),
+                      child: _child(),
+                    )
+                  : SlideTransition(
+                      position: _slideTween.animate(_animation),
+                      child: _child(),
+                    ),
     );
   }
 
