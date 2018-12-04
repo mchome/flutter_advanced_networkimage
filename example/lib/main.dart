@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+// import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -6,7 +6,7 @@ import 'package:flutter_advanced_networkimage/flutter_advanced_networkimage.dart
 import 'package:flutter_advanced_networkimage/transition_to_image.dart';
 import 'package:flutter_advanced_networkimage/zoomable_widget.dart';
 import 'package:flutter_advanced_networkimage/zoomable_list.dart';
-import 'package:flutter_advanced_networkimage/image_cropper.dart';
+// import 'package:flutter_advanced_networkimage/image_cropper.dart';
 
 main() => runApp(MaterialApp(
       title: 'Flutter Example',
@@ -20,15 +20,15 @@ class MyApp extends StatefulWidget {
 }
 
 class Example extends State<MyApp> {
-  ByteData imageCropperData;
-  ValueChanged<ByteData> onImageCropperChanged;
+  // ByteData imageCropperData;
+  // ValueChanged<ByteData> onImageCropperChanged;
 
-  cropImage(ByteData data) => setState(() => imageCropperData = data);
+  // cropImage(ByteData data) => setState(() => imageCropperData = data);
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Flutter Advanced Network Image Example'),
@@ -37,7 +37,7 @@ class Example extends State<MyApp> {
               Tab(text: 'load image'),
               Tab(text: 'zooming'),
               Tab(text: 'widget list'),
-              Tab(text: 'crop image(WIP)'),
+              // Tab(text: 'crop image(WIP)'),
               // Tab(text: 'cropped image'),
             ],
           ),
@@ -72,6 +72,9 @@ class Example extends State<MyApp> {
                   'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
                 ),
               ),
+              onZoomStateChanged: (double value) {
+                print(value);
+              },
             ),
 
             Builder(builder: (BuildContext context) {
@@ -105,12 +108,12 @@ class Example extends State<MyApp> {
               );
             }),
 
-            ImageCropper(
-              AdvancedNetworkImage(
-                'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
-              ),
-              onImageCropperChanged: cropImage,
-            ),
+            // ImageCropper(
+            //   AdvancedNetworkImage(
+            //     'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+            //   ),
+            //   onImageCropperChanged: cropImage,
+            // ),
             // Container(
             //   color: Colors.limeAccent,
             //   child: imageCropperData != null

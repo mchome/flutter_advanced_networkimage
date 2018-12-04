@@ -17,6 +17,7 @@ class ZoomableWidget extends StatefulWidget {
     this.onTap,
     this.zoomSteps: 0,
     this.bounceBackBoundary: true,
+    this.onZoomStateChanged,
   })  : assert(minScale != null),
         assert(maxScale != null),
         assert(enableZoom != null);
@@ -50,6 +51,9 @@ class ZoomableWidget extends StatefulWidget {
 
   /// Enable the bounce-back boundary.
   final bool bounceBackBoundary;
+
+  /// When the scale value changed, the callback will be invoked.
+  final ValueChanged<double> onZoomStateChanged;
 
   @override
   _ZoomableWidgetState createState() => _ZoomableWidgetState();
@@ -107,6 +111,9 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
       setState(() {
         _zoom = (_previewZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
+        if (widget.onZoomStateChanged != null) {
+          widget.onZoomStateChanged(_zoom);
+        }
       });
     }
     if ((widget.singleFingerPan && details.scale == 1.0) ||
@@ -179,7 +186,12 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     double _tmpZoom = _zoom + _stepLength;
     if (_tmpZoom > widget.maxScale || _stepLength == 0.0) _tmpZoom = 1.0;
     _zoomAnimation = Tween(begin: _tmpZoom, end: _zoom).animate(_animation)
-      ..addListener(() => setState(() => _zoom = _zoomAnimation.value));
+      ..addListener(() => setState(() {
+            _zoom = _zoomAnimation.value;
+            if (widget.onZoomStateChanged != null) {
+              widget.onZoomStateChanged(_zoom);
+            }
+          }));
     if (_tmpZoom == 1.0) {
       _panOffsetAnimation = Tween(begin: Offset.zero, end: _panOffset)
           .animate(_animation2)

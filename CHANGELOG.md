@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.12]
+
+- Add `onZoomStateChanged` callback in `zoomable_widget`.
+
 ## [0.3.11]
 
 - Fix `TransitionToImage` BoxFit again.
