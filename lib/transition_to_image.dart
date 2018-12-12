@@ -128,10 +128,10 @@ class TransitionToImage extends StatefulWidget {
   /// scope.
   final bool matchTextDirection;
 
-  /// Widget displayed while the target [image] is loading.
+  /// Widget displayed when the target [image] is loading.
   final Widget loadingWidget;
 
-  /// Enable a interior  [GestureDetector] for manually refreshing.
+  /// Enable an internal [GestureDetector] for manually refreshing.
   final bool enableRefresh;
 
   reloadImage() {
@@ -184,8 +184,10 @@ class _TransitionToImageState extends State<TransitionToImage>
     }
     _reloadListeners.removeWhere((listener) =>
         listener.keys.first == _imageProvider.hashCode.toString());
-    _reloadListeners.add(
-        {_imageProvider.hashCode.toString(): () => _getImage(reload: true)});
+    if (widget.enableRefresh) {
+      _reloadListeners.add(
+          {_imageProvider.hashCode.toString(): () => _getImage(reload: true)});
+    }
     super.initState();
   }
 
@@ -270,8 +272,8 @@ class _TransitionToImageState extends State<TransitionToImage>
       _imageInfo.image
           .toByteData(format: ImageByteFormat.png)
           .then((ByteData data) {
-        if (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
-            ListEquality().equals(data.buffer.asUint8List(), emptyImage2)) {
+        if (this.mounted && (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
+            ListEquality().equals(data.buffer.asUint8List(), emptyImage2))) {
           setState(() => _loadFailed = true);
         }
       });
