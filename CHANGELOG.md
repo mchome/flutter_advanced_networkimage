@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.13]
+
+- Add `autoCenter` in `zoomable_widget`.
+- Check the widget mount state `TransitionToImage`.
+
 ## [0.3.12]
 
 - Add `onZoomStateChanged` callback in `zoomable_widget`.

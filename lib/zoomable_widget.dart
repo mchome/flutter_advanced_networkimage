@@ -16,6 +16,7 @@ class ZoomableWidget extends StatefulWidget {
     this.child,
     this.onTap,
     this.zoomSteps: 0,
+    this.autoCenter: false,
     this.bounceBackBoundary: true,
     this.onZoomStateChanged,
   })  : assert(minScale != null),
@@ -48,6 +49,9 @@ class ZoomableWidget extends StatefulWidget {
 
   /// Allow users to zoom with double tap steps by steps.
   final int zoomSteps;
+
+  /// Center offset when zooming to min scale.
+  final bool autoCenter;
 
   /// Enable the bounce-back boundary.
   final bool bounceBackBoundary;
@@ -118,37 +122,35 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     }
     if ((widget.singleFingerPan && details.scale == 1.0) ||
         (widget.multiFingersPan && details.scale != 1.0)) {
-      setState(() {
-        Offset _panRealOffset = (details.focalPoint -
-                _zoomOriginOffset +
-                _previewPanOffset * _previewZoom) /
-            _zoom;
+      Offset _panRealOffset = (details.focalPoint -
+              _zoomOriginOffset +
+              _previewPanOffset * _previewZoom) /
+          _zoom;
 
-        if (widget.panLimit == 0.0) {
-          _panOffset = _panRealOffset;
-        } else {
-          Offset _baseOffset = Offset(
-              _panRealOffset.dx.clamp(
-                -_boundarySize.width / _zoom * widget.panLimit,
-                _boundarySize.width / _zoom * widget.panLimit,
-              ),
-              _panRealOffset.dy.clamp(
-                -_boundarySize.height / _zoom * widget.panLimit,
-                _boundarySize.height / _zoom * widget.panLimit,
-              ));
+      if (widget.panLimit == 0.0) {
+        _panOffset = _panRealOffset;
+      } else {
+        Offset _baseOffset = Offset(
+            _panRealOffset.dx.clamp(
+              -_boundarySize.width / _zoom * widget.panLimit,
+              _boundarySize.width / _zoom * widget.panLimit,
+            ),
+            _panRealOffset.dy.clamp(
+              -_boundarySize.height / _zoom * widget.panLimit,
+              _boundarySize.height / _zoom * widget.panLimit,
+            ));
 
-          Offset _marginOffset = _panRealOffset - _baseOffset;
-          double _widthFactor =
-              sqrt(_marginOffset.dx.abs()) / _marginSize.width;
-          double _heightFactor =
-              sqrt(_marginOffset.dy.abs()) / _marginSize.height;
-          _marginOffset = Offset(
-            _marginOffset.dx * _widthFactor * 2,
-            _marginOffset.dy * _heightFactor * 2,
-          );
-          _panOffset = _baseOffset + _marginOffset;
-        }
-      });
+        Offset _marginOffset = _panRealOffset - _baseOffset;
+        double _widthFactor = sqrt(_marginOffset.dx.abs()) / _marginSize.width;
+        double _heightFactor =
+            sqrt(_marginOffset.dy.abs()) / _marginSize.height;
+        _marginOffset = Offset(
+          _marginOffset.dx * _widthFactor * 2,
+          _marginOffset.dy * _heightFactor * 2,
+        );
+        _panOffset = _baseOffset + _marginOffset;
+      }
+      setState(() {});
     }
   }
 
@@ -167,6 +169,9 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
         _boundarySize.height / _zoom * widget.panLimit,
       ),
     );
+    if (_zoom == widget.minScale && widget.autoCenter) {
+      _borderOffset = Offset.zero;
+    }
     _bounceAnimation = Tween(begin: _panOffset, end: _borderOffset).animate(
         _animation)
       ..addListener(() => setState(() => _panOffset = _bounceAnimation.value));
