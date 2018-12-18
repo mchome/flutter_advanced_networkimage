@@ -7,6 +7,7 @@ import 'package:collection/collection.dart' show ListEquality;
 import 'package:flutter/material.dart';
 
 import 'package:flutter_advanced_networkimage/utils.dart';
+import 'package:flutter_advanced_networkimage/data.dart';
 
 class TransitionToImage extends StatefulWidget {
   const TransitionToImage(
@@ -135,7 +136,7 @@ class TransitionToImage extends StatefulWidget {
   final bool enableRefresh;
 
   reloadImage() {
-    _reloadListeners.forEach((listener) {
+    Data().reloadListeners.forEach((listener) {
       if (listener.keys.first == image.hashCode.toString()) {
         (listener.values.first)();
       }
@@ -182,10 +183,10 @@ class _TransitionToImageState extends State<TransitionToImage>
       _slideTween = widget.tween ??
           Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
     }
-    _reloadListeners.removeWhere((listener) =>
+    Data().reloadListeners.removeWhere((listener) =>
         listener.keys.first == _imageProvider.hashCode.toString());
     if (widget.enableRefresh) {
-      _reloadListeners.add(
+      Data().reloadListeners.add(
           {_imageProvider.hashCode.toString(): () => _getImage(reload: true)});
     }
     super.initState();
@@ -207,7 +208,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   dispose() {
     _imageStream.removeListener(_updateImage);
     _controller.dispose();
-    _reloadListeners.removeWhere((listener) =>
+    Data().reloadListeners.removeWhere((listener) =>
         listener.keys.first == _imageProvider.hashCode.toString());
     super.dispose();
   }
@@ -269,14 +270,18 @@ class _TransitionToImageState extends State<TransitionToImage>
   _updateImage(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
     if (_imageInfo != null) {
-      _imageInfo.image
-          .toByteData(format: ImageByteFormat.png)
-          .then((ByteData data) {
-        if (this.mounted && (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
-            ListEquality().equals(data.buffer.asUint8List(), emptyImage2))) {
-          setState(() => _loadFailed = true);
-        }
-      });
+      if (_status != _TransitionStatus.completed) {
+        _imageInfo.image
+            .toByteData(format: ImageByteFormat.png)
+            .then((ByteData data) {
+          if (this.mounted &&
+              (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
+                  ListEquality()
+                      .equals(data.buffer.asUint8List(), emptyImage2))) {
+            setState(() => _loadFailed = true);
+          }
+        });
+      }
       _resolveStatus();
     }
   }
@@ -321,6 +326,3 @@ class _TransitionToImageState extends State<TransitionToImage>
     );
   }
 }
-
-/// Store reload listeners
-List<Map<String, Function>> _reloadListeners = List<Map<String, Function>>();
