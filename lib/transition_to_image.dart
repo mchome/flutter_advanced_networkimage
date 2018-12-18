@@ -205,6 +205,12 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   @override
+  reassemble() {
+    _getImage();
+    super.reassemble();
+  }
+
+  @override
   dispose() {
     _imageStream.removeListener(_updateImage);
     _controller.dispose();
@@ -245,8 +251,10 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   _getImage({bool reload: false}) {
     final ImageStream oldImageStream = _imageStream;
-    _imageStream =
-        _imageProvider.resolve(createLocalImageConfiguration(context));
+    _imageStream = _imageProvider.resolve(createLocalImageConfiguration(context,
+        size: widget.width != null && widget.height != null
+            ? Size(widget.width, widget.height)
+            : null));
     if (_imageInfo != null &&
         !reload &&
         (_imageStream.key == oldImageStream?.key)) {
