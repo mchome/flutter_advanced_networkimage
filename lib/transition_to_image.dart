@@ -312,25 +312,30 @@ class _TransitionToImageState extends State<TransitionToImage>
               : (widget.transitionType == TransitionType.fade)
                   ? FadeTransition(
                       opacity: _fadeTween.animate(_animation),
-                      child: _child(),
+                      child: RawImage(
+                        image: _imageInfo.image,
+                        width: widget.width,
+                        height: widget.height,
+                        colorBlendMode: widget.blendMode,
+                        fit: widget.fit,
+                        alignment: widget.alignment,
+                        repeat: widget.repeat,
+                        matchTextDirection: widget.matchTextDirection,
+                      ),
                     )
                   : SlideTransition(
                       position: _slideTween.animate(_animation),
-                      child: _child(),
+                      child: RawImage(
+                        image: _imageInfo.image,
+                        width: widget.width,
+                        height: widget.height,
+                        colorBlendMode: widget.blendMode,
+                        fit: widget.fit,
+                        alignment: widget.alignment,
+                        repeat: widget.repeat,
+                        matchTextDirection: widget.matchTextDirection,
+                      ),
                     ),
-    );
-  }
-
-  Widget _child() {
-    return RawImage(
-      image: _imageInfo.image,
-      width: widget.width,
-      height: widget.height,
-      colorBlendMode: widget.blendMode,
-      fit: widget.fit,
-      alignment: widget.alignment,
-      repeat: widget.repeat,
-      matchTextDirection: widget.matchTextDirection,
     );
   }
 }
