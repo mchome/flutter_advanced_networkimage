@@ -231,7 +231,14 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
           child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints box) {
             _containerSize = Size(box.minWidth, box.minHeight);
-            return _child(widget.child);
+            return Transform(
+              alignment: Alignment.center,
+              origin: Offset(-_panOffset.dx, -_panOffset.dy),
+              transform: Matrix4.identity()
+                ..translate(_panOffset.dx, _panOffset.dy)
+                ..scale(_zoom, _zoom),
+              child: widget.child,
+            );
           }),
         ),
         LayoutId(
@@ -246,17 +253,6 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _child(Widget _child) {
-    return Transform(
-      alignment: Alignment.center,
-      origin: Offset(-_panOffset.dx, -_panOffset.dy),
-      transform: Matrix4.identity()
-        ..translate(_panOffset.dx, _panOffset.dy)
-        ..scale(_zoom, _zoom),
-      child: _child,
     );
   }
 }

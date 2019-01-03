@@ -145,7 +145,23 @@ class _ZoomableListState extends State<ZoomableList>
       children: <Widget>[
         LayoutId(
           id: _ZoomableListLayout.painter,
-          child: _child(widget.child),
+          child: OverflowBox(
+            alignment: Alignment.topCenter,
+            maxWidth: widget.maxWidth,
+            maxHeight: widget.maxHeight,
+            child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints box) {
+              _widgetSize = Size(box.minWidth, box.minHeight);
+              return Transform(
+                origin: Offset(_containerSize.width / 2 - _panOffset.dx,
+                    _widgetSize.height / 2 - _panOffset.dy),
+                transform: Matrix4.identity()
+                  ..translate(_panOffset.dx, _panOffset.dy)
+                  ..scale(_zoom, _zoom),
+                child: widget.child,
+              );
+            }),
+          ),
         ),
         LayoutId(
           id: _ZoomableListLayout.gestureContainer,
@@ -158,25 +174,6 @@ class _ZoomableListState extends State<ZoomableList>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _child(Widget _child) {
-    return OverflowBox(
-      alignment: Alignment.topCenter,
-      maxWidth: widget.maxWidth,
-      maxHeight: widget.maxHeight,
-      child: LayoutBuilder(builder: (BuildContext context, BoxConstraints box) {
-        _widgetSize = Size(box.minWidth, box.minHeight);
-        return Transform(
-          origin: Offset(_containerSize.width / 2 - _panOffset.dx,
-              _widgetSize.height / 2 - _panOffset.dy),
-          transform: Matrix4.identity()
-            ..translate(_panOffset.dx, _panOffset.dy)
-            ..scale(_zoom, _zoom),
-          child: _child,
-        );
-      }),
     );
   }
 }
