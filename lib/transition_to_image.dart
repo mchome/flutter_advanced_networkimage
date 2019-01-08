@@ -1,18 +1,13 @@
 library transition_to_image;
 
-import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:collection/collection.dart' show ListEquality;
 import 'package:flutter/material.dart';
 
-import 'package:flutter_advanced_networkimage/utils.dart';
-import 'package:flutter_advanced_networkimage/data.dart';
-
 class TransitionToImage extends StatefulWidget {
-  const TransitionToImage(
-    this.image, {
+  const TransitionToImage({
     Key key,
+    @required this.image,
     this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -26,7 +21,7 @@ class TransitionToImage extends StatefulWidget {
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
     this.loadingWidget = const CircularProgressIndicator(),
-    this.enableRefresh: true,
+    this.enableRefresh: false,
   })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
@@ -135,19 +130,12 @@ class TransitionToImage extends StatefulWidget {
   /// Enable an internal [GestureDetector] for manually refreshing.
   final bool enableRefresh;
 
-  reloadImage() {
-    Data().reloadListeners.forEach((listener) {
-      if (listener.keys.first == image.hashCode.toString()) {
-        (listener.values.first)();
-      }
-    });
-  }
-
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
 }
 
 enum _TransitionStatus {
+  start,
   loading,
   animating,
   completed,
@@ -169,12 +157,12 @@ class _TransitionToImageState extends State<TransitionToImage>
   ImageInfo _imageInfo;
   bool _loadFailed = false;
 
-  _TransitionStatus _status = _TransitionStatus.loading;
+  _TransitionStatus _status = _TransitionStatus.start;
 
   ImageProvider get _imageProvider => widget.image;
 
   @override
-  initState() {
+  void initState() {
     _controller = AnimationController(vsync: this, duration: widget.duration)
       ..addListener(() => setState(() {}));
     if (widget.transitionType == TransitionType.fade) {
@@ -183,51 +171,49 @@ class _TransitionToImageState extends State<TransitionToImage>
       _slideTween = widget.tween ??
           Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
     }
-    Data().reloadListeners.removeWhere((listener) =>
-        listener.keys.first == _imageProvider.hashCode.toString());
-    if (widget.enableRefresh) {
-      Data().reloadListeners.add(
-          {_imageProvider.hashCode.toString(): () => _getImage(reload: true)});
-    }
     super.initState();
   }
 
   @override
-  didChangeDependencies() {
+  void didChangeDependencies() {
     _getImage();
     super.didChangeDependencies();
   }
 
   @override
-  didUpdateWidget(TransitionToImage oldWidget) {
+  void didUpdateWidget(TransitionToImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.image != oldWidget.image) _getImage();
   }
 
   @override
-  reassemble() {
+  void reassemble() {
     _getImage();
     super.reassemble();
   }
 
   @override
-  dispose() {
+  void dispose() {
     _imageStream.removeListener(_updateImage);
     _controller.dispose();
-    Data().reloadListeners.removeWhere((listener) =>
-        listener.keys.first == _imageProvider.hashCode.toString());
     super.dispose();
   }
 
-  _resolveStatus() {
-    try {
-      setState(() {});
-    } catch (_) {
-      _imageStream?.removeListener(_updateImage);
-      return;
-    }
+  void _resolveStatus() {
     setState(() {
       switch (_status) {
+        case _TransitionStatus.start:
+          if (_imageInfo == null) {
+            _status = _TransitionStatus.loading;
+          } else {
+            _animation = CurvedAnimation(
+              parent: _controller,
+              curve: widget.curve,
+            );
+            _controller.forward(from: 1.0);
+            _status = _TransitionStatus.completed;
+          }
+          break;
         case _TransitionStatus.loading:
           if (_imageInfo != null) {
             _controller.duration = widget.duration;
@@ -244,12 +230,13 @@ class _TransitionToImageState extends State<TransitionToImage>
             _status = _TransitionStatus.completed;
           break;
         case _TransitionStatus.completed:
+          _imageStream.removeListener(_updateImage);
           break;
       }
     });
   }
 
-  _getImage({bool reload: false}) {
+  void _getImage({bool reload: false}) {
     final ImageStream oldImageStream = _imageStream;
     _imageStream = _imageProvider.resolve(createLocalImageConfiguration(context,
         size: widget.width != null && widget.height != null
@@ -263,53 +250,44 @@ class _TransitionToImageState extends State<TransitionToImage>
       if (reload) {
         debugPrint('Reloading image.');
         _imageProvider.evict();
-        _imageStream =
-            _imageProvider.resolve(createLocalImageConfiguration(context));
       }
       setState(() {
-        _status = _TransitionStatus.loading;
+        _status = _TransitionStatus.start;
         _loadFailed = false;
       });
       oldImageStream?.removeListener(_updateImage);
-      _imageStream.addListener(_updateImage);
-    }
-  }
-
-  _updateImage(ImageInfo info, bool synchronousCall) {
-    _imageInfo = info;
-    if (_imageInfo != null) {
-      if (_status != _TransitionStatus.completed) {
-        _imageInfo.image
-            .toByteData(format: ImageByteFormat.png)
-            .then((ByteData data) {
-          if (this.mounted &&
-              (ListEquality().equals(data.buffer.asUint8List(), emptyImage) ||
-                  ListEquality()
-                      .equals(data.buffer.asUint8List(), emptyImage2))) {
-            setState(() => _loadFailed = true);
-          }
-        });
-      }
+      _imageStream.addListener(_updateImage, onError: _catchBadImage);
       _resolveStatus();
     }
   }
 
+  void _updateImage(ImageInfo info, bool synchronousCall) {
+    _imageInfo = info;
+    if (_imageInfo != null) _resolveStatus();
+  }
+
+  void _catchBadImage(dynamic exception, StackTrace stackTrace) {
+    debugPrint(exception.toString());
+    setState(() => _loadFailed = true);
+    _resolveStatus();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: widget.width,
       height: widget.height,
-      color: Color(0),
-      child: (_loadFailed)
-          ? (widget.enableRefresh)
+      child: _loadFailed
+          ? widget.enableRefresh
               ? GestureDetector(
                   onTap: () => _getImage(reload: true),
                   child: Center(child: widget.placeholder),
                 )
               : Center(child: widget.placeholder)
-          : (_status == _TransitionStatus.loading)
+          : _status == _TransitionStatus.start ||
+                  _status == _TransitionStatus.loading
               ? Center(child: widget.loadingWidget)
-              : (widget.transitionType == TransitionType.fade)
+              : widget.transitionType == TransitionType.fade
                   ? FadeTransition(
                       opacity: _fadeTween.animate(_animation),
                       child: RawImage(

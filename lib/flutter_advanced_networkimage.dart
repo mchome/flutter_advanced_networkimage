@@ -14,8 +14,6 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'package:flutter_advanced_networkimage/utils.dart';
-
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   const AdvancedNetworkImage(
     this.url, {
@@ -117,9 +115,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       }
     }
 
-    debugPrint('Failed to load $url.');
     if (key.loadFailedCallback != null) key.loadFailedCallback();
-    return await ui.instantiateImageCodec(key.fallbackImage ?? emptyImage);
+    if (key.fallbackImage != null)
+      return await ui.instantiateImageCodec(key.fallbackImage);
+
+    throw Exception('Failed to load $url.');
   }
 
   /// Load the disk cache
@@ -164,7 +164,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         try {
           http.Response res = await f();
           if (res != null) {
-            if (res.statusCode == 200)
+            if (res.statusCode == HttpStatus.ok)
               return res;
             else
               debugPrint('Load error, response status code: ' +

@@ -46,7 +46,7 @@ class Example extends State<MyApp> {
           physics: NeverScrollableScrollPhysics(),
           children: <Widget>[
             TransitionToImage(
-              AdvancedNetworkImage(
+              image: AdvancedNetworkImage(
                 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
                 loadedCallback: () => print('It works!'),
                 loadFailedCallback: () => print('Oh, no!'),

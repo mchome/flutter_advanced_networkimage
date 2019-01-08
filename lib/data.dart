@@ -7,7 +7,4 @@ class Data {
   }
 
   Data._internal();
-
-  /// Store reload listeners
-  List<Map<String, Function>> reloadListeners = List<Map<String, Function>>();
 }
