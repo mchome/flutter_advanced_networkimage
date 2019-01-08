@@ -1,12 +1,10 @@
-library advanced_networkimage;
+library advanced_networksvg;
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' show hashValues;
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -16,8 +14,8 @@ import 'package:path_provider/path_provider.dart';
 
 class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   const AdvancedNetworkSvg(
-    this.decoder,
-    this.url, {
+    this.url,
+    this.decoder, {
     this.scale: 1.0,
     this.header,
     this.colorFilter,
@@ -34,11 +32,11 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
         assert(retryLimit != null),
         assert(retryDuration != null);
 
-  /// The decoder provided by flutter_svg (svgByteDecoder or svgByteDecoderOutsideViewBox)
-  final PictureInfoDecoder<Uint8List> decoder;
-
   /// The URL from which the image will be fetched.
   final String url;
+
+  /// The decoder provided by flutter_svg (svgByteDecoder or svgByteDecoderOutsideViewBox)
+  final PictureInfoDecoder<Uint8List> decoder;
 
   /// The scale to place in the [ImageInfo] object of the image.
   final double scale;
@@ -197,8 +195,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     return null;
   }
 
-  String _uid(String str) =>
-      md5.convert(utf8.encode(str)).toString().toLowerCase().substring(0, 9);
+  String _uid(String str) => str.hashCode.toString();
 
   @override
   bool operator ==(dynamic other) {

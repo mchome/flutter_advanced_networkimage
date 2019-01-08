@@ -171,6 +171,7 @@ class _TransitionToImageState extends State<TransitionToImage>
       _slideTween = widget.tween ??
           Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
     }
+    _animation = CurvedAnimation(parent: _controller, curve: widget.curve);
     super.initState();
   }
 
@@ -206,21 +207,12 @@ class _TransitionToImageState extends State<TransitionToImage>
           if (_imageInfo == null) {
             _status = _TransitionStatus.loading;
           } else {
-            _animation = CurvedAnimation(
-              parent: _controller,
-              curve: widget.curve,
-            );
-            _controller.forward(from: 1.0);
             _status = _TransitionStatus.completed;
+            _controller.forward(from: 1.0);
           }
           break;
         case _TransitionStatus.loading:
           if (_imageInfo != null) {
-            _controller.duration = widget.duration;
-            _animation = CurvedAnimation(
-              parent: _controller,
-              curve: widget.curve,
-            );
             _status = _TransitionStatus.animating;
             _controller.forward(from: 0.0);
           }
@@ -237,6 +229,10 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   void _getImage({bool reload: false}) {
+    if (reload) {
+      debugPrint('Reloading image.');
+      _imageProvider.evict();
+    }
     final ImageStream oldImageStream = _imageStream;
     _imageStream = _imageProvider.resolve(createLocalImageConfiguration(context,
         size: widget.width != null && widget.height != null
@@ -247,10 +243,6 @@ class _TransitionToImageState extends State<TransitionToImage>
         (_imageStream.key == oldImageStream?.key)) {
       setState(() => _status = _TransitionStatus.completed);
     } else {
-      if (reload) {
-        debugPrint('Reloading image.');
-        _imageProvider.evict();
-      }
       setState(() {
         _status = _TransitionStatus.start;
         _loadFailed = false;
@@ -274,9 +266,10 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: widget.width,
       height: widget.height,
+      color: Color(0),
       child: _loadFailed
           ? widget.enableRefresh
               ? GestureDetector(

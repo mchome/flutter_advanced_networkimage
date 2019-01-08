@@ -1,13 +1,11 @@
 library advanced_networkimage;
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui show instantiateImageCodec, Codec;
 import 'dart:ui' show hashValues;
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -190,8 +188,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     return null;
   }
 
-  String _uid(String str) =>
-      md5.convert(utf8.encode(str)).toString().toLowerCase().substring(0, 9);
+  String _uid(String str) => str.hashCode.toString();
 
   @override
   bool operator ==(dynamic other) {

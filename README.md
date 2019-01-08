@@ -30,6 +30,11 @@ Image(
   image: AdvancedNetworkImage(url, header: header, useDiskCache: true),
   fit: BoxFit.cover,
 )
+
+// or svg provider (flutter_svg)
+SvgPicture(
+  AdvancedNetworkSvg(url, SvgPicture.svgByteDecoder, useDiskCache: true),
+)
 ```
 
 ```dart
@@ -65,7 +70,7 @@ ZoomableWidget(
 ```dart
 // Reload feature included
 TransitionToImage(
-  AdvancedNetworkImage(url,
+  image: AdvancedNetworkImage(url,
     loadedCallback: () {
       print('It works!');
     },
@@ -77,6 +82,7 @@ TransitionToImage(
   placeholder: const Icon(Icons.refresh),
   width: 400.0,
   height: 300.0,
+  enableRefresh: true,
 );
 ```
 
