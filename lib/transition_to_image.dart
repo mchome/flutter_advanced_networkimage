@@ -222,7 +222,6 @@ class _TransitionToImageState extends State<TransitionToImage>
             _status = _TransitionStatus.completed;
           break;
         case _TransitionStatus.completed:
-          _imageStream.removeListener(_updateImage);
           break;
       }
     });
