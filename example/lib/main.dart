@@ -2,11 +2,11 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:flutter_advanced_networkimage/flutter_advanced_networkimage.dart';
-import 'package:flutter_advanced_networkimage/transition_to_image.dart';
-import 'package:flutter_advanced_networkimage/zoomable_widget.dart';
-import 'package:flutter_advanced_networkimage/zoomable_list.dart';
-// import 'package:flutter_advanced_networkimage/image_cropper.dart';
+import 'package:flutter_advanced_networkimage/transition.dart';
+import 'package:flutter_advanced_networkimage/zoomable.dart';
+import 'package:flutter_advanced_networkimage/provider.dart';
+
+import 'package:flutter_advanced_networkimage/src/stream_loading_image.dart';
 
 main() => runApp(MaterialApp(
       title: 'Flutter Example',
@@ -37,6 +37,7 @@ class Example extends State<MyApp> {
               Tab(text: 'load image'),
               Tab(text: 'zooming'),
               Tab(text: 'widget list'),
+              // Tab(text: 'stream loading'),
               // Tab(text: 'crop image(WIP)'),
               // Tab(text: 'cropped image'),
             ],
@@ -108,6 +109,10 @@ class Example extends State<MyApp> {
                 ),
               );
             }),
+
+            // StreamLoadingImage(
+            //   url: 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+            // ),
 
             // ImageCropper(
             //   AdvancedNetworkImage(

@@ -1,13 +1,13 @@
-library advanced_networkimage;
-
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui' as ui show instantiateImageCodec, Codec;
+import 'dart:ui' as ui show Codec;
 import 'dart:ui' show hashValues;
 
-import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -20,6 +20,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.useDiskCache: false,
     this.retryLimit: 5,
     this.retryDuration: const Duration(milliseconds: 500),
+    this.retryDurationFactor: 1.5,
     this.timeoutDuration: const Duration(seconds: 5),
     this.loadedCallback,
     this.loadFailedCallback,
@@ -28,7 +29,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         assert(scale != null),
         assert(useDiskCache != null),
         assert(retryLimit != null),
-        assert(retryDuration != null);
+        assert(retryDuration != null),
+        assert(retryDurationFactor != null),
+        assert(timeoutDuration != null);
 
   /// The URL from which the image will be fetched.
   final String url;
@@ -47,6 +50,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   /// The retry duration will give the interval between the retries.
   final Duration retryDuration;
+
+  /// Apply factor to control retry duration between retry.
+  final double retryDurationFactor;
 
   /// The timeout duration will give the timeout to a fetching function.
   final Duration timeoutDuration;
@@ -96,7 +102,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       if (useDiskCache) {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
         if (key.loadedCallback != null) key.loadedCallback();
-        return await ui.instantiateImageCodec(_diskCache);
+        return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -107,7 +113,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
       try {
-        return await ui.instantiateImageCodec(imageData);
+        return await PaintingBinding.instance.instantiateImageCodec(imageData);
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -115,7 +121,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     if (key.loadFailedCallback != null) key.loadFailedCallback();
     if (key.fallbackImage != null)
-      return await ui.instantiateImageCodec(key.fallbackImage);
+      return await PaintingBinding.instance
+          .instantiateImageCodec(key.fallbackImage);
 
     throw Exception('Failed to load $url.');
   }
@@ -158,7 +165,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     /// Retry mechanism.
     Future<http.Response> run<T>(
         Future f(), int retryLimit, Duration retryDuration) async {
-      for (int t = 0; t < retryLimit + 1; t++) {
+      for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
         try {
           http.Response res = await f();
           if (res != null) {
@@ -169,7 +176,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
                   res.statusCode.toString());
           }
         } catch (_) {}
-        await Future.delayed(retryDuration);
+        await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
       }
 
       if (retryLimit > 0) debugPrint('Retry failed!');
@@ -178,10 +185,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     http.Response _response;
     _response = await run(() async {
-      if (header != null)
-        return await http.get(url, headers: header).timeout(timeoutDuration);
-      else
-        return await http.get(url).timeout(timeoutDuration);
+      return await http.get(url, headers: header).timeout(timeoutDuration);
     }, retryLimit, retryDuration);
     if (_response != null) return _response.bodyBytes;
 
@@ -215,31 +219,4 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       'retryDuration:$retryDuration,'
       'timeoutDuration:$timeoutDuration'
       ')';
-}
-
-/// Clear the disk cache directory then return if it succeed.
-Future<bool> clearDiskCachedImages() async {
-  Directory _cacheImagesDirectory =
-      Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-  try {
-    await _cacheImagesDirectory.delete(recursive: true);
-  } catch (_) {
-    return false;
-  }
-  return true;
-}
-
-/// Return the disk cache directory size.
-Future<int> getDiskCachedImagesSize() async {
-  Directory _cacheImagesDirectory =
-      Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-  int size = 0;
-  try {
-    _cacheImagesDirectory
-        .listSync()
-        .forEach((var file) => size += file.statSync().size);
-    return size;
-  } catch (_) {
-    return null;
-  }
 }

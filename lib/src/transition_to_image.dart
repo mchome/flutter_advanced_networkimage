@@ -1,11 +1,9 @@
-library transition_to_image;
-
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
 class TransitionToImage extends StatefulWidget {
-  const TransitionToImage({
+  TransitionToImage({
     Key key,
     @required this.image,
     this.placeholder: const Icon(Icons.clear),
@@ -15,6 +13,7 @@ class TransitionToImage extends StatefulWidget {
     this.transitionType: TransitionType.fade,
     this.width,
     this.height,
+    this.borderRadius,
     this.blendMode,
     this.fit: BoxFit.contain,
     this.alignment = Alignment.center,
@@ -67,6 +66,14 @@ class TransitionToImage extends StatefulWidget {
   /// placeholder image does not match that of the target image. The size is
   /// also affected by the scale factor.
   final double height;
+
+  /// The border radius of the rounded corners.
+  ///
+  /// Values are clamped so that horizontal and vertical radii sums do not
+  /// exceed width/height.
+  ///
+  /// This value is ignored if [clipper] is non-null.
+  final BorderRadius borderRadius;
 
   /// How to inscribe the image into the space allocated during layout.
   ///
@@ -233,10 +240,12 @@ class _TransitionToImageState extends State<TransitionToImage>
       _imageProvider.evict();
     }
     final ImageStream oldImageStream = _imageStream;
-    _imageStream = _imageProvider.resolve(createLocalImageConfiguration(context,
-        size: widget.width != null && widget.height != null
-            ? Size(widget.width, widget.height)
-            : null));
+    _imageStream = _imageProvider.resolve(createLocalImageConfiguration(
+      context,
+      size: widget.width != null && widget.height != null
+          ? Size(widget.width, widget.height)
+          : null,
+    ));
     if (_imageInfo != null &&
         !reload &&
         (_imageStream.key == oldImageStream?.key)) {
@@ -282,30 +291,36 @@ class _TransitionToImageState extends State<TransitionToImage>
               : widget.transitionType == TransitionType.fade
                   ? FadeTransition(
                       opacity: _fadeTween.animate(_animation),
-                      child: RawImage(
-                        image: _imageInfo.image,
-                        width: widget.width,
-                        height: widget.height,
-                        colorBlendMode: widget.blendMode,
-                        fit: widget.fit,
-                        alignment: widget.alignment,
-                        repeat: widget.repeat,
-                        matchTextDirection: widget.matchTextDirection,
-                      ),
+                      child: widget.borderRadius != null
+                          ? ClipRRect(
+                              borderRadius: widget.borderRadius,
+                              child: buildRawImage(),
+                            )
+                          : buildRawImage(),
                     )
                   : SlideTransition(
                       position: _slideTween.animate(_animation),
-                      child: RawImage(
-                        image: _imageInfo.image,
-                        width: widget.width,
-                        height: widget.height,
-                        colorBlendMode: widget.blendMode,
-                        fit: widget.fit,
-                        alignment: widget.alignment,
-                        repeat: widget.repeat,
-                        matchTextDirection: widget.matchTextDirection,
-                      ),
+                      child: widget.borderRadius != null
+                          ? ClipRRect(
+                              borderRadius: widget.borderRadius,
+                              child: buildRawImage(),
+                            )
+                          : buildRawImage(),
                     ),
+    );
+  }
+
+  RawImage buildRawImage() {
+    return RawImage(
+      image: _imageInfo?.image,
+      width: widget.width,
+      height: widget.height,
+      scale: _imageInfo?.scale ?? 1.0,
+      colorBlendMode: widget.blendMode,
+      fit: widget.fit,
+      alignment: widget.alignment,
+      repeat: widget.repeat,
+      matchTextDirection: widget.matchTextDirection,
     );
   }
 }

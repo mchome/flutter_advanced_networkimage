@@ -1,5 +1,3 @@
-library zoomable_widget;
-
 import 'dart:math';
 
 import 'package:flutter/widgets.dart';
