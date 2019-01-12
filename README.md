@@ -1,4 +1,4 @@
-# Flutter Advanced Network Imageprovider
+# Flutter Advanced Network Image Provider
 
 [![pub package](https://img.shields.io/pub/v/flutter_advanced_networkimage.svg)](https://pub.dartlang.org/packages/flutter_advanced_networkimage)
 

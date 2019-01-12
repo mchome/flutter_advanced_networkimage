@@ -6,7 +6,7 @@ import 'package:flutter_advanced_networkimage/transition.dart';
 import 'package:flutter_advanced_networkimage/zoomable.dart';
 import 'package:flutter_advanced_networkimage/provider.dart';
 
-import 'package:flutter_advanced_networkimage/src/stream_loading_image.dart';
+// import 'package:flutter_advanced_networkimage/src/stream_loading_image.dart';
 
 main() => runApp(MaterialApp(
       title: 'Flutter Example',
