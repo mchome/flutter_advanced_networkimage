@@ -8,29 +8,16 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 class ImageCropper extends StatefulWidget {
-  ImageCropper(
-    this.image, {
+  ImageCropper({
     Key key,
-    this.minScale: 0.7,
-    this.maxScale: 1.4,
-    this.enableRotate: false,
-    this.onImageCropperChanged,
-  })  : assert(minScale != null),
-        assert(maxScale != null);
+    @required this.image,
+    @required this.onCropperChanged,
+  });
 
   /// The target image that is cropped.
   final ImageProvider image;
 
-  /// The minimum size for scaling.
-  final double minScale;
-
-  /// The maximum size for scaling.
-  final double maxScale;
-
-  /// Allow user to rotate the image.
-  final bool enableRotate;
-
-  final ValueChanged<ByteData> onImageCropperChanged;
+  final ValueChanged<ByteData> onCropperChanged;
 
   @override
   _ImageCropperState createState() => _ImageCropperState();
@@ -54,7 +41,7 @@ class _ImageCropperState extends State<ImageCropper>
   ImageProvider get _imageProvider => widget.image;
 
   @override
-  initState() {
+  void initState() {
     // _resetZoomController =
     //     AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     // _resetPanController =
@@ -63,26 +50,26 @@ class _ImageCropperState extends State<ImageCropper>
   }
 
   @override
-  didChangeDependencies() {
+  void didChangeDependencies() {
     _getImage();
     super.didChangeDependencies();
   }
 
   @override
-  didUpdateWidget(ImageCropper oldWidget) {
+  void didUpdateWidget(ImageCropper oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.image != oldWidget.image) _getImage();
   }
 
   @override
-  dispose() {
+  void dispose() {
     // _resetZoomController.dispose();
     // _resetPanController.dispose();
     _imageStream?.removeListener(_updateImage);
     super.dispose();
   }
 
-  _getImage() {
+  void _getImage() {
     final ImageStream oldImageStream = _imageStream;
     _imageStream =
         _imageProvider.resolve(createLocalImageConfiguration(context));
@@ -92,9 +79,9 @@ class _ImageCropperState extends State<ImageCropper>
     }
   }
 
-  _updateImage(ImageInfo info, _) => setState(() => _image = info.image);
+  void _updateImage(ImageInfo info, _) => setState(() => _image = info.image);
 
-  _onScaleStart(ScaleStartDetails details) {
+  void _onScaleStart(ScaleStartDetails details) {
     setState(() {
       _zoomOriginOffset = details.focalPoint;
       _previewPanOffset = _panOffset;
@@ -102,13 +89,10 @@ class _ImageCropperState extends State<ImageCropper>
     });
   }
 
-  _onScaleUpdate(ScaleUpdateDetails details) {
+  void _onScaleUpdate(ScaleUpdateDetails details) {
     // Size _boundarySize = Size(_image.width / 2, _image.height / 2);
     if (details.scale != 1.0) {
-      setState(() {
-        _zoom = (_previewZoom * details.scale)
-            .clamp(widget.minScale, widget.maxScale);
-      });
+      setState(() => _zoom = (_previewZoom * details.scale).clamp(1.0, 5.0));
     }
     setState(() {
       Offset _panRealOffset = details.focalPoint -
@@ -140,12 +124,15 @@ class _ImageCropperState extends State<ImageCropper>
           _zoom = 1.0;
         });
       },
-      child: CustomPaint(
-        painter: _GesturePainter(
-          _image,
-          _zoom,
-          _panOffset,
-          widget.onImageCropperChanged,
+      child: ClipRect(
+        child: CustomPaint(
+          size: Size(_image.width.toDouble(), _image.height.toDouble()),
+          painter: _GesturePainter(
+            _image,
+            _zoom,
+            _panOffset,
+            widget.onCropperChanged,
+          ),
         ),
       ),
     );
@@ -168,31 +155,33 @@ class _GesturePainter extends CustomPainter {
   final ValueChanged<ByteData> onImageCropperChanged;
 
   @override
-  paint(Canvas canvas, Size size) {
-    Rect displayRect = offset & (size * zoom);
-    Rect cropRect = (offset + Offset(100.0, 0.0)) & (size * zoom);
+  void paint(Canvas canvas, Size size) {
+    Rect rect = offset & (size * zoom);
 
-    final _recorder = ui.PictureRecorder();
-    final cropperCanvas = Canvas(_recorder);
+    final recorder = ui.PictureRecorder();
+    final cropperCanvas = Canvas(recorder, rect);
 
     paintImage(
       canvas: canvas,
-      rect: displayRect,
       image: image,
+      rect: rect,
       fit: BoxFit.contain,
     );
     paintImage(
       canvas: cropperCanvas,
-      rect: cropRect,
       image: image,
+      rect: rect,
       fit: BoxFit.contain,
     );
 
-    _recorder
+    recorder
         .endRecording()
-        .toImage(image.width.toInt(), image.height.toInt())
-        .toByteData(format: ui.ImageByteFormat.png)
-        .then((data) => onImageCropperChanged(data));
+        .toImage(size.width.toInt(), size.height.toInt())
+        .then((ui.Image image) {
+      image
+          .toByteData(format: ui.ImageByteFormat.png)
+          .then((ByteData data) => onImageCropperChanged(data));
+    });
   }
 
   @override

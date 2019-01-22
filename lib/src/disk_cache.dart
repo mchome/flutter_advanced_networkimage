@@ -2,21 +2,40 @@
 
 library disk_cache;
 
-class DiskCache {
-  bool simpleCache = false;
-  Map cacheConfig = {
-    'maxSize': null,
-    'maxEntries': null,
-    'maxAge': null,
-    'compress': false,
-  };
-  List cachedFiles = [];
+import 'dart:async';
+import 'dart:io';
 
-  getFiles(List key) {}
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sembast/sembast.dart';
+import 'package:sembast/sembast_io.dart';
 
-  listFiles() {}
-
-  removeFiles(List key) {}
+enum StoreDirectoryType {
+  document,
+  temporary,
 }
 
-DiskCache diskCache = DiskCache();
+class DiskCache {
+  static final DiskCache _instance = DiskCache._internal();
+  factory DiskCache() => _instance;
+  DiskCache._internal();
+
+  Database _db;
+  StoreDirectoryType directoryType = StoreDirectoryType.temporary;
+
+  Future<Database> get db async {
+    if (_db != null) return _db;
+    _db = await _initDb();
+    return _db;
+  }
+
+  Future<Database> _initDb() async {
+    String path = join(
+        (directoryType == StoreDirectoryType.temporary
+                ? await getTemporaryDirectory()
+                : await getApplicationDocumentsDirectory())
+            .path,
+        'image_cache.db');
+    return await databaseFactoryIo.openDatabase(path);
+  }
+}

@@ -98,25 +98,17 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     String uId = _uid(key.url);
 
-    try {
-      if (useDiskCache) {
-        Uint8List _diskCache = await _loadFromDiskCache(key, uId);
-        if (key.loadedCallback != null) key.loadedCallback();
-        return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
-      }
-    } catch (e) {
-      debugPrint(e.toString());
+    if (useDiskCache) {
+      Uint8List _diskCache = await _loadFromDiskCache(key, uId);
+      if (key.loadedCallback != null) key.loadedCallback();
+      return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
     }
 
     Uint8List imageData = await _loadFromRemote(
         key.url, key.header, key.retryLimit, key.retryDuration);
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
-      try {
-        return await PaintingBinding.instance.instantiateImageCodec(imageData);
-      } catch (e) {
-        debugPrint(e.toString());
-      }
+      return await PaintingBinding.instance.instantiateImageCodec(imageData);
     }
 
     if (key.loadFailedCallback != null) key.loadFailedCallback();
@@ -163,8 +155,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     if (retryLimit < 0) retryLimit = 0;
 
     /// Retry mechanism.
-    Future<http.Response> run<T>(
-        Future f(), int retryLimit, Duration retryDuration) async {
+    Future<http.Response> run<T>(Future f(), int retryLimit,
+        Duration retryDuration, double retryDurationFactor) async {
       for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
         try {
           http.Response res = await f();
@@ -186,7 +178,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     http.Response _response;
     _response = await run(() async {
       return await http.get(url, headers: header).timeout(timeoutDuration);
-    }, retryLimit, retryDuration);
+    }, retryLimit, retryDuration, retryDurationFactor);
     if (_response != null) return _response.bodyBytes;
 
     return null;
