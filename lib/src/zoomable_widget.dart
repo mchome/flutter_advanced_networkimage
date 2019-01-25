@@ -16,7 +16,7 @@ class ZoomableWidget extends StatefulWidget {
     this.zoomSteps: 0,
     this.autoCenter: false,
     this.bounceBackBoundary: true,
-    this.onZoomStateChanged,
+    this.onZoomChanged,
   })  : assert(minScale != null),
         assert(maxScale != null),
         assert(enableZoom != null);
@@ -55,7 +55,7 @@ class ZoomableWidget extends StatefulWidget {
   final bool bounceBackBoundary;
 
   /// When the scale value changed, the callback will be invoked.
-  final ValueChanged<double> onZoomStateChanged;
+  final ValueChanged<double> onZoomChanged;
 
   @override
   _ZoomableWidgetState createState() => _ZoomableWidgetState();
@@ -79,7 +79,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   Animation<Offset> _bounceAnimation;
 
   @override
-  initState() {
+  void initState() {
     _resetZoomController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     _resetPanController =
@@ -90,14 +90,14 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   }
 
   @override
-  dispose() {
+  void dispose() {
     _resetZoomController.dispose();
     _resetPanController.dispose();
     _bounceController.dispose();
     super.dispose();
   }
 
-  _onScaleStart(ScaleStartDetails details) {
+  void _onScaleStart(ScaleStartDetails details) {
     setState(() {
       _zoomOriginOffset = details.focalPoint;
       _previewPanOffset = _panOffset;
@@ -105,7 +105,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     });
   }
 
-  _onScaleUpdate(ScaleUpdateDetails details) {
+  void _onScaleUpdate(ScaleUpdateDetails details) {
     Size _boundarySize =
         Size(_containerSize.width / 2, _containerSize.height / 2);
     Size _marginSize = Size(100.0, 100.0);
@@ -113,9 +113,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
       setState(() {
         _zoom = (_previewZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
-        if (widget.onZoomStateChanged != null) {
-          widget.onZoomStateChanged(_zoom);
-        }
+        if (widget.onZoomChanged != null) widget.onZoomChanged(_zoom);
       });
     }
     if ((widget.singleFingerPan && details.scale == 1.0) ||
@@ -152,7 +150,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     }
   }
 
-  _onScaleEnd(_) {
+  void _onScaleEnd(_) {
     Size _boundarySize =
         Size(_containerSize.width / 2, _containerSize.height / 2);
     Animation _animation =
@@ -176,7 +174,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     _bounceController.forward(from: 0.0);
   }
 
-  _handleDoubleTap() {
+  void _handleDoubleTap() {
     double _stepLength = 0.0;
     Animation _animation =
         CurvedAnimation(parent: _resetZoomController, curve: Curves.easeInOut);
@@ -189,17 +187,18 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     double _tmpZoom = _zoom + _stepLength;
     if (_tmpZoom > widget.maxScale || _stepLength == 0.0) _tmpZoom = 1.0;
     _zoomAnimation = Tween(begin: _tmpZoom, end: _zoom).animate(_animation)
-      ..addListener(() => setState(() {
-            _zoom = _zoomAnimation.value;
-            if (widget.onZoomStateChanged != null) {
-              widget.onZoomStateChanged(_zoom);
-            }
-          }));
+      ..addListener(() {
+        setState(() {
+          _zoom = _zoomAnimation.value;
+          if (widget.onZoomChanged != null) widget.onZoomChanged(_zoom);
+        });
+      });
     if (_tmpZoom == 1.0) {
-      _panOffsetAnimation = Tween(begin: Offset.zero, end: _panOffset)
-          .animate(_animation2)
-            ..addListener(
-                () => setState(() => _panOffset = _panOffsetAnimation.value));
+      _panOffsetAnimation =
+          Tween(begin: Offset.zero, end: _panOffset).animate(_animation2)
+            ..addListener(() {
+              setState(() => _panOffset = _panOffsetAnimation.value);
+            });
       _resetPanController.reverse(from: 1.0);
     }
 
@@ -262,7 +261,7 @@ class _ZoomableWidgetLayout extends MultiChildLayoutDelegate {
   static final String painter = 'painter';
 
   @override
-  performLayout(Size size) {
+  void performLayout(Size size) {
     layoutChild(gestureContainer,
         BoxConstraints.tightFor(width: size.width, height: size.height));
     positionChild(gestureContainer, Offset.zero);

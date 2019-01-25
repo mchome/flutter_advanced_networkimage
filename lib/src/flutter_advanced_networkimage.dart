@@ -7,10 +7,11 @@ import 'dart:ui' show hashValues;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   const AdvancedNetworkImage(
@@ -25,6 +26,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.loadedCallback,
     this.loadFailedCallback,
     this.fallbackImage,
+    this.cacheRule,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
@@ -66,15 +68,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The image will be displayed when the image failed to load.
   final Uint8List fallbackImage;
 
-  Future<String> get cachedPath async {
-    Directory _cacheImagesDirectory =
-        Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-    String uId = _uid(url);
-
-    return useDiskCache
-        ? File(join(_cacheImagesDirectory.path, uId)).path
-        : null;
-  }
+  /// Disk cache rules for advanced control.
+  final CacheRule cacheRule;
 
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
@@ -93,13 +88,15 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     );
   }
 
+  String _uid(String str) => str.hashCode.toString();
+
   Future<ui.Codec> _loadAsync(AdvancedNetworkImage key) async {
     assert(key == this);
 
-    String uId = _uid(key.url);
+    String uid = _uid(key.url);
 
     if (useDiskCache) {
-      Uint8List _diskCache = await _loadFromDiskCache(key, uId);
+      Uint8List _diskCache = await _loadFromDiskCache(key, uid);
       if (key.loadedCallback != null) key.loadedCallback();
       return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
     }
@@ -119,14 +116,17 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     throw Exception('Failed to load $url.');
   }
 
-  /// Load the disk cache
+  /// __Load the disk cache__
   ///
-  /// Check the following condition:
+  /// Check the following conditions:
   /// 1. Check if cache directory exist. If not exist, create it.
-  /// 2. Check if cached file([uId]) exist. If yes, load the cache,
+  /// 2. Check if cached file([uid]) exist. If yes, load the cache,
   ///   otherwise go to download step.
   Future<Uint8List> _loadFromDiskCache(
       AdvancedNetworkImage key, String uId) async {
+    DiskCache diskCache = DiskCache();
+    CacheRule rule = key.cacheRule;
+
     Directory _cacheImagesDirectory =
         Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
     if (_cacheImagesDirectory.existsSync()) {
@@ -184,8 +184,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     return null;
   }
 
-  String _uid(String str) => str.hashCode.toString();
-
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
@@ -201,6 +199,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   @override
   int get hashCode => hashValues(url, scale, header, useDiskCache, retryLimit,
       retryDuration, timeoutDuration);
+
   @override
   String toString() => '$runtimeType('
       '"$url",'

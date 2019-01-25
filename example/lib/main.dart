@@ -1,5 +1,3 @@
-// import 'dart:typed_data';
-
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -76,8 +74,8 @@ class Example extends State<MyApp> {
                   'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
                 ),
               ),
-              onZoomStateChanged: (double value) {
-                print(value);
+              onZoomChanged: (double value) {
+                // print(value);
               },
             ),
 

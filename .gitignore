@@ -9,3 +9,5 @@ pubspec.lock
 .vscode/
 *.log
 tmp/
+ref/
+build/
