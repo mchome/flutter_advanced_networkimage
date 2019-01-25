@@ -28,13 +28,32 @@ main() {
       print(await getTemporaryDirectory());
     });
     test('=> dummy2', () async {
-      await DiskCache().save('aaa'.hashCode.toString(), utf8.encode('hello'),
-          CacheRule(checksum: true));
-      await DiskCache().save('bbb'.hashCode.toString(), utf8.encode('world'),
-          CacheRule(checksum: true));
-    });
-    test('=> dummy3', () async {
-      await DiskCache().load('uid'.hashCode.toString());
+      expect(
+        await DiskCache().save('aaa'.hashCode.toString(), utf8.encode('hello'),
+            CacheRule(checksum: true)),
+        true,
+      );
+      expect(
+        await DiskCache().save('bbb'.hashCode.toString(), utf8.encode('world'),
+            CacheRule(checksum: true)),
+        true,
+      );
+      expect(
+        await DiskCache().save('ccc'.hashCode.toString(),
+            utf8.encode('welcome'), CacheRule(checksum: true)),
+        true,
+      );
+      expect(
+        await DiskCache().save('ddd'.hashCode.toString(), utf8.encode('to'),
+            CacheRule(checksum: true)),
+        true,
+      );
+      expect(
+        await DiskCache().save('eee'.hashCode.toString(),
+            utf8.encode('flutter'), CacheRule(checksum: true)),
+        true,
+      );
+      expect(await DiskCache().load('aaa'.hashCode.toString()), utf8.encode('hello'));
     });
   });
 }

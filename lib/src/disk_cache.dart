@@ -1,13 +1,13 @@
 /// WIP, do not use it
 
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter_advanced_networkimage/src/utils.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_advanced_networkimage/src/utils.dart' show crc32;
 
 enum StoreDirectoryType {
   temporary,
@@ -79,7 +79,11 @@ class DiskCache {
     await path.writeAsString(json.encode(_metadata));
   }
 
-  Future<void> keepCacheHealth() async {}
+  Future<void> keepCacheHealth() async {
+    _metadata.forEach((k, v) {
+      if (File(v['path']).existsSync()) {}
+    });
+  }
 
   Future<Uint8List> load(String uid) async {
     if (_metadata == null) await _initMetaData();
@@ -99,7 +103,7 @@ class DiskCache {
       }
       Uint8List data = await File(_metadata[uid]['path']).readAsBytes();
       if (_metadata[uid]['crc32'] != null &&
-          _metadata[uid]['crc32'] == crc32(data)) {
+          _metadata[uid]['crc32'] != crc32(data)) {
         _metadata.remove(uid);
         _commitMetaData();
         return null;
@@ -134,17 +138,21 @@ class DiskCache {
         'maxAge': rule.maxAge.inMilliseconds,
       };
       _metadata[uid] = metadata;
-      if (_currentEntries >= maxEntries || _currentSizeBytes >= maxSizeBytes) {
-        String key = _metadata.keys.first;
-        if (File(_metadata[key]['path']).existsSync())
-          await File(_metadata[key]['path']).delete();
-        _metadata.remove(key);
-      }
+      await _checkCacheSize();
       await _commitMetaData(true);
 
       return true;
     } catch (_) {
       return false;
+    }
+  }
+
+  Future<void> _checkCacheSize() async {
+    while (_currentEntries > maxEntries || _currentSizeBytes > maxSizeBytes) {
+      String key = _metadata.keys.first;
+      if (File(_metadata[key]['path']).existsSync())
+        await File(_metadata[key]['path']).delete();
+      _metadata.remove(key);
     }
   }
 
