@@ -84,6 +84,7 @@ main() {
       expect(await DiskCache().load('ggg'.hashCode.toString()), null);
       expect(await DiskCache().load('iii'.hashCode.toString()),
           utf8.encode('autumn'));
+      DiskCache().maxEntries = 5000;
     });
     test('=> reach maxSizeBytes', () async {
       DiskCache().maxSizeBytes = 8;
@@ -100,6 +101,7 @@ main() {
       expect(await DiskCache().load('jjj'.hashCode.toString()), null);
       expect(await DiskCache().load('kkk'.hashCode.toString()),
           utf8.encode('Monday'));
+      DiskCache().maxSizeBytes = 1000 << 20;
     });
     test('=> evict uid', () async {
       expect(

@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart' show crc32;
@@ -59,7 +60,8 @@ class DiskCache {
         _metadata = json.decode(await path.readAsString());
       else
         _metadata = {};
-    } catch (_) {
+    } catch (e) {
+      debugPrint(e.toString());
       _metadata = {};
     }
   }
@@ -100,36 +102,43 @@ class DiskCache {
 
   Future<Uint8List> load(String uid) async {
     if (_metadata == null) await _initMetaData();
-    if (_metadata.containsKey(uid)) {
-      if (!File(_metadata[uid]['path']).existsSync()) {
-        _metadata.remove(uid);
-        await _commitMetaData();
+    try {
+      if (_metadata.containsKey(uid)) {
+        if (!File(_metadata[uid]['path']).existsSync()) {
+          _metadata.remove(uid);
+          await _commitMetaData();
+          return null;
+        }
+        if (DateTime.fromMillisecondsSinceEpoch(
+              _metadata[uid]['createdTime'] + _metadata[uid]['maxAge'],
+            ).compareTo(DateTime.now()) <
+            0) {
+          await File(_metadata[uid]['path']).delete();
+          _metadata.remove(uid);
+          await _commitMetaData();
+          return null;
+        }
+        Uint8List data = await File(_metadata[uid]['path']).readAsBytes();
+        if (_metadata[uid]['crc32'] != null &&
+            _metadata[uid]['crc32'] != crc32(data)) {
+          await File(_metadata[uid]['path']).delete();
+          _metadata.remove(uid);
+          await _commitMetaData();
+          return null;
+        }
+        if (_currentEntries >= maxEntries ||
+            _currentSizeBytes >= maxSizeBytes) {
+          _metadata[uid] = _metadata.remove(uid);
+          await _commitMetaData();
+        }
+        return data;
+      } else {
         return null;
       }
-      if (DateTime.fromMillisecondsSinceEpoch(
-            _metadata[uid]['createdTime'] + _metadata[uid]['maxAge'],
-          ).compareTo(DateTime.now()) <
-          0) {
-        await File(_metadata[uid]['path']).delete();
-        _metadata.remove(uid);
-        await _commitMetaData();
-        return null;
-      }
-      Uint8List data = await File(_metadata[uid]['path']).readAsBytes();
-      if (_metadata[uid]['crc32'] != null &&
-          _metadata[uid]['crc32'] != crc32(data)) {
-        await File(_metadata[uid]['path']).delete();
-        _metadata.remove(uid);
-        await _commitMetaData();
-        return null;
-      }
-      if (_currentEntries >= maxEntries || _currentSizeBytes >= maxSizeBytes) {
-        _metadata[uid] = _metadata.remove(uid);
-        await _commitMetaData();
-      }
-      return data;
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
     }
-    return null;
   }
 
   Future<bool> save(String uid, Uint8List data, CacheRule rule) async {
@@ -157,7 +166,8 @@ class DiskCache {
       await _commitMetaData(true);
 
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint(e.toString());
       return false;
     }
   }
@@ -181,7 +191,8 @@ class DiskCache {
         await _commitMetaData();
       }
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint(e.toString());
       return false;
     }
   }
@@ -198,7 +209,8 @@ class DiskCache {
       if (appDir.existsSync()) await appDir.delete(recursive: true);
       if (metadataFile.existsSync()) await metadataFile.delete();
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint(e.toString());
       return false;
     }
   }
