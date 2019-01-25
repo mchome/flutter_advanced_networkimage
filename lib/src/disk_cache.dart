@@ -25,7 +25,7 @@ class DiskCache {
   int _maxSizeBytes = 1000 << 20; // 1 GiB
   int maxCounts = 10;
 
-  int get _currentEntries => _metadata.keys.length;
+  int get _currentEntries => _metadata != null ? _metadata.keys.length : 0;
   int get _currentSizeBytes {
     int size = 0;
     _metadata.values.forEach((item) => size += item['size']);
@@ -79,7 +79,7 @@ class DiskCache {
     await path.writeAsString(json.encode(_metadata));
   }
 
-  Future<void> checkFileAge() async {}
+  Future<void> keepCacheHealth() async {}
 
   Future<Uint8List> load(String uid) async {
     if (_metadata == null) await _initMetaData();
@@ -104,6 +104,10 @@ class DiskCache {
         _commitMetaData();
         return null;
       }
+      if (_currentEntries >= maxEntries || _currentSizeBytes >= maxSizeBytes) {
+        _metadata[uid] = _metadata.remove(uid);
+        _commitMetaData();
+      }
       return data;
     }
     return null;
@@ -117,21 +121,31 @@ class DiskCache {
                 : await getApplicationDocumentsDirectory())
             .path,
         'imagecache'));
-    if (!dir.existsSync()) dir.createSync(recursive: true);
-    await File(join(dir.path, uid)).writeAsBytes(data);
 
-    Map<String, dynamic> metadata = {
-      'path': join(dir.path, uid),
-      'createdTime': DateTime.now().millisecondsSinceEpoch,
-      'crc32': rule.checksum ? crc32(data) : null,
-      'size': data.lengthInBytes,
-      'maxAge': rule.maxAge.inMilliseconds,
-    };
-    _metadata[uid] = metadata;
+    try {
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      await File(join(dir.path, uid)).writeAsBytes(data);
 
-    await _commitMetaData(true);
+      Map<String, dynamic> metadata = {
+        'path': join(dir.path, uid),
+        'createdTime': DateTime.now().millisecondsSinceEpoch,
+        'crc32': rule.checksum ? crc32(data) : null,
+        'size': data.lengthInBytes,
+        'maxAge': rule.maxAge.inMilliseconds,
+      };
+      _metadata[uid] = metadata;
+      if (_currentEntries >= maxEntries || _currentSizeBytes >= maxSizeBytes) {
+        String key = _metadata.keys.first;
+        if (File(_metadata[key]['path']).existsSync())
+          await File(_metadata[key]['path']).delete();
+        _metadata.remove(key);
+      }
+      await _commitMetaData(true);
 
-    return true;
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> evict(String uid) async {
