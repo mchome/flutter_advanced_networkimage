@@ -23,8 +23,9 @@ class DiskCache {
   int _maxEntries = 5000;
   int get maxSizeBytes => _maxSizeBytes;
   int _maxSizeBytes = 1000 << 20; // 1 GiB
-  int maxCounts = 10;
+  int maxCommitOps = 10;
 
+  int _currentOps = 0;
   int get _currentEntries => _metadata != null ? _metadata.keys.length : 0;
   int get _currentSizeBytes {
     int size = 0;
@@ -38,14 +39,14 @@ class DiskCache {
     assert(value != null);
     assert(value >= 0);
     if (value == maxEntries) return;
-    maxEntries = value;
+    _maxEntries = value;
   }
 
   set maxSizeBytes(int value) {
     assert(value != null);
     assert(value >= 0);
     if (value == maxSizeBytes) return;
-    maxSizeBytes = value;
+    _maxSizeBytes = value;
   }
 
   static const String _metadataFilename = 'imagecache_metadata.json';
@@ -63,16 +64,15 @@ class DiskCache {
     }
   }
 
-  int _currentCounts = 0;
   Future<void> _commitMetaData([bool force = false]) async {
     if (force) {
-      _currentCounts = 0;
+      _currentOps = 0;
     } else {
-      _currentCounts += 1;
-      if (_currentCounts < maxCounts)
+      _currentOps += 1;
+      if (_currentOps < maxCommitOps)
         return;
       else
-        _currentCounts = 0;
+        _currentOps = 0;
     }
     File path = File(join(
         (await getApplicationDocumentsDirectory()).path, _metadataFilename));
@@ -80,9 +80,22 @@ class DiskCache {
   }
 
   Future<void> keepCacheHealth() async {
-    _metadata.forEach((k, v) {
-      if (File(v['path']).existsSync()) {}
+    _metadata.removeWhere((k, v) {
+      if (!File(v['path']).existsSync()) return true;
+      if (DateTime.fromMillisecondsSinceEpoch(v['createdTime'] + v['maxAge'])
+              .compareTo(DateTime.now()) <
+          0) {
+        File(v['path']).deleteSync();
+        return true;
+      }
+      Uint8List data = File(v['path']).readAsBytesSync();
+      if (v['crc32'] != null && v['crc32'] != crc32(data)) {
+        File(v['path']).deleteSync();
+        return true;
+      }
     });
+    await _checkCacheSize();
+    await _commitMetaData();
   }
 
   Future<Uint8List> load(String uid) async {
@@ -90,27 +103,29 @@ class DiskCache {
     if (_metadata.containsKey(uid)) {
       if (!File(_metadata[uid]['path']).existsSync()) {
         _metadata.remove(uid);
-        _commitMetaData();
+        await _commitMetaData();
         return null;
       }
       if (DateTime.fromMillisecondsSinceEpoch(
             _metadata[uid]['createdTime'] + _metadata[uid]['maxAge'],
           ).compareTo(DateTime.now()) <
           0) {
+        await File(_metadata[uid]['path']).delete();
         _metadata.remove(uid);
-        _commitMetaData();
+        await _commitMetaData();
         return null;
       }
       Uint8List data = await File(_metadata[uid]['path']).readAsBytes();
       if (_metadata[uid]['crc32'] != null &&
           _metadata[uid]['crc32'] != crc32(data)) {
+        await File(_metadata[uid]['path']).delete();
         _metadata.remove(uid);
-        _commitMetaData();
+        await _commitMetaData();
         return null;
       }
       if (_currentEntries >= maxEntries || _currentSizeBytes >= maxSizeBytes) {
         _metadata[uid] = _metadata.remove(uid);
-        _commitMetaData();
+        await _commitMetaData();
       }
       return data;
     }
@@ -157,11 +172,35 @@ class DiskCache {
   }
 
   Future<bool> evict(String uid) async {
-    return null;
+    if (_metadata == null) await _initMetaData();
+    try {
+      if (_metadata.containsKey(uid) &&
+          File(_metadata[uid]['path']).existsSync()) {
+        await File(_metadata[uid]['path']).delete();
+        _metadata.remove(uid);
+        await _commitMetaData();
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> clear() async {
-    return null;
+    try {
+      Directory tempDir =
+          Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+      Directory appDir = Directory(
+          join((await getApplicationDocumentsDirectory()).path, 'imagecache'));
+      File metadataFile = File(join(
+          (await getApplicationDocumentsDirectory()).path, _metadataFilename));
+      if (tempDir.existsSync()) await tempDir.delete(recursive: true);
+      if (appDir.existsSync()) await appDir.delete(recursive: true);
+      if (metadataFile.existsSync()) await metadataFile.delete();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
 
