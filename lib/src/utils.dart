@@ -278,3 +278,5 @@ int crc32(List<int> bytes) {
 //   }
 //   return result;
 // }
+
+String uid(String str) => str.hashCode.toString();

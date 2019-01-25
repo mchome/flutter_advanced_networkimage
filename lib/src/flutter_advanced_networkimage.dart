@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'dart:ui' show hashValues;
@@ -12,6 +12,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
+import 'package:flutter_advanced_networkimage/src/utils.dart' show uid;
 
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   const AdvancedNetworkImage(
@@ -88,15 +89,13 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     );
   }
 
-  String _uid(String str) => str.hashCode.toString();
-
   Future<ui.Codec> _loadAsync(AdvancedNetworkImage key) async {
     assert(key == this);
 
-    String uid = _uid(key.url);
+    String uId = uid(key.url);
 
     if (useDiskCache) {
-      Uint8List _diskCache = await _loadFromDiskCache(key, uid);
+      Uint8List _diskCache = await _loadFromDiskCache(key, uId);
       if (key.loadedCallback != null) key.loadedCallback();
       return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
     }
@@ -118,32 +117,42 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   /// __Load the disk cache__
   ///
-  /// Check the following conditions:
+  /// Check the following conditions: (no [CacheRule])
   /// 1. Check if cache directory exist. If not exist, create it.
-  /// 2. Check if cached file([uid]) exist. If yes, load the cache,
+  /// 2. Check if cached file(uid) exist. If yes, load the cache,
   ///   otherwise go to download step.
   Future<Uint8List> _loadFromDiskCache(
       AdvancedNetworkImage key, String uId) async {
-    DiskCache diskCache = DiskCache();
-    CacheRule rule = key.cacheRule;
+    if (key.cacheRule == null) {
+      Directory _cacheImagesDirectory =
+          Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+      if (_cacheImagesDirectory.existsSync()) {
+        File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
+        if (_cacheImageFile.existsSync()) {
+          return await _cacheImageFile.readAsBytes();
+        }
+      } else {
+        await _cacheImagesDirectory.create();
+      }
 
-    Directory _cacheImagesDirectory =
-        Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-    if (_cacheImagesDirectory.existsSync()) {
-      File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
-      if (_cacheImageFile.existsSync()) {
-        return await _cacheImageFile.readAsBytes();
+      Uint8List imageData = await _loadFromRemote(
+          key.url, key.header, key.retryLimit, key.retryDuration);
+      if (imageData != null) {
+        await (File(join(_cacheImagesDirectory.path, uId)))
+            .writeAsBytes(imageData);
+        return imageData;
       }
     } else {
-      await _cacheImagesDirectory.create();
-    }
+      DiskCache diskCache = DiskCache();
+      Uint8List data = await diskCache.load(uId);
+      if (data != null) return data;
 
-    Uint8List imageData = await _loadFromRemote(
-        key.url, key.header, key.retryLimit, key.retryDuration);
-    if (imageData != null) {
-      await (File(join(_cacheImagesDirectory.path, uId)))
-          .writeAsBytes(imageData);
-      return imageData;
+      data = await _loadFromRemote(
+          key.url, key.header, key.retryLimit, key.retryDuration);
+      if (data != null) {
+        await diskCache.save(uId, data, key.cacheRule);
+        return data;
+      }
     }
 
     return null;
