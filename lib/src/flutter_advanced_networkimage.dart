@@ -210,10 +210,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     http.Response _response;
     _response = await run(() async {
-      final _res = await http.Request('GET', Uri.parse(url))
-          .send()
-          .timeout(timeoutDuration)
-        ..headers.addAll(header ?? {});
+      final _req = http.Request('GET', Uri.parse(url));
+      _req.headers.addAll(header);
+      final _res = await _req.send().timeout(timeoutDuration);
       List<int> buffer = [];
       final Completer<http.Response> completer = Completer<http.Response>();
       _res.stream.listen((bytes) {
