@@ -11,6 +11,7 @@ class ZoomableWidget extends StatefulWidget {
     this.panLimit: 1.0,
     this.singleFingerPan: true,
     this.multiFingersPan: true,
+    this.enableRotate: false,
     this.child,
     this.onTap,
     this.zoomSteps: 0,
@@ -19,7 +20,8 @@ class ZoomableWidget extends StatefulWidget {
     this.onZoomChanged,
   })  : assert(minScale != null),
         assert(maxScale != null),
-        assert(enableZoom != null);
+        assert(enableZoom != null),
+        assert(enableRotate != null);
 
   /// The minimum size for scaling.
   final double minScale;
@@ -35,6 +37,9 @@ class ZoomableWidget extends StatefulWidget {
 
   /// Allow panning with more than one finger.
   final bool multiFingersPan;
+
+  /// Allow rotating the [image].
+  final bool enableRotate;
 
   /// Create a boundary with the factor.
   final double panLimit;
@@ -64,18 +69,22 @@ class ZoomableWidget extends StatefulWidget {
 class _ZoomableWidgetState extends State<ZoomableWidget>
     with TickerProviderStateMixin {
   double _zoom = 1.0;
-  double _previewZoom = 1.0;
-  Offset _previewPanOffset = Offset.zero;
+  double _previousZoom = 1.0;
+  Offset _previousPanOffset = Offset.zero;
   Offset _panOffset = Offset.zero;
   Offset _zoomOriginOffset = Offset.zero;
+  double _rotation = 0.0;
+  double _previousRotation = 0.0;
 
   Size _containerSize = Size.zero;
 
   AnimationController _resetZoomController;
   AnimationController _resetPanController;
+  AnimationController _resetRotateController;
   AnimationController _bounceController;
   Animation<double> _zoomAnimation;
   Animation<Offset> _panOffsetAnimation;
+  Animation<double> _rotateAnimation;
   Animation<Offset> _bounceAnimation;
 
   @override
@@ -84,6 +93,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     _resetPanController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    _resetRotateController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 250));
     _bounceController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     super.initState();
@@ -93,6 +104,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   void dispose() {
     _resetZoomController.dispose();
     _resetPanController.dispose();
+    _resetRotateController.dispose();
     _bounceController.dispose();
     super.dispose();
   }
@@ -100,8 +112,9 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   void _onScaleStart(ScaleStartDetails details) {
     setState(() {
       _zoomOriginOffset = details.focalPoint;
-      _previewPanOffset = _panOffset;
-      _previewZoom = _zoom;
+      _previousPanOffset = _panOffset;
+      _previousZoom = _zoom;
+      _previousRotation = _rotation;
     });
   }
 
@@ -109,9 +122,13 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     Size _boundarySize =
         Size(_containerSize.width / 2, _containerSize.height / 2);
     Size _marginSize = Size(100.0, 100.0);
+    if (widget.enableRotate) {
+      setState(() =>
+          _rotation = (_previousRotation + details.rotation).clamp(-pi, pi));
+    }
     if (widget.enableZoom && details.scale != 1.0) {
       setState(() {
-        _zoom = (_previewZoom * details.scale)
+        _zoom = (_previousZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
         if (widget.onZoomChanged != null) widget.onZoomChanged(_zoom);
       });
@@ -120,7 +137,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
         (widget.multiFingersPan && details.scale != 1.0)) {
       Offset _panRealOffset = (details.focalPoint -
               _zoomOriginOffset +
-              _previewPanOffset * _previewZoom) /
+              _previousPanOffset * _previousZoom) /
           _zoom;
 
       if (widget.panLimit == 0.0) {
@@ -180,6 +197,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
         CurvedAnimation(parent: _resetZoomController, curve: Curves.easeInOut);
     Animation _animation2 =
         CurvedAnimation(parent: _resetPanController, curve: Curves.easeInOut);
+    Animation _animation3 = CurvedAnimation(
+        parent: _resetRotateController, curve: Curves.easeInOut);
 
     if (widget.zoomSteps > 0)
       _stepLength = (widget.maxScale - 1.0) / widget.zoomSteps;
@@ -207,11 +226,19 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     else
       _resetZoomController.reverse(from: 1.0);
 
+    _rotateAnimation = Tween(begin: _rotation, end: 0.0).animate(_animation3)
+      ..addListener(() {
+        setState(() {
+          _rotation = _rotateAnimation.value;
+        });
+      });
+    _resetRotateController.forward(from: 0.0);
+
     setState(() {
-      _previewZoom = _tmpZoom;
+      _previousZoom = _tmpZoom;
       if (_tmpZoom == 1.0) {
         _zoomOriginOffset = Offset.zero;
-        _previewPanOffset = Offset.zero;
+        _previousPanOffset = Offset.zero;
       }
     });
   }
@@ -234,7 +261,10 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
               transform: Matrix4.identity()
                 ..translate(_panOffset.dx, _panOffset.dy)
                 ..scale(_zoom, _zoom),
-              child: widget.child,
+              child: Transform.rotate(
+                angle: _rotation,
+                child: widget.child,
+              ),
             );
           }),
         ),

@@ -36,8 +36,8 @@ class Example extends State<MyApp> {
             isScrollable: true,
             tabs: <Widget>[
               Tab(text: 'load image'),
-              Tab(text: 'zooming'),
-              Tab(text: 'widget list'),
+              Tab(text: 'zoomable widget'),
+              Tab(text: 'zoomable list'),
               Tab(text: 'crop image(WIP)'),
               // Tab(text: 'stream loading(DEMO)'),
             ],
@@ -71,6 +71,8 @@ class Example extends State<MyApp> {
               maxScale: 2.0,
               minScale: 0.5,
               multiFingersPan: false,
+              enableRotate: true,
+              autoCenter: true,
               child: Image(
                 image: AdvancedNetworkImage(
                   'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',

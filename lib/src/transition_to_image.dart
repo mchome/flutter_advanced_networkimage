@@ -309,6 +309,7 @@ class _TransitionToImageState extends State<TransitionToImage>
               ? Center(
                   child: widget.loadingWidgetBuilder != null
                       ? widget.loadingWidgetBuilder(_progress)
+                      // ignore: deprecated_member_use_from_same_package
                       : widget.loadingWidget,
                 )
               : widget.transitionType == TransitionType.fade
