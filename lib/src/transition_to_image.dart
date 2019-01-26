@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_advanced_networkimage/provider.dart';
 
 class TransitionToImage extends StatefulWidget {
-  TransitionToImage({
+  const TransitionToImage({
     Key key,
     @required this.image,
     this.placeholder: const Icon(Icons.clear),
@@ -309,7 +309,6 @@ class _TransitionToImageState extends State<TransitionToImage>
               ? Center(
                   child: widget.loadingWidgetBuilder != null
                       ? widget.loadingWidgetBuilder(_progress)
-                      // ignore: deprecated_member_use_from_same_package
                       : widget.loadingWidget,
                 )
               : widget.transitionType == TransitionType.fade

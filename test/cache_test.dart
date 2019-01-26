@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:path/path.dart';
-import 'package:test_api/test_api.dart';
+import 'package:test/test.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
