@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_advanced_networkimage/provider.dart';
 
 class TransitionToImage extends StatefulWidget {
   TransitionToImage({
@@ -20,6 +21,7 @@ class TransitionToImage extends StatefulWidget {
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
     this.loadingWidget = const CircularProgressIndicator(),
+    this.loadingWidgetBuilder,
     this.enableRefresh: false,
   })  : assert(image != null),
         assert(placeholder != null),
@@ -132,7 +134,13 @@ class TransitionToImage extends StatefulWidget {
   final bool matchTextDirection;
 
   /// Widget displayed when the target [image] is loading.
+  /// Deprecated, use [loadingWidgetBuilder] instead.
+  @deprecated
   final Widget loadingWidget;
+
+  /// Widget builder (with loading progress) displayed
+  /// when the target [image] is loading.
+  final LoadingWidgetBuilder loadingWidgetBuilder;
 
   /// Enable an internal [GestureDetector] for manually refreshing.
   final bool enableRefresh;
@@ -152,6 +160,8 @@ enum TransitionType {
   fade,
 }
 
+typedef Widget LoadingWidgetBuilder(double progress);
+
 class _TransitionToImageState extends State<TransitionToImage>
     with TickerProviderStateMixin {
   AnimationController _controller;
@@ -163,6 +173,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   ImageStream _imageStream;
   ImageInfo _imageInfo;
   bool _loadFailed = false;
+  double _progress = 0.0;
 
   _TransitionStatus _status = _TransitionStatus.start;
 
@@ -240,6 +251,14 @@ class _TransitionToImageState extends State<TransitionToImage>
       _imageProvider.evict();
     }
     final ImageStream oldImageStream = _imageStream;
+    if (_imageProvider is AdvancedNetworkImage) {
+      var callback = (_imageProvider as AdvancedNetworkImage).loadingProgress;
+      (_imageProvider as AdvancedNetworkImage).loadingProgress =
+          (double progress) {
+        setState(() => _progress = progress);
+        if (callback != null) callback(progress);
+      };
+    }
     _imageStream = _imageProvider.resolve(createLocalImageConfiguration(
       context,
       size: widget.width != null && widget.height != null
@@ -287,7 +306,11 @@ class _TransitionToImageState extends State<TransitionToImage>
               : Center(child: widget.placeholder)
           : _status == _TransitionStatus.start ||
                   _status == _TransitionStatus.loading
-              ? Center(child: widget.loadingWidget)
+              ? Center(
+                  child: widget.loadingWidgetBuilder != null
+                      ? widget.loadingWidgetBuilder(_progress)
+                      : widget.loadingWidget,
+                )
               : widget.transitionType == TransitionType.fade
                   ? FadeTransition(
                       opacity: _fadeTween.animate(_animation),

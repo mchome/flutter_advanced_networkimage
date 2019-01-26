@@ -15,7 +15,7 @@ import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart' show uid;
 
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
-  const AdvancedNetworkImage(
+  AdvancedNetworkImage(
     this.url, {
     this.scale: 1.0,
     this.header,
@@ -74,7 +74,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   final CacheRule cacheRule;
 
   /// Report progress when fetching image.
-  final ValueChanged<double> loadingProgress;
+  ValueChanged<double> loadingProgress;
 
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
@@ -211,7 +211,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     http.Response _response;
     _response = await run(() async {
       final _req = http.Request('GET', Uri.parse(url));
-      _req.headers.addAll(header);
+      _req.headers.addAll(header ?? {});
       final _res = await _req.send().timeout(timeoutDuration);
       List<int> buffer = [];
       final Completer<http.Response> completer = Completer<http.Response>();

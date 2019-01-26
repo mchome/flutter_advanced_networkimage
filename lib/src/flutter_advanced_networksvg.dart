@@ -223,7 +223,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     http.Response _response;
     _response = await run(() async {
       final _req = http.Request('GET', Uri.parse(url));
-      _req.headers.addAll(header);
+      _req.headers.addAll(header ?? {});
       final _res = await _req.send().timeout(timeoutDuration);
       List<int> buffer = [];
       final Completer<http.Response> completer = Completer<http.Response>();
