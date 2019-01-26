@@ -39,11 +39,9 @@ class StreamLoadingImageState extends State<StreamLoadingImage> {
 
   void getImage() async {
     StreamedResponse res = await Request('GET', Uri.parse(widget.url)).send();
-    int fileSize = 0;
     subscription = res.stream.listen((bytes) {
       buffer.addAll(bytes);
-      fileSize += bytes.length;
-      setState(() => progress = fileSize / res.contentLength);
+      setState(() => progress = buffer.length / res.contentLength);
     });
   }
 

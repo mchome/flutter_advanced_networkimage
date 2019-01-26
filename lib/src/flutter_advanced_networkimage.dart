@@ -5,8 +5,8 @@ import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'dart:ui' show hashValues;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -28,6 +28,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.loadFailedCallback,
     this.fallbackImage,
     this.cacheRule,
+    this.loadingProgress,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
@@ -72,6 +73,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Disk cache rules for advanced control.
   final CacheRule cacheRule;
 
+  /// Report progress when fetching image.
+  final ValueChanged<double> loadingProgress;
+
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return SynchronousFuture<AdvancedNetworkImage>(this);
@@ -101,7 +105,12 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     }
 
     Uint8List imageData = await _loadFromRemote(
-        key.url, key.header, key.retryLimit, key.retryDuration);
+      key.url,
+      key.header,
+      key.retryLimit,
+      key.retryDuration,
+      key.loadingProgress,
+    );
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
       return await PaintingBinding.instance.instantiateImageCodec(imageData);
@@ -136,7 +145,12 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       }
 
       Uint8List imageData = await _loadFromRemote(
-          key.url, key.header, key.retryLimit, key.retryDuration);
+        key.url,
+        key.header,
+        key.retryLimit,
+        key.retryDuration,
+        key.loadingProgress,
+      );
       if (imageData != null) {
         await (File(join(_cacheImagesDirectory.path, uId)))
             .writeAsBytes(imageData);
@@ -148,7 +162,12 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       if (data != null) return data;
 
       data = await _loadFromRemote(
-          key.url, key.header, key.retryLimit, key.retryDuration);
+        key.url,
+        key.header,
+        key.retryLimit,
+        key.retryDuration,
+        key.loadingProgress,
+      );
       if (data != null) {
         await diskCache.save(uId, data, key.cacheRule);
         return data;
@@ -159,8 +178,13 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   /// Fetch the image from network.
-  Future<Uint8List> _loadFromRemote(String url, Map<String, String> header,
-      int retryLimit, Duration retryDuration) async {
+  Future<Uint8List> _loadFromRemote(
+    String url,
+    Map<String, String> header,
+    int retryLimit,
+    Duration retryDuration,
+    ValueChanged<double> progressReporter,
+  ) async {
     if (retryLimit < 0) retryLimit = 0;
 
     /// Retry mechanism.
@@ -186,7 +210,25 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     http.Response _response;
     _response = await run(() async {
-      return await http.get(url, headers: header).timeout(timeoutDuration);
+      final _res = await http.Request('GET', Uri.parse(url))
+          .send()
+          .timeout(timeoutDuration)
+        ..headers.addAll(header ?? {});
+      List<int> buffer = [];
+      final Completer<http.Response> completer = Completer<http.Response>();
+      _res.stream.listen((bytes) {
+        buffer.addAll(bytes);
+        double progress = buffer.length / _res.contentLength;
+        if (progressReporter != null) progressReporter(progress);
+        if (progress >= 1.0)
+          completer.complete(http.Response.bytes(buffer, _res.statusCode,
+              request: _res.request,
+              headers: _res.headers,
+              isRedirect: _res.isRedirect,
+              persistentConnection: _res.persistentConnection,
+              reasonPhrase: _res.reasonPhrase));
+      });
+      return completer.future;
     }, retryLimit, retryDuration, retryDurationFactor);
     if (_response != null) return _response.bodyBytes;
 
@@ -202,21 +244,23 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         header == typedOther.header &&
         useDiskCache == typedOther.useDiskCache &&
         retryLimit == typedOther.retryLimit &&
+        retryDurationFactor == typedOther.retryDurationFactor &&
         retryDuration == typedOther.retryDuration;
   }
 
   @override
   int get hashCode => hashValues(url, scale, header, useDiskCache, retryLimit,
-      retryDuration, timeoutDuration);
+      retryDuration, retryDurationFactor, timeoutDuration);
 
   @override
   String toString() => '$runtimeType('
       '"$url",'
       'scale: $scale,'
       'header: $header,'
-      'useDiskCache:$useDiskCache,'
-      'retryLimit:$retryLimit,'
-      'retryDuration:$retryDuration,'
-      'timeoutDuration:$timeoutDuration'
+      'useDiskCache: $useDiskCache,'
+      'retryLimit: $retryLimit,'
+      'retryDuration: $retryDuration,'
+      'retryDurationFactor: $retryDurationFactor,'
+      'timeoutDuration: $timeoutDuration'
       ')';
 }

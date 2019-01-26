@@ -39,7 +39,7 @@ class Example extends State<MyApp> {
               Tab(text: 'zooming'),
               Tab(text: 'widget list'),
               Tab(text: 'crop image(WIP)'),
-              // Tab(text: 'stream loading'),
+              // Tab(text: 'stream loading(DEMO)'),
             ],
           ),
         ),
@@ -51,6 +51,7 @@ class Example extends State<MyApp> {
                 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
                 loadedCallback: () => print('It works!'),
                 loadFailedCallback: () => print('Oh, no!'),
+                // loadingProgress: (double progress) => print(progress),
               ),
               fit: BoxFit.contain,
               placeholder: Container(
@@ -74,9 +75,7 @@ class Example extends State<MyApp> {
                   'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
                 ),
               ),
-              onZoomChanged: (double value) {
-                // print(value);
-              },
+              // onZoomChanged: (double value) => print(value),
             ),
 
             Builder(builder: (BuildContext context) {
