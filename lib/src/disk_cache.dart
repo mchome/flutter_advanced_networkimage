@@ -239,6 +239,25 @@ class DiskCache {
       return false;
     }
   }
+
+  /// Get cache folder size.
+  Future<int> cacheSize() async {
+    int size = 0;
+    try {
+      Directory tempDir =
+          Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+      Directory appDir = Directory(
+          join((await getApplicationDocumentsDirectory()).path, 'imagecache'));
+      if (tempDir.existsSync())
+        tempDir.listSync().forEach((var file) => size += file.statSync().size);
+      if (appDir.existsSync())
+        appDir.listSync().forEach((var file) => size += file.statSync().size);
+      return size;
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
 }
 
 /// The rules used in [DiskCache].

@@ -126,5 +126,26 @@ main() {
       expect(await DiskCache().clear(), true);
       expect(await DiskCache().load('lll'.hashCode.toString()), null);
     });
+    test('=> get cache size', () async {
+      expect(await DiskCache().clear(), true);
+      expect(
+        await DiskCache().save(
+            'mmm'.hashCode.toString(), utf8.encode('Thursday'), CacheRule()),
+        true,
+      );
+      expect(
+        await DiskCache().save('nnn'.hashCode.toString(), utf8.encode('Friday'),
+            CacheRule(storeDirectory: StoreDirectoryType.document)),
+        true,
+      );
+      expect(await DiskCache().load('mmm'.hashCode.toString()),
+          utf8.encode('Thursday'));
+      expect(await DiskCache().load('nnn'.hashCode.toString()),
+          utf8.encode('Friday'));
+      expect(
+          await DiskCache().cacheSize(), 'Thursday'.length + 'Friday'.length);
+      expect(await DiskCache().clear(), true);
+      expect(await DiskCache().cacheSize(), 0);
+    });
   });
 }
