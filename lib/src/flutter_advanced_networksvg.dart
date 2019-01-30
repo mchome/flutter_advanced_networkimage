@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart' show uid;
 
+/// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   const AdvancedNetworkSvg(
     this.url,
@@ -31,6 +32,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     this.fallbackImage,
     this.cacheRule,
     this.loadingProgress,
+    this.getRealUrl,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
@@ -82,6 +84,9 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   /// Report progress when fetching image.
   final ValueChanged<double> loadingProgress;
 
+  /// Extract the real url before fetching.
+  final Future<String> getRealUrl;
+
   @override
   Future<AdvancedNetworkSvg> obtainKey() {
     return SynchronousFuture<AdvancedNetworkSvg>(this);
@@ -103,14 +108,10 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
 
     String uId = uid(key.url);
 
-    try {
-      if (useDiskCache) {
-        Uint8List _diskCache = await _loadFromDiskCache(key, uId);
-        if (key.loadedCallback != null) key.loadedCallback();
-        return await decoder(_diskCache, key.colorFilter, key.toString());
-      }
-    } catch (e) {
-      debugPrint(e.toString());
+    if (useDiskCache) {
+      Uint8List _diskCache = await _loadFromDiskCache(key, uId);
+      if (key.loadedCallback != null) key.loadedCallback();
+      return await decoder(_diskCache, key.colorFilter, key.toString());
     }
 
     Uint8List imageData = await _loadFromRemote(
@@ -118,15 +119,14 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       key.header,
       key.retryLimit,
       key.retryDuration,
+      key.retryDurationFactor,
+      key.timeoutDuration,
       key.loadingProgress,
+      key.getRealUrl,
     );
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
-      try {
-        return await decoder(imageData, key.colorFilter, key.toString());
-      } catch (e) {
-        debugPrint(e.toString());
-      }
+      return await decoder(imageData, key.colorFilter, key.toString());
     }
 
     if (key.loadFailedCallback != null) key.loadFailedCallback();
@@ -134,116 +134,6 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       return await decoder(key.fallbackImage, key.colorFilter, key.toString());
 
     throw Exception('Failed to load $url.');
-  }
-
-  /// __Load the disk cache__
-  ///
-  /// Check the following conditions: (no [CacheRule])
-  /// 1. Check if cache directory exist. If not exist, create it.
-  /// 2. Check if cached file(uid) exist. If yes, load the cache,
-  ///   otherwise go to download step.
-  Future<Uint8List> _loadFromDiskCache(
-      AdvancedNetworkSvg key, String uId) async {
-    if (key.cacheRule == null) {
-      Directory _cacheImagesDirectory =
-          Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-      if (_cacheImagesDirectory.existsSync()) {
-        File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
-        if (_cacheImageFile.existsSync()) {
-          return await _cacheImageFile.readAsBytes();
-        }
-      } else {
-        await _cacheImagesDirectory.create();
-      }
-
-      Uint8List imageData = await _loadFromRemote(
-        key.url,
-        key.header,
-        key.retryLimit,
-        key.retryDuration,
-        key.loadingProgress,
-      );
-      if (imageData != null) {
-        await (File(join(_cacheImagesDirectory.path, uId)))
-            .writeAsBytes(imageData);
-        return imageData;
-      }
-    } else {
-      DiskCache diskCache = DiskCache();
-      Uint8List data = await diskCache.load(uId);
-      if (data != null) return data;
-
-      data = await _loadFromRemote(
-        key.url,
-        key.header,
-        key.retryLimit,
-        key.retryDuration,
-        key.loadingProgress,
-      );
-      if (data != null) {
-        await diskCache.save(uId, data, key.cacheRule);
-        return data;
-      }
-    }
-
-    return null;
-  }
-
-  /// Fetch the image from network.
-  Future<Uint8List> _loadFromRemote(
-    String url,
-    Map<String, String> header,
-    int retryLimit,
-    Duration retryDuration,
-    ValueChanged<double> progressReporter,
-  ) async {
-    if (retryLimit < 0) retryLimit = 0;
-
-    /// Retry mechanism.
-    Future<http.Response> run<T>(
-        Future f(), int retryLimit, Duration retryDuration) async {
-      for (int t = 0; t < retryLimit + 1; t++) {
-        try {
-          http.Response res = await f();
-          if (res != null) {
-            if (res.statusCode == HttpStatus.ok)
-              return res;
-            else
-              debugPrint('Load error, response status code: ' +
-                  res.statusCode.toString());
-          }
-        } catch (_) {}
-        await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
-      }
-
-      if (retryLimit > 0) debugPrint('Retry failed!');
-      return null;
-    }
-
-    http.Response _response;
-    _response = await run(() async {
-      final _req = http.Request('GET', Uri.parse(url));
-      _req.headers.addAll(header ?? {});
-      final _res = await _req.send().timeout(timeoutDuration);
-      List<int> buffer = [];
-      final Completer<http.Response> completer = Completer<http.Response>();
-      _res.stream.listen((bytes) {
-        buffer.addAll(bytes);
-        double progress = buffer.length / _res.contentLength;
-        if (progressReporter != null) progressReporter(progress);
-        if (progress >= 1.0)
-          completer.complete(http.Response.bytes(buffer, _res.statusCode,
-              request: _res.request,
-              headers: _res.headers,
-              isRedirect: _res.isRedirect,
-              persistentConnection: _res.persistentConnection,
-              reasonPhrase: _res.reasonPhrase));
-      });
-      return completer.future;
-    }, retryLimit, retryDuration);
-    if (_response != null) return _response.bodyBytes;
-
-    return null;
   }
 
   @override
@@ -274,4 +164,125 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       'retryDurationFactor: $retryDurationFactor,'
       'timeoutDuration: $timeoutDuration'
       ')';
+}
+
+/// Load the disk cache
+///
+/// Check the following conditions: (no [CacheRule])
+/// 1. Check if cache directory exist. If not exist, create it.
+/// 2. Check if cached file(uid) exist. If yes, load the cache,
+///   otherwise go to download step.
+Future<Uint8List> _loadFromDiskCache(AdvancedNetworkSvg key, String uId) async {
+  if (key.cacheRule == null) {
+    Directory _cacheImagesDirectory =
+        Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+    if (_cacheImagesDirectory.existsSync()) {
+      File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
+      if (_cacheImageFile.existsSync()) {
+        return await _cacheImageFile.readAsBytes();
+      }
+    } else {
+      await _cacheImagesDirectory.create();
+    }
+
+    Uint8List imageData = await _loadFromRemote(
+      key.url,
+      key.header,
+      key.retryLimit,
+      key.retryDuration,
+      key.retryDurationFactor,
+      key.timeoutDuration,
+      key.loadingProgress,
+      key.getRealUrl,
+    );
+    if (imageData != null) {
+      await (File(join(_cacheImagesDirectory.path, uId)))
+          .writeAsBytes(imageData);
+      return imageData;
+    }
+  } else {
+    DiskCache diskCache = DiskCache();
+    Uint8List data = await diskCache.load(uId);
+    if (data != null) return data;
+
+    data = await _loadFromRemote(
+      key.url,
+      key.header,
+      key.retryLimit,
+      key.retryDuration,
+      key.retryDurationFactor,
+      key.timeoutDuration,
+      key.loadingProgress,
+      key.getRealUrl,
+    );
+    if (data != null) {
+      await diskCache.save(uId, data, key.cacheRule);
+      return data;
+    }
+  }
+
+  return null;
+}
+
+/// Fetch the image from network.
+Future<Uint8List> _loadFromRemote(
+  String url,
+  Map<String, String> header,
+  int retryLimit,
+  Duration retryDuration,
+  double retryDurationFactor,
+  Duration timeoutDuration,
+  ValueChanged<double> progressReporter,
+  Future<String> getRealUrl,
+) async {
+  if (retryLimit < 0) retryLimit = 0;
+
+  /// Retry mechanism.
+  Future<http.Response> run<T>(Future f(), int retryLimit,
+      Duration retryDuration, double retryDurationFactor) async {
+    for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
+      try {
+        http.Response res = await f();
+        if (res != null) {
+          if (res.statusCode == HttpStatus.ok)
+            return res;
+          else
+            debugPrint('Load error, response status code: ' +
+                res.statusCode.toString());
+        }
+      } catch (_) {}
+      await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
+    }
+
+    if (retryLimit > 0) debugPrint('Retry failed!');
+    return null;
+  }
+
+  http.Response _response;
+  _response = await run(() async {
+    String _url = url;
+    if (getRealUrl != null) _url = await getRealUrl;
+
+    final _req = http.Request('GET', Uri.parse(_url));
+    _req.headers.addAll(header ?? {});
+    final _res = await _req.send().timeout(timeoutDuration);
+    List<int> buffer = [];
+    final Completer<http.Response> completer = Completer<http.Response>();
+    _res.stream.listen((bytes) {
+      buffer.addAll(bytes);
+      double progress = buffer.length / _res.contentLength;
+      if (progressReporter != null) progressReporter(progress);
+      if (progress >= 1.0)
+        completer.complete(http.Response.bytes(buffer, _res.statusCode,
+            request: _res.request,
+            headers: _res.headers,
+            isRedirect: _res.isRedirect,
+            persistentConnection: _res.persistentConnection,
+            reasonPhrase: _res.reasonPhrase));
+    });
+    return completer.future;
+  }, retryLimit, retryDuration, retryDurationFactor);
+  if (_response != null) return _response.bodyBytes;
+
+  return null;
 }

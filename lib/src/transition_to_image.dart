@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_advanced_networkimage/provider.dart';
 
+typedef Widget LoadingWidgetBuilder(double progress);
+
 class TransitionToImage extends StatefulWidget {
   const TransitionToImage({
     Key key,
@@ -159,8 +161,6 @@ enum TransitionType {
   slide,
   fade,
 }
-
-typedef Widget LoadingWidgetBuilder(double progress);
 
 class _TransitionToImageState extends State<TransitionToImage>
     with TickerProviderStateMixin {

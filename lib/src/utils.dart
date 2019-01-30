@@ -1,3 +1,19 @@
+/// Calculate crc32 checksum
+/// 
+/// crc table generator:
+/// ```dart
+/// List<String> createCRCTable() {
+///   List<String> result = List<String>(256);
+///   for (int i = 0; i <= 255; i++) {
+///     int rem = i;
+///     for (int j = 0; j <= 7; j++) {
+///       rem = (rem & 1) > 0 ? (rem >> 1) ^ 0xedb88320 : rem >> 1;
+///     }
+///     result[i] = '0x' + rem.toRadixString(16).padLeft(8, '0');
+///   }
+///   return result;
+/// }
+/// ```
 int crc32(List<int> bytes) {
   const List<int> crcTable = const [
     0x00000000,
@@ -267,16 +283,5 @@ int crc32(List<int> bytes) {
   return crc ^ 0xffffffff;
 }
 
-// List<String> createCRCTable() {
-//   List<String> result = List<String>(256);
-//   for (int i = 0; i <= 255; i++) {
-//     int rem = i;
-//     for (int j = 0; j <= 7; j++) {
-//       rem = (rem & 1) > 0 ? (rem >> 1) ^ 0xedb88320 : rem >> 1;
-//     }
-//     result[i] = '0x' + rem.toRadixString(16).padLeft(8, '0');
-//   }
-//   return result;
-// }
-
+/// Get uid from hashCode.
 String uid(String str) => str.hashCode.toString();

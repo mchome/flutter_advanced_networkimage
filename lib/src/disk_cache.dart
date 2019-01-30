@@ -9,23 +9,60 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_advanced_networkimage/src/utils.dart' show crc32;
 
+/// Stand for [getTemporaryDirectory] and
+/// [getApplicationDocumentsDirectory] in path_provider plugin.
 enum StoreDirectoryType {
   temporary,
   document,
 }
 
+/// Singleton for managing cache files.
 class DiskCache {
   static final DiskCache _instance = DiskCache._internal();
   factory DiskCache() => _instance;
   DiskCache._internal();
 
+  /// Maximum number of entries to store in the cache.
+  ///
+  /// Once this many entries have been cached, the least-recently-used entry is
+  /// evicted when adding a new entry.
   int get maxEntries => _maxEntries;
-  int _maxEntries = 5000;
-  int get maxSizeBytes => _maxSizeBytes;
-  int _maxSizeBytes = 1000 << 20; // 1 GiB
-  int maxCommitOps = 10;
+  int _maxEntries = 5000; // default: 5000
+  /// Changes the maximum cache size.
+  set maxEntries(int value) {
+    assert(value != null);
+    assert(value >= 0);
+    if (value == maxEntries) return;
+    _maxEntries = value;
+  }
 
+  /// Maximum size of entries to store in the cache in bytes.
+  ///
+  /// Once more than this amount of bytes have been cached, the
+  /// least-recently-used entry is evicted until there are fewer than the
+  /// maximum bytes.
+  int get maxSizeBytes => _maxSizeBytes;
+  int _maxSizeBytes = 1000 << 20; // default: 1 GiB
+  /// Changes the maximum cache bytes.
+  set maxSizeBytes(int value) {
+    assert(value != null);
+    assert(value >= 0);
+    if (value == maxSizeBytes) return;
+    _maxSizeBytes = value;
+    if (maxSizeBytes == 0) {
+      clear();
+    } else {
+      _checkCacheSize();
+    }
+  }
+
+  /// Maximum read operations to save the metadata.
+  ///
+  /// Once this many operations have been reached,
+  /// the metadata will be saved.
+  int maxCommitOps = 10;
   int _currentOps = 0;
+
   int get _currentEntries => _metadata != null ? _metadata.keys.length : 0;
   int get _currentSizeBytes {
     int size = 0;
@@ -34,20 +71,6 @@ class DiskCache {
   }
 
   Map<String, dynamic> _metadata;
-
-  set maxEntries(int value) {
-    assert(value != null);
-    assert(value >= 0);
-    if (value == maxEntries) return;
-    _maxEntries = value;
-  }
-
-  set maxSizeBytes(int value) {
-    assert(value != null);
-    assert(value >= 0);
-    if (value == maxSizeBytes) return;
-    _maxSizeBytes = value;
-  }
 
   static const String _metadataFilename = 'imagecache_metadata.json';
 
@@ -66,20 +89,19 @@ class DiskCache {
   }
 
   Future<void> _commitMetaData([bool force = false]) async {
-    if (force) {
-      _currentOps = 0;
-    } else {
-      _currentOps += 1;
-      if (_currentOps < maxCommitOps)
+    if (!force) {
+      if (_currentEntries < maxEntries && _currentSizeBytes < maxEntries)
         return;
-      else
-        _currentOps = 0;
+      _currentOps += 1;
+      if (_currentOps < maxCommitOps) return;
     }
     File path = File(join(
         (await getApplicationDocumentsDirectory()).path, _metadataFilename));
     await path.writeAsString(json.encode(_metadata));
+    _currentOps = 0;
   }
 
+  /// Clean up the bad cache files in metadata.
   Future<void> keepCacheHealth() async {
     _metadata.removeWhere((k, v) {
       if (!File(v['path']).existsSync()) return true;
@@ -99,6 +121,7 @@ class DiskCache {
     await _commitMetaData();
   }
 
+  /// Load the cache image from [DiskCache].
   Future<Uint8List> load(String uid) async {
     if (_metadata == null) await _initMetaData();
     try {
@@ -140,6 +163,7 @@ class DiskCache {
     }
   }
 
+  /// Load the cache image save [DiskCache].
   Future<bool> save(String uid, Uint8List data, CacheRule rule) async {
     if (_metadata == null) await _initMetaData();
     Directory dir = Directory(join(
@@ -180,6 +204,7 @@ class DiskCache {
     }
   }
 
+  /// Evicts a single entry from [DiskCache], returning true if successful.
   Future<bool> evict(String uid) async {
     if (_metadata == null) await _initMetaData();
     try {
@@ -196,6 +221,7 @@ class DiskCache {
     }
   }
 
+  /// Evicts all entries from [DiskCache].
   Future<bool> clear() async {
     try {
       Directory tempDir =
@@ -215,6 +241,7 @@ class DiskCache {
   }
 }
 
+/// The rules used in [DiskCache].
 class CacheRule {
   const CacheRule({
     this.maxAge = const Duration(days: 30),
@@ -224,7 +251,15 @@ class CacheRule {
         assert(storeDirectory != null),
         assert(checksum != null);
 
+  /// Set a maximum age for the cache file.
+  /// Default is 30 days.
   final Duration maxAge;
+
+  /// Determining the type of folder for the cache file.
+  /// Default is temp folder.
   final StoreDirectoryType storeDirectory;
+
+  /// Checkum(CRC32) for cache file.
+  /// Default is disabled;
   final bool checksum;
 }

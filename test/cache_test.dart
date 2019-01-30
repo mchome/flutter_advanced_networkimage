@@ -79,11 +79,11 @@ main() {
       );
       expect(
         await DiskCache().save(
-            'iii'.hashCode.toString(), utf8.encode('autumn'), CacheRule()),
+            'hhh'.hashCode.toString(), utf8.encode('autumn'), CacheRule()),
         true,
       );
       expect(await DiskCache().load('ggg'.hashCode.toString()), null);
-      expect(await DiskCache().load('iii'.hashCode.toString()),
+      expect(await DiskCache().load('hhh'.hashCode.toString()),
           utf8.encode('autumn'));
       DiskCache().maxEntries = 5000;
     });
@@ -91,40 +91,40 @@ main() {
       DiskCache().maxSizeBytes = 8;
       expect(
         await DiskCache().save(
-            'jjj'.hashCode.toString(), utf8.encode('winter'), CacheRule()),
+            'iii'.hashCode.toString(), utf8.encode('winter'), CacheRule()),
         true,
       );
       expect(
         await DiskCache().save(
-            'kkk'.hashCode.toString(), utf8.encode('Monday'), CacheRule()),
+            'jjj'.hashCode.toString(), utf8.encode('Monday'), CacheRule()),
         true,
       );
-      expect(await DiskCache().load('jjj'.hashCode.toString()), null);
-      expect(await DiskCache().load('kkk'.hashCode.toString()),
+      expect(await DiskCache().load('iii'.hashCode.toString()), null);
+      expect(await DiskCache().load('jjj'.hashCode.toString()),
           utf8.encode('Monday'));
       DiskCache().maxSizeBytes = 1000 << 20;
     });
     test('=> evict uid', () async {
       expect(
         await DiskCache().save(
-            'lll'.hashCode.toString(), utf8.encode('Tuesday'), CacheRule()),
+            'kkk'.hashCode.toString(), utf8.encode('Tuesday'), CacheRule()),
         true,
       );
-      expect(await DiskCache().load('lll'.hashCode.toString()),
+      expect(await DiskCache().load('kkk'.hashCode.toString()),
           utf8.encode('Tuesday'));
-      expect(await DiskCache().evict('lll'.hashCode.toString()), true);
-      expect(await DiskCache().load('lll'.hashCode.toString()), null);
+      expect(await DiskCache().evict('kkk'.hashCode.toString()), true);
+      expect(await DiskCache().load('kkk'.hashCode.toString()), null);
     });
     test('=> clear cache', () async {
       expect(
         await DiskCache().save(
-            'mmm'.hashCode.toString(), utf8.encode('Wednesday'), CacheRule()),
+            'lll'.hashCode.toString(), utf8.encode('Wednesday'), CacheRule()),
         true,
       );
-      expect(await DiskCache().load('mmm'.hashCode.toString()),
+      expect(await DiskCache().load('lll'.hashCode.toString()),
           utf8.encode('Wednesday'));
       expect(await DiskCache().clear(), true);
-      expect(await DiskCache().load('mmm'.hashCode.toString()), null);
+      expect(await DiskCache().load('lll'.hashCode.toString()), null);
     });
   });
 }
