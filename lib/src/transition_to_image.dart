@@ -255,7 +255,10 @@ class _TransitionToImageState extends State<TransitionToImage>
       var callback = (_imageProvider as AdvancedNetworkImage).loadingProgress;
       (_imageProvider as AdvancedNetworkImage).loadingProgress =
           (double progress) {
-        setState(() => _progress = progress);
+        if (mounted)
+          setState(() => _progress = progress);
+        else
+          return oldImageStream?.removeListener(_updateImage);
         if (callback != null) callback(progress);
       };
     }
