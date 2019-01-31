@@ -27,7 +27,12 @@ flutter packages get
 ```dart
 // using image provider
 Image(
-  image: AdvancedNetworkImage(url, header: header, useDiskCache: true),
+  image: AdvancedNetworkImage(
+    url,
+    header: header,
+    useDiskCache: true,
+    cacheRule: CacheRule(maxAge: const Duration(days: 7)),
+  ),
   fit: BoxFit.cover,
 )
 
@@ -39,12 +44,12 @@ SvgPicture(
 
 ```dart
 // get the disk cache folder size
-int folderSize = await getDiskCachedImagesSize();
+int cacheSize = await DiskCache().cacheSize();
 ```
 
 ```dart
 // clean the disk cache
-bool isSucceed = await clearDiskCachedImages();
+bool isSucceed = await DiskCache().clear();
 ```
 
 ```dart
@@ -76,8 +81,12 @@ TransitionToImage(
     },
     loadFailedCallback: () {
       print('Oh, no!');
-    }),
-  loadingWidget: const CircularProgressIndicator(),
+    },
+    loadingProgress: (double progress) {
+      print('Now Loading: $progress');
+    },
+  ),
+  loadingWidgetBuilder: (double progress) => Text(progress.toString()),
   fit: BoxFit.contain,
   placeholder: const Icon(Icons.refresh),
   width: 400.0,
@@ -93,7 +102,8 @@ ZoomableWidget(
   maxScale: 2.0,
   minScale: 0.5,
   singleFingerPan: true,
-  multiFingersPan: true,
+  multiFingersPan: false,
+  enableRotate: true,
   child: Image(
     image: AssetImage('graphics/background.png'),
   ),

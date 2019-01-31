@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0]
+
+- `flutter_advanced_networkimage`: add `cacheRule`, `loadingProgress`
+    and `getRealUrl`.
+- `flutter_advanced_networksvg:`: new in 0.4.0.
+- `transition_to_image`: match `Image` widget option(breaking change),
+    `loadingWidget` is deprecated, use `loadingWidgetBuilder`(display progress),
+    add `borderRadius`, fix setState() called after dispose().
+- `disk_cache`: new in 0.4.0.
+- `zoomable_widget`: add `enableRotate`.
+
 ## [0.3.13]
 
 - Add `autoCenter` in `zoomable_widget`.

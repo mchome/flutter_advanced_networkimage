@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 
-main() {
+void main() {
   group('Cache Test', () {
     const MethodChannel('plugins.flutter.io/path_provider')
         .setMockMethodCallHandler((MethodCall methodCall) async {
