@@ -232,7 +232,7 @@ Future<Uint8List> _loadFromRemote(
   Duration retryDuration,
   double retryDurationFactor,
   Duration timeoutDuration,
-  ValueChanged<double> progressReporter,
+  ValueChanged<double> progressReport,
   Future<String> getRealUrl,
 ) async {
   if (retryLimit < 0) retryLimit = 0;
@@ -263,24 +263,7 @@ Future<Uint8List> _loadFromRemote(
     String _url = url;
     if (getRealUrl != null) _url = await getRealUrl;
 
-    final _req = http.Request('GET', Uri.parse(_url));
-    _req.headers.addAll(header ?? {});
-    final _res = await _req.send().timeout(timeoutDuration);
-    List<int> buffer = [];
-    final Completer<http.Response> completer = Completer<http.Response>();
-    _res.stream.listen((bytes) {
-      buffer.addAll(bytes);
-      double progress = buffer.length / _res.contentLength;
-      if (progressReporter != null) progressReporter(progress);
-      if (progress >= 1.0)
-        completer.complete(http.Response.bytes(buffer, _res.statusCode,
-            request: _res.request,
-            headers: _res.headers,
-            isRedirect: _res.isRedirect,
-            persistentConnection: _res.persistentConnection,
-            reasonPhrase: _res.reasonPhrase));
-    });
-    return completer.future;
+    return await http.get(_url, headers: header).timeout(timeoutDuration);
   }, retryLimit, retryDuration, retryDurationFactor);
   if (_response != null) return _response.bodyBytes;
 

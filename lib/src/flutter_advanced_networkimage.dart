@@ -229,7 +229,7 @@ Future<Uint8List> _loadFromRemote(
   Duration retryDuration,
   double retryDurationFactor,
   Duration timeoutDuration,
-  ValueChanged<double> progressReporter,
+  ValueChanged<double> progressReport,
   Future<String> getRealUrl,
 ) async {
   if (retryLimit < 0) retryLimit = 0;
@@ -268,7 +268,7 @@ Future<Uint8List> _loadFromRemote(
     _res.stream.listen((bytes) {
       buffer.addAll(bytes);
       double progress = buffer.length / _res.contentLength;
-      if (progressReporter != null) progressReporter(progress);
+      if (progressReport != null) progressReport(progress);
       if (progress >= 1.0)
         completer.complete(http.Response.bytes(buffer, _res.statusCode,
             request: _res.request,

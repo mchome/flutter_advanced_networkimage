@@ -1,5 +1,5 @@
 /// Calculate crc32 checksum
-/// 
+///
 /// crc table generator:
 /// ```dart
 /// List<String> createCRCTable() {
