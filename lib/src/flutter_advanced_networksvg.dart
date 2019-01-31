@@ -31,7 +31,6 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     this.loadFailedCallback,
     this.fallbackImage,
     this.cacheRule,
-    this.loadingProgress,
     this.getRealUrl,
   })  : assert(url != null),
         assert(scale != null),
@@ -81,9 +80,6 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   /// Disk cache rules for advanced control.
   final CacheRule cacheRule;
 
-  /// Report progress when fetching image.
-  final ValueChanged<double> loadingProgress;
-
   /// Extract the real url before fetching.
   final Future<String> getRealUrl;
 
@@ -121,7 +117,6 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       key.retryDuration,
       key.retryDurationFactor,
       key.timeoutDuration,
-      key.loadingProgress,
       key.getRealUrl,
     );
     if (imageData != null) {
@@ -192,7 +187,6 @@ Future<Uint8List> _loadFromDiskCache(AdvancedNetworkSvg key, String uId) async {
       key.retryDuration,
       key.retryDurationFactor,
       key.timeoutDuration,
-      key.loadingProgress,
       key.getRealUrl,
     );
     if (imageData != null) {
@@ -212,7 +206,6 @@ Future<Uint8List> _loadFromDiskCache(AdvancedNetworkSvg key, String uId) async {
       key.retryDuration,
       key.retryDurationFactor,
       key.timeoutDuration,
-      key.loadingProgress,
       key.getRealUrl,
     );
     if (data != null) {
@@ -232,7 +225,6 @@ Future<Uint8List> _loadFromRemote(
   Duration retryDuration,
   double retryDurationFactor,
   Duration timeoutDuration,
-  ValueChanged<double> progressReport,
   Future<String> getRealUrl,
 ) async {
   if (retryLimit < 0) retryLimit = 0;
