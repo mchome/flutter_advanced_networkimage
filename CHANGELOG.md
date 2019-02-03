@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.1]
+
+- Fix `TransitionToImage` loadingWidget & placeholder padding problem.
+- Remove `loadingWidget` deprecated status.
+
 ## [0.4.0]
 
 - `flutter_advanced_networkimage`: add `cacheRule`, `loadingProgress`

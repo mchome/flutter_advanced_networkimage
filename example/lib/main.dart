@@ -63,7 +63,8 @@ class Example extends State<MyApp> {
               width: 300.0,
               height: 300.0,
               enableRefresh: true,
-              loadingWidgetBuilder: (progress) => Text(progress.toString()),
+              loadingWidgetBuilder: (progress) =>
+                  Center(child: Text(progress.toString())),
             ),
 
             ZoomableWidget(

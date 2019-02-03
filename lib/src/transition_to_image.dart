@@ -22,7 +22,7 @@ class TransitionToImage extends StatefulWidget {
     this.alignment = Alignment.center,
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
-    this.loadingWidget = const CircularProgressIndicator(),
+    this.loadingWidget = const Center(child: const CircularProgressIndicator()),
     this.loadingWidgetBuilder,
     this.enableRefresh: false,
   })  : assert(image != null),
@@ -136,12 +136,10 @@ class TransitionToImage extends StatefulWidget {
   final bool matchTextDirection;
 
   /// Widget displayed when the target [image] is loading.
-  /// Deprecated, use [loadingWidgetBuilder] instead.
-  @deprecated
   final Widget loadingWidget;
 
   /// Widget builder (with loading progress) displayed
-  /// when the target [image] is loading.
+  /// when the target [image] is loading and loadingWidget is null.
   final LoadingWidgetBuilder loadingWidgetBuilder;
 
   /// Enable an internal [GestureDetector] for manually refreshing.
@@ -296,44 +294,37 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: widget.width,
-      height: widget.height,
-      color: Color(0),
-      child: _loadFailed
-          ? widget.enableRefresh
-              ? GestureDetector(
-                  onTap: () => _getImage(reload: true),
-                  child: Center(child: widget.placeholder),
-                )
-              : Center(child: widget.placeholder)
-          : _status == _TransitionStatus.start ||
-                  _status == _TransitionStatus.loading
-              ? Center(
-                  child: widget.loadingWidgetBuilder != null
-                      ? widget.loadingWidgetBuilder(_progress)
-                      : widget.loadingWidget,
-                )
-              : widget.transitionType == TransitionType.fade
-                  ? FadeTransition(
-                      opacity: _fadeTween.animate(_animation),
-                      child: widget.borderRadius != null
-                          ? ClipRRect(
-                              borderRadius: widget.borderRadius,
-                              child: buildRawImage(),
-                            )
-                          : buildRawImage(),
-                    )
-                  : SlideTransition(
-                      position: _slideTween.animate(_animation),
-                      child: widget.borderRadius != null
-                          ? ClipRRect(
-                              borderRadius: widget.borderRadius,
-                              child: buildRawImage(),
-                            )
-                          : buildRawImage(),
-                    ),
-    );
+    return _loadFailed
+        ? widget.enableRefresh
+            ? GestureDetector(
+                onTap: () => _getImage(reload: true),
+                child: widget.placeholder,
+              )
+            : widget.placeholder
+        : _status == _TransitionStatus.start ||
+                _status == _TransitionStatus.loading
+            ? widget.loadingWidgetBuilder != null
+                ? widget.loadingWidgetBuilder(_progress)
+                : widget.loadingWidget
+            : widget.transitionType == TransitionType.fade
+                ? FadeTransition(
+                    opacity: _fadeTween.animate(_animation),
+                    child: widget.borderRadius != null
+                        ? ClipRRect(
+                            borderRadius: widget.borderRadius,
+                            child: buildRawImage(),
+                          )
+                        : buildRawImage(),
+                  )
+                : SlideTransition(
+                    position: _slideTween.animate(_animation),
+                    child: widget.borderRadius != null
+                        ? ClipRRect(
+                            borderRadius: widget.borderRadius,
+                            child: buildRawImage(),
+                          )
+                        : buildRawImage(),
+                  );
   }
 
   RawImage buildRawImage() {
