@@ -260,13 +260,14 @@ Future<Uint8List> _loadFromRemote(
     String _url = url;
     if (getRealUrl != null) _url = await getRealUrl;
 
-    try {
-      final _req = http.Request('GET', Uri.parse(_url));
-      _req.headers.addAll(header ?? {});
-      final _res = await _req.send().timeout(timeoutDuration);
-      List<int> buffer = [];
-      final Completer<http.Response> completer = Completer<http.Response>();
-      _res.stream.listen((bytes) {
+    final _req = http.Request('GET', Uri.parse(_url));
+    _req.headers.addAll(header ?? {});
+    final _res = await _req.send().timeout(timeoutDuration);
+    List<int> buffer = [];
+    final Completer<http.Response> completer = Completer<http.Response>();
+    StreamSubscription<List<int>> subscription;
+    subscription = _res.stream.listen((bytes) {
+      try {
         buffer.addAll(bytes);
         double progress = buffer.length / _res.contentLength;
         if (progressReport != null) progressReport(progress);
@@ -277,12 +278,12 @@ Future<Uint8List> _loadFromRemote(
               isRedirect: _res.isRedirect,
               persistentConnection: _res.persistentConnection,
               reasonPhrase: _res.reasonPhrase));
-      });
-      return completer.future;
-    } catch (e) {
-      debugPrint(e.toString());
-      return await http.get(_url, headers: header).timeout(timeoutDuration);
-    }
+      } catch (e) {
+        subscription.cancel();
+        completer.complete(null);
+      }
+    });
+    return completer.future;
   }, retryLimit, retryDuration, retryDurationFactor);
   if (_response != null) return _response.bodyBytes;
 
