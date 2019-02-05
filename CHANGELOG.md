@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.2]
+
+- `AdvancedNetworkImage` download method fallback.
+
 ## [0.4.1]
 
 - Fix `TransitionToImage` loadingWidget & placeholder padding problem.
