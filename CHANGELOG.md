@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.3]
+
+- `AdvancedNetworkImage` fix download error.
+
 ## [0.4.2]
 
 - `AdvancedNetworkImage` download method fallback.
