@@ -25,7 +25,7 @@ class TransitionToImage extends StatefulWidget {
     this.loadingWidget = const Center(child: const CircularProgressIndicator()),
     this.loadingWidgetBuilder,
     this.enableRefresh: false,
-    this.enableMemoryCache: true,
+    this.disableMemoryCache: false,
     this.loadedCallback,
     this.loadFailedCallback,
   })  : assert(image != null),
@@ -39,7 +39,7 @@ class TransitionToImage extends StatefulWidget {
         assert(repeat != null),
         assert(matchTextDirection != null),
         assert(enableRefresh != null),
-        assert(enableMemoryCache != null),
+        assert(disableMemoryCache != null),
         super(key: key);
 
   /// The target image that is displayed.
@@ -150,8 +150,8 @@ class TransitionToImage extends StatefulWidget {
   /// Enable an internal [GestureDetector] for manually refreshing.
   final bool enableRefresh;
 
-  /// If set to false, the image provider will be evicted from [ImageCache].
-  final bool enableMemoryCache;
+  /// If set to enable, the image provider will be evicted from [ImageCache].
+  final bool disableMemoryCache;
 
   /// The callback will fire when the image loaded.
   final VoidCallback loadedCallback;
@@ -300,7 +300,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     if (_imageInfo != null) {
       _resolveStatus();
       if (widget.loadedCallback != null) widget.loadedCallback();
-      if (!widget.enableMemoryCache) _imageProvider.evict();
+      if (widget.disableMemoryCache) _imageProvider.evict();
     }
   }
 
@@ -309,7 +309,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     setState(() => _loadFailed = true);
     _resolveStatus();
     if (widget.loadFailedCallback != null) widget.loadFailedCallback();
-    if (!widget.enableMemoryCache) _imageProvider.evict();
+    if (widget.disableMemoryCache) _imageProvider.evict();
   }
 
   @override

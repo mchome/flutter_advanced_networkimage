@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.4]
+
+- `TransitionToImage` add `disableMemoryCache`;
+- `TransitionToImage` add `loadedCallback` & `loadFailedCallback`.
+
 ## [0.4.3]
 
 - `AdvancedNetworkImage` fix download error.

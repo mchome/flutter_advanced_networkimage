@@ -105,9 +105,14 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     String uId = uid(key.url);
 
     if (useDiskCache) {
-      Uint8List _diskCache = await _loadFromDiskCache(key, uId);
-      if (key.loadedCallback != null) key.loadedCallback();
-      return await decoder(_diskCache, key.colorFilter, key.toString());
+      try {
+        Uint8List _diskCache = await _loadFromDiskCache(key, uId);
+        if (key.loadedCallback != null) key.loadedCallback();
+        return await decoder(_diskCache, key.colorFilter, key.toString());
+      } catch (e) {
+        debugPrint(e.toString());
+        if (key.loadFailedCallback != null) key.loadFailedCallback();
+      }
     }
 
     Uint8List imageData = await _loadFromRemote(

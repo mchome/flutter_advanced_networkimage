@@ -55,7 +55,7 @@ class Example extends State<MyApp> {
               ),
               loadedCallback: () => print('It works!'),
               loadFailedCallback: () => print('Oh, no!'),
-              // enableMemoryCache: false,
+              // disableMemoryCache: true,
               fit: BoxFit.contain,
               placeholder: Container(
                 width: 300.0,
