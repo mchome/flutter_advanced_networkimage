@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.5]
+
+- `pubspec.yaml` update `version and path_provider dependency`;
+
 ## [0.4.4]
 
 - `TransitionToImage` add `disableMemoryCache`;
