@@ -49,15 +49,18 @@ class Example extends State<MyApp> {
             TransitionToImage(
               image: AdvancedNetworkImage(
                 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
-                loadedCallback: () => print('It works!'),
-                loadFailedCallback: () => print('Oh, no!'),
+                // loadedCallback: () => print('It works!'),
+                // loadFailedCallback: () => print('Oh, no!'),
                 // loadingProgress: (double progress) => print(progress),
               ),
+              loadedCallback: () => print('It works!'),
+              loadFailedCallback: () => print('Oh, no!'),
+              // enableMemoryCache: false,
               fit: BoxFit.contain,
               placeholder: Container(
                 width: 300.0,
                 height: 300.0,
-                color: Color(0),
+                color: Colors.transparent,
                 child: const Icon(Icons.refresh),
               ),
               width: 300.0,

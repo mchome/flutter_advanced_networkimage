@@ -284,8 +284,6 @@ class _TransitionToImageState extends State<TransitionToImage>
         !reload &&
         (_imageStream.key == oldImageStream?.key)) {
       setState(() => _status = _TransitionStatus.completed);
-      if (widget.loadedCallback != null) widget.loadedCallback();
-      if (!widget.enableMemoryCache) _imageProvider.evict();
     } else {
       setState(() {
         _status = _TransitionStatus.start;
@@ -299,14 +297,19 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   void _updateImage(ImageInfo info, bool synchronousCall) {
     _imageInfo = info;
-    if (_imageInfo != null) _resolveStatus();
+    if (_imageInfo != null) {
+      _resolveStatus();
+      if (widget.loadedCallback != null) widget.loadedCallback();
+      if (!widget.enableMemoryCache) _imageProvider.evict();
+    }
   }
 
   void _catchBadImage(dynamic exception, StackTrace stackTrace) {
     debugPrint(exception.toString());
     setState(() => _loadFailed = true);
-    if (widget.loadFailedCallback != null) widget.loadFailedCallback();
     _resolveStatus();
+    if (widget.loadFailedCallback != null) widget.loadFailedCallback();
+    if (!widget.enableMemoryCache) _imageProvider.evict();
   }
 
   @override
