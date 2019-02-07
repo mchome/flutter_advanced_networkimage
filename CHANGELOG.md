@@ -2,7 +2,8 @@
 
 ## [0.4.5]
 
-- `pubspec.yaml` update `version and path_provider dependency`;
+- Update `path_provider` dependency.
+- Add download test and update download error function.
 
 ## [0.4.4]
 

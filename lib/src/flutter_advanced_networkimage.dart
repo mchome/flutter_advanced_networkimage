@@ -31,13 +31,15 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.cacheRule,
     this.loadingProgress,
     this.getRealUrl,
+    this.printError = false,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
         assert(retryLimit != null),
         assert(retryDuration != null),
         assert(retryDurationFactor != null),
-        assert(timeoutDuration != null);
+        assert(timeoutDuration != null),
+        assert(printError != null);
 
   /// The URL from which the image will be fetched.
   final String url;
@@ -81,6 +83,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Extract the real url before fetching.
   final Future<String> getRealUrl;
 
+  /// Print error.
+  final bool printError;
+
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return SynchronousFuture<AdvancedNetworkImage>(this);
@@ -113,7 +118,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       }
     }
 
-    Uint8List imageData = await _loadFromRemote(
+    Uint8List imageData = await loadFromRemote(
       key.url,
       key.header,
       key.retryLimit,
@@ -122,6 +127,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       key.timeoutDuration,
       key.loadingProgress,
       key.getRealUrl,
+      printError: key.printError,
     );
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
@@ -186,7 +192,7 @@ Future<Uint8List> _loadFromDiskCache(
       await _cacheImagesDirectory.create();
     }
 
-    Uint8List imageData = await _loadFromRemote(
+    Uint8List imageData = await loadFromRemote(
       key.url,
       key.header,
       key.retryLimit,
@@ -195,6 +201,7 @@ Future<Uint8List> _loadFromDiskCache(
       key.timeoutDuration,
       key.loadingProgress,
       key.getRealUrl,
+      printError: key.printError,
     );
     if (imageData != null) {
       await (File(join(_cacheImagesDirectory.path, uId)))
@@ -206,7 +213,7 @@ Future<Uint8List> _loadFromDiskCache(
     Uint8List data = await diskCache.load(uId);
     if (data != null) return data;
 
-    data = await _loadFromRemote(
+    data = await loadFromRemote(
       key.url,
       key.header,
       key.retryLimit,
@@ -215,6 +222,7 @@ Future<Uint8List> _loadFromDiskCache(
       key.timeoutDuration,
       key.loadingProgress,
       key.getRealUrl,
+      printError: key.printError,
     );
     if (data != null) {
       await diskCache.save(uId, data, key.cacheRule);
@@ -226,7 +234,8 @@ Future<Uint8List> _loadFromDiskCache(
 }
 
 /// Fetch the image from network.
-Future<Uint8List> _loadFromRemote(
+@visibleForTesting
+Future<Uint8List> loadFromRemote(
   String url,
   Map<String, String> header,
   int retryLimit,
@@ -234,8 +243,9 @@ Future<Uint8List> _loadFromRemote(
   double retryDurationFactor,
   Duration timeoutDuration,
   ValueChanged<double> progressReport,
-  Future<String> getRealUrl,
-) async {
+  Future<String> getRealUrl, {
+  bool printError = false,
+}) async {
   if (retryLimit < 0) retryLimit = 0;
 
   /// Retry mechanism.
@@ -247,11 +257,13 @@ Future<Uint8List> _loadFromRemote(
         if (res != null) {
           if (res.statusCode == HttpStatus.ok)
             return res;
-          else
+          else if (printError)
             debugPrint('Load error, response status code: ' +
                 res.statusCode.toString());
         }
-      } catch (_) {}
+      } catch (e) {
+        if (printError) debugPrint(e.toString());
+      }
       await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
     }
 
@@ -275,6 +287,8 @@ Future<Uint8List> _loadFromRemote(
         buffer.addAll(bytes);
         double progress = buffer.length / _res.contentLength;
         if (progressReport != null) progressReport(progress);
+        if (!_res.isRedirect && _res.statusCode != HttpStatus.ok)
+          throw Exception('status code: ${_res.statusCode}');
         if (progress >= 1.0)
           completer.complete(http.Response.bytes(buffer, _res.statusCode,
               request: _res.request,
@@ -283,8 +297,14 @@ Future<Uint8List> _loadFromRemote(
               persistentConnection: _res.persistentConnection,
               reasonPhrase: _res.reasonPhrase));
       } catch (e) {
+        if (printError) debugPrint(e.toString());
         subscription.cancel();
-        completer.complete(null);
+        completer.complete(http.Response.bytes([], _res.statusCode,
+            request: _res.request,
+            headers: _res.headers,
+            isRedirect: _res.isRedirect,
+            persistentConnection: _res.persistentConnection,
+            reasonPhrase: _res.reasonPhrase));
       }
     });
     return completer.future;
