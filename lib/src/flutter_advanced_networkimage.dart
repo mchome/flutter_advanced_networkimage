@@ -110,7 +110,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
       } catch (e) {
         debugPrint(e.toString());
-        if (key.loadFailedCallback != null) key.loadFailedCallback();
       }
     }
 
