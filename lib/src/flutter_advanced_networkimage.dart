@@ -63,11 +63,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The timeout duration will give the timeout to a fetching function.
   final Duration timeoutDuration;
 
-  /// The callback will be executed when the image loaded.
-  final Function loadedCallback;
+  /// The callback will fire when the image loaded.
+  final VoidCallback loadedCallback;
 
-  /// The callback will be executed when the image failed to load.
-  final Function loadFailedCallback;
+  /// The callback will fire when the image failed to load.
+  final VoidCallback loadFailedCallback;
 
   /// The image will be displayed when the image failed to load.
   final Uint8List fallbackImage;

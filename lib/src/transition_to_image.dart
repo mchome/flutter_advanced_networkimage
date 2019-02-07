@@ -25,6 +25,9 @@ class TransitionToImage extends StatefulWidget {
     this.loadingWidget = const Center(child: const CircularProgressIndicator()),
     this.loadingWidgetBuilder,
     this.enableRefresh: false,
+    this.enableMemoryCache: true,
+    this.loadedCallback,
+    this.loadFailedCallback,
   })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
@@ -35,6 +38,8 @@ class TransitionToImage extends StatefulWidget {
         assert(alignment != null),
         assert(repeat != null),
         assert(matchTextDirection != null),
+        assert(enableRefresh != null),
+        assert(enableMemoryCache != null),
         super(key: key);
 
   /// The target image that is displayed.
@@ -144,6 +149,15 @@ class TransitionToImage extends StatefulWidget {
 
   /// Enable an internal [GestureDetector] for manually refreshing.
   final bool enableRefresh;
+
+  /// If set to false, the image provider will be evicted from [ImageCache].
+  final bool enableMemoryCache;
+
+  /// The callback will fire when the image loaded.
+  final VoidCallback loadedCallback;
+
+  /// The callback will fire when the image failed to load.
+  final VoidCallback loadFailedCallback;
 
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
@@ -270,6 +284,8 @@ class _TransitionToImageState extends State<TransitionToImage>
         !reload &&
         (_imageStream.key == oldImageStream?.key)) {
       setState(() => _status = _TransitionStatus.completed);
+      if (widget.loadedCallback != null) widget.loadedCallback();
+      if (!widget.enableMemoryCache) _imageProvider.evict();
     } else {
       setState(() {
         _status = _TransitionStatus.start;
@@ -289,6 +305,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   void _catchBadImage(dynamic exception, StackTrace stackTrace) {
     debugPrint(exception.toString());
     setState(() => _loadFailed = true);
+    if (widget.loadFailedCallback != null) widget.loadFailedCallback();
     _resolveStatus();
   }
 

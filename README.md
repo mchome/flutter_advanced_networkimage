@@ -114,3 +114,5 @@ ZoomableWidget(
 Details in [example/](https://github.com/mchome/flutter_advanced_networkimage/tree/master/example) folder.
 
 ![demo gif](https://user-images.githubusercontent.com/7392658/38853766-db25add4-4250-11e8-9f6e-af550e43ef9a.gif)
+
+If you have any problem or question, feel free to file issues.
