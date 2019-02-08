@@ -28,6 +28,7 @@ class TransitionToImage extends StatefulWidget {
     this.disableMemoryCache: false,
     this.loadedCallback,
     this.loadFailedCallback,
+    this.forceRebuildWidget: false,
   })  : assert(image != null),
         assert(placeholder != null),
         assert(duration != null),
@@ -40,6 +41,7 @@ class TransitionToImage extends StatefulWidget {
         assert(matchTextDirection != null),
         assert(enableRefresh != null),
         assert(disableMemoryCache != null),
+        assert(forceRebuildWidget != null),
         super(key: key);
 
   /// The target image that is displayed.
@@ -159,6 +161,10 @@ class TransitionToImage extends StatefulWidget {
   /// The callback will fire when the image failed to load.
   final VoidCallback loadFailedCallback;
 
+  /// If set to enable, the [loadedCallback] or [loadFailedCallback]
+  /// will fire again.
+  final bool forceRebuildWidget;
+
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
 }
@@ -214,7 +220,8 @@ class _TransitionToImageState extends State<TransitionToImage>
   @override
   void didUpdateWidget(TransitionToImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.image != oldWidget.image) _getImage();
+    if ((widget.image != oldWidget.image) || widget.forceRebuildWidget)
+      _getImage();
   }
 
   @override
@@ -283,6 +290,11 @@ class _TransitionToImageState extends State<TransitionToImage>
     if (_imageInfo != null &&
         !reload &&
         (_imageStream.key == oldImageStream?.key)) {
+      if (widget.forceRebuildWidget) {
+        if (widget.loadedCallback != null)
+          widget.loadedCallback();
+        else if (widget.loadFailedCallback != null) widget.loadFailedCallback();
+      }
       setState(() => _status = _TransitionStatus.completed);
     } else {
       setState(() {
