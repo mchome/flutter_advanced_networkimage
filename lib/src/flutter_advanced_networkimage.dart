@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'dart:ui' show hashValues;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -27,6 +28,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.timeoutDuration: const Duration(seconds: 5),
     this.loadedCallback,
     this.loadFailedCallback,
+    this.fallbackAssetImage,
     this.fallbackImage,
     this.cacheRule,
     this.loadingProgress,
@@ -71,7 +73,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The callback will fire when the image failed to load.
   final VoidCallback loadFailedCallback;
 
-  /// The image will be displayed when the image failed to load.
+  /// Displays image from an asset bundle when the image failed to load.
+  final String fallbackAssetImage;
+
+  /// The image will be displayed when the image failed to load
+  /// and [fallbackAssetImage] is null.
   final Uint8List fallbackImage;
 
   /// Disk cache rules for advanced control.
@@ -135,6 +141,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     }
 
     if (key.loadFailedCallback != null) key.loadFailedCallback();
+    if (key.fallbackAssetImage != null) {
+      ByteData imageData = await rootBundle.load(key.fallbackAssetImage);
+      return await PaintingBinding.instance
+          .instantiateImageCodec(imageData.buffer.asUint8List());
+    }
     if (key.fallbackImage != null)
       return await PaintingBinding.instance
           .instantiateImageCodec(key.fallbackImage);

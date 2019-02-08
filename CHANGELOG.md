@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.6]
+
+- `TransitionToImage`: add `forceRebuildWidget`.
+- `AdvancedNetworkImage` & `AdvancedNetworkSvg`: add `fallbackAssetImage`.
+
 ## [0.4.5]
 
 - Update `path_provider` dependency.
@@ -7,16 +12,16 @@
 
 ## [0.4.4]
 
-- `TransitionToImage` add `disableMemoryCache`;
-- `TransitionToImage` add `loadedCallback` & `loadFailedCallback`.
+- `TransitionToImage`: add `disableMemoryCache`;
+- `TransitionToImage`: add `loadedCallback` & `loadFailedCallback`.
 
 ## [0.4.3]
 
-- `AdvancedNetworkImage` fix download error.
+- `AdvancedNetworkImage`: fix download error.
 
 ## [0.4.2]
 
-- `AdvancedNetworkImage` download method fallback.
+- `AdvancedNetworkImage`: download method fallback.
 
 ## [0.4.1]
 

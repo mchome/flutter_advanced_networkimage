@@ -9,7 +9,7 @@ import 'package:flutter_advanced_networkimage/cropper.dart';
 
 // import 'package:flutter_advanced_networkimage/src/stream_loading_image.dart';
 
-main() => runApp(MaterialApp(
+void main() => runApp(MaterialApp(
       title: 'Flutter Example',
       theme: ThemeData(primaryColor: Colors.blue),
       home: MyApp(),

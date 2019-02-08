@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' show hashValues;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -29,14 +30,17 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     this.timeoutDuration: const Duration(seconds: 5),
     this.loadedCallback,
     this.loadFailedCallback,
+    this.fallbackAssetImage,
     this.fallbackImage,
     this.cacheRule,
     this.getRealUrl,
+    this.printError = false,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
         assert(retryLimit != null),
-        assert(retryDuration != null);
+        assert(retryDuration != null),
+        assert(printError != null);
 
   /// The URL from which the image will be fetched.
   final String url;
@@ -74,7 +78,11 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   /// The callback will be executed when the image failed to load.
   final Function loadFailedCallback;
 
-  /// The image will be displayed when the image failed to load.
+  /// Displays image from an asset bundle when the image failed to load.
+  final String fallbackAssetImage;
+
+  /// The image will be displayed when the image failed to load
+  /// and [fallbackAssetImage] is null.
   final Uint8List fallbackImage;
 
   /// Disk cache rules for advanced control.
@@ -82,6 +90,9 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
 
   /// Extract the real url before fetching.
   final Future<String> getRealUrl;
+
+  /// Print error.
+  final bool printError;
 
   @override
   Future<AdvancedNetworkSvg> obtainKey() {
@@ -122,6 +133,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       key.retryDurationFactor,
       key.timeoutDuration,
       key.getRealUrl,
+      printError: key.printError,
     );
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
@@ -129,6 +141,11 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     }
 
     if (key.loadFailedCallback != null) key.loadFailedCallback();
+    if (key.fallbackAssetImage != null) {
+      ByteData imageData = await rootBundle.load(key.fallbackAssetImage);
+      return await decoder(
+          imageData.buffer.asUint8List(), key.colorFilter, key.toString());
+    }
     if (key.fallbackImage != null)
       return await decoder(key.fallbackImage, key.colorFilter, key.toString());
 
@@ -229,8 +246,9 @@ Future<Uint8List> _loadFromRemote(
   Duration retryDuration,
   double retryDurationFactor,
   Duration timeoutDuration,
-  Future<String> getRealUrl,
-) async {
+  Future<String> getRealUrl, {
+  bool printError = false,
+}) async {
   if (retryLimit < 0) retryLimit = 0;
 
   /// Retry mechanism.
@@ -242,11 +260,13 @@ Future<Uint8List> _loadFromRemote(
         if (res != null) {
           if (res.statusCode == HttpStatus.ok)
             return res;
-          else
+          else if (printError)
             debugPrint('Load error, response status code: ' +
                 res.statusCode.toString());
         }
-      } catch (_) {}
+      } catch (e) {
+        if (printError) debugPrint(e.toString());
+      }
       await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
     }
 
