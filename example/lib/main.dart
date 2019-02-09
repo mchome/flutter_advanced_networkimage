@@ -89,9 +89,7 @@ class Example extends State<MyApp> {
               GlobalKey _key = GlobalKey();
               return ZoomableList(
                 childKey: _key,
-                panLimit: 1.0,
                 maxScale: 2.0,
-                minScale: 0.5,
                 child: Column(
                   key: _key,
                   mainAxisSize: MainAxisSize.min,
