@@ -18,6 +18,7 @@ class ZoomableWidget extends StatefulWidget {
     this.autoCenter: false,
     this.bounceBackBoundary: true,
     this.enableFling: true,
+    this.flingFactor: 1.0,
     this.onZoomChanged,
   })  : assert(minScale != null),
         assert(maxScale != null),
@@ -62,6 +63,9 @@ class ZoomableWidget extends StatefulWidget {
 
   /// Allow fling image after pan.
   final bool enableFling;
+
+  /// Greater value create greater fling distance.
+  final double flingFactor;
 
   /// When the scale value changed, the callback will be invoked.
   final ValueChanged<double> onZoomChanged;
@@ -186,7 +190,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     if (magnitude > 800.0 * _zoom && widget.enableFling) {
       final Offset direction = velocity / magnitude;
       final double distance = (Offset.zero & context.size).shortestSide;
-      final Offset endOffset = _panOffset + direction * distance * 0.4;
+      final Offset endOffset =
+          _panOffset + direction * distance * widget.flingFactor * 0.4;
       _flingAnimation = Tween(
           begin: _panOffset,
           end: Offset(
