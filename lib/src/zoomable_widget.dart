@@ -23,7 +23,15 @@ class ZoomableWidget extends StatefulWidget {
   })  : assert(minScale != null),
         assert(maxScale != null),
         assert(enableZoom != null),
-        assert(enableRotate != null);
+        assert(panLimit != null),
+        assert(singleFingerPan != null),
+        assert(multiFingersPan != null),
+        assert(enableRotate != null),
+        assert(zoomSteps != null),
+        assert(autoCenter != null),
+        assert(bounceBackBoundary != null),
+        assert(enableFling != null),
+        assert(flingFactor != null);
 
   /// The minimum size for scaling.
   final double minScale;
@@ -50,7 +58,7 @@ class ZoomableWidget extends StatefulWidget {
   final Widget child;
 
   /// Tap callback for this widget.
-  final Function onTap;
+  final VoidCallback onTap;
 
   /// Allow users to zoom with double tap steps by steps.
   final int zoomSteps;
@@ -123,13 +131,13 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   }
 
   void _onScaleStart(ScaleStartDetails details) {
+    _bounceController.stop();
+    _flingController.stop();
     setState(() {
       _zoomOriginOffset = details.focalPoint;
       _previousPanOffset = _panOffset;
       _previousZoom = _zoom;
       _previousRotation = _rotation;
-      _bounceController.stop();
-      _flingController.stop();
     });
   }
 
@@ -191,7 +199,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
       final Offset direction = velocity / magnitude;
       final double distance = (Offset.zero & context.size).shortestSide;
       final Offset endOffset =
-          _panOffset + direction * distance * widget.flingFactor * 0.4;
+          _panOffset + direction * distance * widget.flingFactor * 0.5;
       _flingAnimation = Tween(
           begin: _panOffset,
           end: Offset(

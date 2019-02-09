@@ -4,32 +4,36 @@ import 'package:flutter/widgets.dart';
 class ZoomableList extends StatefulWidget {
   ZoomableList({
     Key key,
-    this.minScale: 0.7,
+    @required this.child,
+    @required this.childKey,
     this.maxScale: 1.4,
     this.enablePan: true,
     this.enableZoom: true,
-    this.panLimit: 1.0,
     this.maxWidth,
     this.maxHeight: double.infinity,
-    @required this.child,
-    @required this.childKey,
+    this.zoomSteps: 0,
+    this.enableFling: true,
+    this.flingFactor: 1.0,
     this.onTap,
-  })  : assert(minScale != null),
-        assert(maxScale != null),
+  })  : assert(maxScale != null),
         assert(enablePan != null),
         assert(enableZoom != null),
-        assert(childKey != null);
+        assert(zoomSteps != null),
+        assert(childKey != null),
+        assert(enableFling != null),
+        assert(flingFactor != null);
 
-  final double maxScale;
-  final double minScale;
-  final bool enableZoom;
-  final bool enablePan;
-  final double panLimit;
-  final double maxWidth;
-  final double maxHeight;
   final Widget child;
   final GlobalKey childKey;
-  final Function onTap;
+  final double maxScale;
+  final bool enableZoom;
+  final bool enablePan;
+  final double maxWidth;
+  final double maxHeight;
+  final int zoomSteps;
+  final bool enableFling;
+  final double flingFactor;
+  final VoidCallback onTap;
 
   @override
   _ZoomableListState createState() => _ZoomableListState();
@@ -48,23 +52,28 @@ class _ZoomableListState extends State<ZoomableList>
   bool _getContainerSize = false;
 
   AnimationController _controller;
+  AnimationController _flingController;
   Animation<double> _zoomAnimation;
   Animation<Offset> _panOffsetAnimation;
+  Animation<Offset> _flingAnimation;
 
   @override
-  initState() {
+  void initState() {
     _controller =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _flingController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 200));
     super.initState();
   }
 
   @override
-  dispose() {
+  void dispose() {
     _controller.dispose();
+    _flingController.dispose();
     super.dispose();
   }
 
-  _handleReset() {
+  void _handleReset() {
     _zoomAnimation = Tween<double>(begin: 1.0, end: _zoom)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
           ..addListener(() => setState(() => _zoom = _zoomAnimation.value));
@@ -86,7 +95,8 @@ class _ZoomableListState extends State<ZoomableList>
     });
   }
 
-  _onScaleStart(ScaleStartDetails details) {
+  void _onScaleStart(ScaleStartDetails details) {
+    _flingController.stop();
     setState(() {
       _startTouchOriginOffset = details.focalPoint;
       _previewPanOffset = _panOffset;
@@ -94,7 +104,7 @@ class _ZoomableListState extends State<ZoomableList>
     });
   }
 
-  _onScaleUpdate(ScaleUpdateDetails details) {
+  void _onScaleUpdate(ScaleUpdateDetails details) {
     if (!_getContainerSize) {
       final RenderBox box = widget.childKey.currentContext.findRenderObject();
       if (box.size == _containerSize) {
@@ -103,8 +113,7 @@ class _ZoomableListState extends State<ZoomableList>
         _containerSize = box.size;
       }
     }
-    Size _boundarySize = Size(_containerSize.width / 2 * widget.panLimit,
-        _containerSize.height * widget.panLimit);
+    Size _boundarySize = Size(_containerSize.width / 2, _containerSize.height);
     if (widget.enableZoom) {
       setState(() {
         if (details.scale == 1.0) {
@@ -112,25 +121,68 @@ class _ZoomableListState extends State<ZoomableList>
                   _startTouchOriginOffset +
                   _previewPanOffset * _previewZoom) /
               _zoom;
-          _panOffset = widget.panLimit != 0.0
-              ? Offset(
-                  _zoom == 1.0
-                      ? _tmpOffset.dx.clamp(0.0, 0.0)
-                      : _tmpOffset.dx
-                          .clamp(-_boundarySize.width, _boundarySize.width),
-                  _zoom == 1.0
-                      ? _tmpOffset.dy
-                          .clamp(_widgetSize.height - _boundarySize.height, 0.0)
-                      : _tmpOffset.dy.clamp(
-                          _widgetSize.height / 2 * widget.panLimit -
-                              _boundarySize.height,
-                          _widgetSize.height / 2 * widget.panLimit))
-              : _tmpOffset;
+          _panOffset = Offset(
+            _tmpOffset.dx.clamp(
+              -_boundarySize.width * (_zoom - 1.0) / (widget.maxScale - 1.0),
+              _boundarySize.width * (_zoom - 1.0) / (widget.maxScale - 1.0),
+            ),
+            _tmpOffset.dy.clamp(
+              _widgetSize.height / 2 * (2 / _zoom) - _boundarySize.height,
+              _widgetSize.height / 2 * (_zoom - 1.0) / (widget.maxScale - 1.0),
+            ),
+          );
         } else {
-          _zoom = (_previewZoom * details.scale)
-              .clamp(widget.minScale, widget.maxScale);
+          _zoom = (_previewZoom * details.scale).clamp(1.0, widget.maxScale);
+          _panOffset = Offset(
+            _panOffset.dx.clamp(
+              -_boundarySize.width * (_zoom - 1.0) / (widget.maxScale - 1.0),
+              _boundarySize.width * (_zoom - 1.0) / (widget.maxScale - 1.0),
+            ),
+            _panOffset.dy.clamp(
+              _widgetSize.height / 2 * (2 / _zoom) - _boundarySize.height,
+              _widgetSize.height / 2 * (_zoom - 1.0) / (widget.maxScale - 1.0),
+            ),
+          );
         }
       });
+    }
+  }
+
+  void _onScaleEnd(ScaleEndDetails details) {
+    if (!_getContainerSize) {
+      final RenderBox box = widget.childKey.currentContext.findRenderObject();
+      if (box.size == _containerSize) {
+        _getContainerSize = true;
+      } else {
+        _containerSize = box.size;
+      }
+    }
+    Size _boundarySize = Size(_containerSize.width / 2, _containerSize.height);
+    final Offset velocity = details.velocity.pixelsPerSecond;
+    final double magnitude = velocity.distance;
+    if (magnitude > 800.0 * _zoom && widget.enableFling) {
+      final Offset direction = velocity / magnitude;
+      final double distance = (Offset.zero & context.size).shortestSide;
+      final Offset endOffset =
+          _panOffset + direction * distance * widget.flingFactor * 0.5;
+      _flingAnimation = Tween(
+        begin: _panOffset,
+        end: Offset(
+          endOffset.dx.clamp(
+            -_boundarySize.width * (_zoom - 1.0) / (widget.maxScale - 1.0),
+            _boundarySize.width * (_zoom - 1.0) / (widget.maxScale - 1.0),
+          ),
+          endOffset.dy.clamp(
+            _widgetSize.height / 2 * (2 / _zoom) - _boundarySize.height,
+            _widgetSize.height / 2 * (_zoom - 1.0) / (widget.maxScale - 1.0),
+          ),
+        ),
+      ).animate(_flingController)
+        ..addListener(() => setState(() => _panOffset = _flingAnimation.value));
+
+      _flingController
+        ..value = 0.0
+        ..fling(velocity: magnitude / 1000.0);
     }
   }
 
@@ -167,6 +219,7 @@ class _ZoomableListState extends State<ZoomableList>
             child: Container(color: Color(0)),
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,
+            onScaleEnd: _onScaleEnd,
             onDoubleTap: _handleReset,
             onTap: widget.onTap,
           ),
