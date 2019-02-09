@@ -17,6 +17,7 @@ class ZoomableWidget extends StatefulWidget {
     this.zoomSteps: 0,
     this.autoCenter: false,
     this.bounceBackBoundary: true,
+    this.enableFling: true,
     this.onZoomChanged,
   })  : assert(minScale != null),
         assert(maxScale != null),
@@ -59,6 +60,9 @@ class ZoomableWidget extends StatefulWidget {
   /// Enable the bounce-back boundary.
   final bool bounceBackBoundary;
 
+  /// Allow fling image after pan.
+  final bool enableFling;
+
   /// When the scale value changed, the callback will be invoked.
   final ValueChanged<double> onZoomChanged;
 
@@ -82,10 +86,12 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
   AnimationController _resetPanController;
   AnimationController _resetRotateController;
   AnimationController _bounceController;
+  AnimationController _flingController;
   Animation<double> _zoomAnimation;
   Animation<Offset> _panOffsetAnimation;
   Animation<double> _rotateAnimation;
   Animation<Offset> _bounceAnimation;
+  Animation<Offset> _flingAnimation;
 
   @override
   void initState() {
@@ -97,6 +103,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
         AnimationController(vsync: this, duration: Duration(milliseconds: 250));
     _bounceController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
+    _flingController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     super.initState();
   }
 
@@ -106,6 +114,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     _resetPanController.dispose();
     _resetRotateController.dispose();
     _bounceController.dispose();
+    _flingController.dispose();
     super.dispose();
   }
 
@@ -115,6 +124,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
       _previousPanOffset = _panOffset;
       _previousZoom = _zoom;
       _previousRotation = _rotation;
+      _bounceController.stop();
+      _flingController.stop();
     });
   }
 
@@ -167,57 +178,74 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     }
   }
 
-  void _onScaleEnd(_) {
+  void _onScaleEnd(ScaleEndDetails details) {
     Size _boundarySize =
         Size(_containerSize.width / 2, _containerSize.height / 2);
-    Animation _animation =
-        CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut);
-    Offset _borderOffset = Offset(
-      _panOffset.dx.clamp(
-        -_boundarySize.width / _zoom * widget.panLimit,
-        _boundarySize.width / _zoom * widget.panLimit,
-      ),
-      _panOffset.dy.clamp(
-        -_boundarySize.height / _zoom * widget.panLimit,
-        _boundarySize.height / _zoom * widget.panLimit,
-      ),
-    );
-    if (_zoom == widget.minScale && widget.autoCenter) {
-      _borderOffset = Offset.zero;
+    final Offset velocity = details.velocity.pixelsPerSecond;
+    final double magnitude = velocity.distance;
+    if (magnitude > 800.0 * _zoom && widget.enableFling) {
+      final Offset direction = velocity / magnitude;
+      final double distance = (Offset.zero & context.size).shortestSide;
+      final Offset endOffset = _panOffset + direction * distance * 0.4;
+      _flingAnimation = Tween(
+          begin: _panOffset,
+          end: Offset(
+              endOffset.dx.clamp(
+                -_boundarySize.width / _zoom * widget.panLimit,
+                _boundarySize.width / _zoom * widget.panLimit,
+              ),
+              endOffset.dy.clamp(
+                -_boundarySize.height / _zoom * widget.panLimit,
+                _boundarySize.height / _zoom * widget.panLimit,
+              ))).animate(_flingController)
+        ..addListener(() => setState(() => _panOffset = _flingAnimation.value));
+
+      _flingController
+        ..value = 0.0
+        ..fling(velocity: magnitude / 1000.0);
+    } else {
+      Offset _borderOffset = Offset(
+        _panOffset.dx.clamp(
+          -_boundarySize.width / _zoom * widget.panLimit,
+          _boundarySize.width / _zoom * widget.panLimit,
+        ),
+        _panOffset.dy.clamp(
+          -_boundarySize.height / _zoom * widget.panLimit,
+          _boundarySize.height / _zoom * widget.panLimit,
+        ),
+      );
+      if (_zoom == widget.minScale && widget.autoCenter) {
+        _borderOffset = Offset.zero;
+      }
+      _bounceAnimation = Tween(begin: _panOffset, end: _borderOffset).animate(
+        CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
+      )..addListener(() => setState(() => _panOffset = _bounceAnimation.value));
+      _bounceController.forward(from: 0.0);
     }
-    _bounceAnimation = Tween(begin: _panOffset, end: _borderOffset).animate(
-        _animation)
-      ..addListener(() => setState(() => _panOffset = _bounceAnimation.value));
-    _bounceController.forward(from: 0.0);
   }
 
   void _handleDoubleTap() {
     double _stepLength = 0.0;
-    Animation _animation =
-        CurvedAnimation(parent: _resetZoomController, curve: Curves.easeInOut);
-    Animation _animation2 =
-        CurvedAnimation(parent: _resetPanController, curve: Curves.easeInOut);
-    Animation _animation3 = CurvedAnimation(
-        parent: _resetRotateController, curve: Curves.easeInOut);
 
     if (widget.zoomSteps > 0)
       _stepLength = (widget.maxScale - 1.0) / widget.zoomSteps;
 
     double _tmpZoom = _zoom + _stepLength;
     if (_tmpZoom > widget.maxScale || _stepLength == 0.0) _tmpZoom = 1.0;
-    _zoomAnimation = Tween(begin: _tmpZoom, end: _zoom).animate(_animation)
-      ..addListener(() {
+    _zoomAnimation = Tween(begin: _tmpZoom, end: _zoom).animate(
+      CurvedAnimation(parent: _resetZoomController, curve: Curves.easeInOut),
+    )..addListener(() {
         setState(() {
           _zoom = _zoomAnimation.value;
           if (widget.onZoomChanged != null) widget.onZoomChanged(_zoom);
         });
       });
     if (_tmpZoom == 1.0) {
-      _panOffsetAnimation =
-          Tween(begin: Offset.zero, end: _panOffset).animate(_animation2)
-            ..addListener(() {
-              setState(() => _panOffset = _panOffsetAnimation.value);
-            });
+      _panOffsetAnimation = Tween(begin: Offset.zero, end: _panOffset).animate(
+        CurvedAnimation(parent: _resetPanController, curve: Curves.easeInOut),
+      )..addListener(() {
+          setState(() => _panOffset = _panOffsetAnimation.value);
+        });
       _resetPanController.reverse(from: 1.0);
     }
 
@@ -226,8 +254,9 @@ class _ZoomableWidgetState extends State<ZoomableWidget>
     else
       _resetZoomController.reverse(from: 1.0);
 
-    _rotateAnimation = Tween(begin: _rotation, end: 0.0).animate(_animation3)
-      ..addListener(() {
+    _rotateAnimation = Tween(begin: _rotation, end: 0.0).animate(
+      CurvedAnimation(parent: _resetRotateController, curve: Curves.easeInOut),
+    )..addListener(() {
         setState(() {
           _rotation = _rotateAnimation.value;
         });

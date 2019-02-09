@@ -181,7 +181,7 @@ enum TransitionType {
 }
 
 class _TransitionToImageState extends State<TransitionToImage>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   AnimationController _controller;
   Animation _animation;
   Tween<double> _fadeTween = Tween(begin: 0.0, end: 1.0);

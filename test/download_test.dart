@@ -12,7 +12,8 @@ void main() {
 
       expect(
           await loadFromRemote(url, null, 5, const Duration(milliseconds: 100),
-              1.0, const Duration(seconds: 5), null, null),
+              1.0, const Duration(seconds: 5), null, null,
+              printError: true),
           res);
     });
 
