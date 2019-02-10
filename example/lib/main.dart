@@ -52,6 +52,7 @@ class Example extends State<MyApp> {
                 // loadedCallback: () => print('It works!'),
                 // loadFailedCallback: () => print('Oh, no!'),
                 // loadingProgress: (double progress) => print(progress),
+                // disableMemoryCache: true,
               ),
               loadedCallback: () => print('It works!'),
               loadFailedCallback: () => print('Oh, no!'),

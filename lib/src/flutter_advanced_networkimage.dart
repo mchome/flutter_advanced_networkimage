@@ -33,6 +33,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.cacheRule,
     this.loadingProgress,
     this.getRealUrl,
+    this.disableMemoryCache: false,
     this.printError = false,
   })  : assert(url != null),
         assert(scale != null),
@@ -41,6 +42,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         assert(retryDuration != null),
         assert(retryDurationFactor != null),
         assert(timeoutDuration != null),
+        assert(disableMemoryCache != null),
         assert(printError != null);
 
   /// The URL from which the image will be fetched.
@@ -89,8 +91,49 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Extract the real url before fetching.
   final Future<String> getRealUrl;
 
+  /// If set to enable, the image provider will be evicted from [ImageCache].
+  final bool disableMemoryCache;
+
   /// Print error.
   final bool printError;
+
+  ImageStream resolve(ImageConfiguration configuration) {
+    assert(configuration != null);
+    final ImageStream stream = ImageStream();
+    AdvancedNetworkImage obtainedKey;
+    Future<void> handleError(dynamic exception, StackTrace stack) async {
+      await null; // wait an event turn in case a listener has been added to the image stream.
+      final _ErrorImageCompleter imageCompleter = _ErrorImageCompleter();
+      stream.setCompleter(imageCompleter);
+      imageCompleter.setError(
+          exception: exception,
+          stack: stack,
+          context: 'while resolving an image',
+          silent: true, // could be a network error or whatnot
+          informationCollector: (StringBuffer information) {
+            information.writeln('Image provider: $this');
+            information.writeln('Image configuration: $configuration');
+            if (obtainedKey != null) {
+              information.writeln('Image key: $obtainedKey');
+            }
+          });
+    }
+
+    obtainKey(configuration).then<void>((AdvancedNetworkImage key) {
+      obtainedKey = key;
+      if (key.disableMemoryCache) {
+        stream.setCompleter(load(key));
+      } else {
+        final ImageStreamCompleter completer = PaintingBinding
+            .instance.imageCache
+            .putIfAbsent(key, () => load(key), onError: handleError);
+        if (completer != null) {
+          stream.setCompleter(completer);
+        }
+      }
+    }).catchError(handleError);
+    return stream;
+  }
 
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
@@ -278,7 +321,7 @@ Future<Uint8List> loadFromRemote(
       await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
     }
 
-    if (retryLimit > 0) debugPrint('Retry failed!');
+    if (retryLimit > 0 && printError) debugPrint('Retry failed!');
     return null;
   }
 
@@ -323,4 +366,25 @@ Future<Uint8List> loadFromRemote(
   if (_response != null) return _response.bodyBytes;
 
   return null;
+}
+
+// A completer used when resolving an image fails sync.
+class _ErrorImageCompleter extends ImageStreamCompleter {
+  _ErrorImageCompleter();
+
+  void setError({
+    String context,
+    dynamic exception,
+    StackTrace stack,
+    InformationCollector informationCollector,
+    bool silent = false,
+  }) {
+    reportError(
+      context: context,
+      exception: exception,
+      stack: stack,
+      informationCollector: informationCollector,
+      silent: silent,
+    );
+  }
 }

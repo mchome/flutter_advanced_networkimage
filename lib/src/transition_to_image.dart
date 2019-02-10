@@ -9,11 +9,6 @@ class TransitionToImage extends StatefulWidget {
   const TransitionToImage({
     Key key,
     @required this.image,
-    this.placeholder: const Icon(Icons.clear),
-    this.duration: const Duration(milliseconds: 300),
-    this.tween,
-    this.curve: Curves.easeInOut,
-    this.transitionType: TransitionType.fade,
     this.width,
     this.height,
     this.borderRadius,
@@ -22,45 +17,39 @@ class TransitionToImage extends StatefulWidget {
     this.alignment = Alignment.center,
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
+    this.placeholder: const Icon(Icons.clear),
+    this.duration: const Duration(milliseconds: 300),
+    this.tween,
+    this.curve: Curves.easeInOut,
+    this.transitionType: TransitionType.fade,
     this.loadingWidget = const Center(child: const CircularProgressIndicator()),
     this.loadingWidgetBuilder,
     this.enableRefresh: false,
     this.disableMemoryCache: false,
+    this.disableMemoryCacheIfFailed: false,
     this.loadedCallback,
     this.loadFailedCallback,
     this.forceRebuildWidget: false,
+    this.printError = false,
   })  : assert(image != null),
+        assert(fit != null),
+        assert(alignment != null),
+        assert(repeat != null),
+        assert(matchTextDirection != null),
         assert(placeholder != null),
         assert(duration != null),
         assert(curve != null),
         assert(transitionType != null),
         assert(loadingWidget != null),
-        assert(fit != null),
-        assert(alignment != null),
-        assert(repeat != null),
-        assert(matchTextDirection != null),
         assert(enableRefresh != null),
         assert(disableMemoryCache != null),
+        assert(disableMemoryCacheIfFailed != null),
         assert(forceRebuildWidget != null),
+        assert(printError != null),
         super(key: key);
 
   /// The target image that is displayed.
   final ImageProvider image;
-
-  /// Widget displayed while the target [image] failed to load.
-  final Widget placeholder;
-
-  /// The duration of the fade-out animation for the result.
-  final Duration duration;
-
-  /// The tween of the fade-out animation for the result.
-  final Tween tween;
-
-  /// The curve of the fade-out animation for the result.
-  final Curve curve;
-
-  /// The transition type of the fade-out animation for the result.
-  final TransitionType transitionType;
 
   /// If non-null, require the image to have this width.
   ///
@@ -142,6 +131,21 @@ class TransitionToImage extends StatefulWidget {
   /// scope.
   final bool matchTextDirection;
 
+  /// Widget displayed while the target [image] failed to load.
+  final Widget placeholder;
+
+  /// The duration of the fade-out animation for the result.
+  final Duration duration;
+
+  /// The tween of the fade-out animation for the result.
+  final Tween tween;
+
+  /// The curve of the fade-out animation for the result.
+  final Curve curve;
+
+  /// The transition type of the fade-out animation for the result.
+  final TransitionType transitionType;
+
   /// Widget displayed when the target [image] is loading.
   final Widget loadingWidget;
 
@@ -155,6 +159,10 @@ class TransitionToImage extends StatefulWidget {
   /// If set to enable, the image provider will be evicted from [ImageCache].
   final bool disableMemoryCache;
 
+  /// If set to enable, the image provider will be evicted from [ImageCache]
+  /// if the image failed to load.
+  final bool disableMemoryCacheIfFailed;
+
   /// The callback will fire when the image loaded.
   final VoidCallback loadedCallback;
 
@@ -164,6 +172,9 @@ class TransitionToImage extends StatefulWidget {
   /// If set to enable, the [loadedCallback] or [loadFailedCallback]
   /// will fire again.
   final bool forceRebuildWidget;
+
+  /// Print error.
+  final bool printError;
 
   @override
   _TransitionToImageState createState() => _TransitionToImageState();
@@ -266,9 +277,10 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   void _getImage({bool reload: false}) {
     if (reload) {
-      debugPrint('Reloading image.');
+      if (widget.printError) debugPrint('Reloading image.');
       _imageProvider.evict();
     }
+
     final ImageStream oldImageStream = _imageStream;
     if (_imageProvider is AdvancedNetworkImage) {
       var callback = (_imageProvider as AdvancedNetworkImage).loadingProgress;
@@ -317,11 +329,12 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   void _catchBadImage(dynamic exception, StackTrace stackTrace) {
-    debugPrint(exception.toString());
+    if (widget.printError) debugPrint(exception.toString());
     setState(() => _loadFailed = true);
     _resolveStatus();
     if (widget.loadFailedCallback != null) widget.loadFailedCallback();
-    if (widget.disableMemoryCache) _imageProvider.evict();
+    if (widget.disableMemoryCache || widget.disableMemoryCacheIfFailed)
+      _imageProvider.evict();
   }
 
   @override
