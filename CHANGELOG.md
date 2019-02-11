@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.7]
+
+- `AdvancedNetworkImage`: add `disableMemoryCache`.
+- `TransitionToImage`: add `disableMemoryCacheIfFailed`.
+- `ZoomableWidget` & `ZoomableList`: add a non-physical fling in `enableFling` & `flingFactor`.
+
 ## [0.4.6]
 
 - `TransitionToImage`: add `forceRebuildWidget`.
