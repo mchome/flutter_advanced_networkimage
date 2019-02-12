@@ -15,6 +15,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart' show uid;
 
+typedef Future<Uint8List> ImageTransform(Uint8List data);
+
 /// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   AdvancedNetworkImage(
@@ -33,6 +35,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.cacheRule,
     this.loadingProgress,
     this.getRealUrl,
+    this.transform,
     this.disableMemoryCache: false,
     this.printError = false,
   })  : assert(url != null),
@@ -90,6 +93,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   /// Extract the real url before fetching.
   final Future<String> getRealUrl;
+
+  /// Receive the data([Uint8List]) and do some modifications.
+  final ImageTransform transform;
 
   /// If set to enable, the image provider will be evicted from [ImageCache].
   final bool disableMemoryCache;
@@ -161,9 +167,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       try {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
         if (key.loadedCallback != null) key.loadedCallback();
+        if (key.transform != null)
+          _diskCache = (await key.transform(_diskCache)) ?? _diskCache;
         return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
       } catch (e) {
-        debugPrint(e.toString());
+        if (key.printError) debugPrint(e.toString());
       }
     }
 
@@ -180,6 +188,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     );
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
+      if (key.transform != null)
+        imageData = (await key.transform(imageData)) ?? imageData;
       return await PaintingBinding.instance.instantiateImageCodec(imageData);
     }
 
