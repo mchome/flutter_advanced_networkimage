@@ -100,18 +100,18 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Receive the data([Uint8List]) and do some manipulations after save.
   final ImageProcessing postProcessing;
 
-  /// If set to enable, the image provider will be evicted from [ImageCache].
+  /// If set to enable, the image will skip [ImageCache].
   ///
   /// It is not recommended to disable momery cache, because image provider
   /// will be called a lot of times. If you do not enable [useDiskCache],
-  /// image provider will fetch a lot of times. So, do not use this option
+  /// image provider will fetch a lot of times. So do not use this option
   /// in production.
   ///
-  /// If you want to use the same url with different fallbackImage,
+  /// If you want to use the same url with different [fallbackImage],
   /// you should make different [hashCode].
-  /// For example, you can set different retryLimit. If you enable [useDiskCache],
-  /// you can set different [url] with the same `Future.value(sameUrl)`
-  /// in [getRealUrl].
+  /// For example, you can set different [retryLimit].
+  /// If you enable [useDiskCache], you can set different [differentId]
+  /// with the same `Future.value(sameUrl)` in [getRealUrl].
   final bool disableMemoryCache;
 
   /// Print error.
