@@ -48,7 +48,7 @@ class Example extends State<MyApp> {
           children: <Widget>[
             TransitionToImage(
               image: AdvancedNetworkImage(
-                'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
                 // loadedCallback: () => print('It works!'),
                 // loadFailedCallback: () => print('Oh, no!'),
                 // loadingProgress: (double progress) => print(progress),
@@ -80,7 +80,7 @@ class Example extends State<MyApp> {
               autoCenter: true,
               child: Image(
                 image: AdvancedNetworkImage(
-                  'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                  'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
                 ),
               ),
               // onZoomChanged: (double value) => print(value),
@@ -97,17 +97,17 @@ class Example extends State<MyApp> {
                   children: <Widget>[
                     Image(
                       image: AdvancedNetworkImage(
-                        'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                        'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
                       ),
                     ),
                     Image(
                       image: AdvancedNetworkImage(
-                        'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                        'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
                       ),
                     ),
                     Image(
                       image: AdvancedNetworkImage(
-                        'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                        'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
                       ),
                     ),
                   ],
@@ -122,7 +122,7 @@ class Example extends State<MyApp> {
                   color: Colors.grey,
                   child: ImageCropper(
                     image: AdvancedNetworkImage(
-                      'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+                      'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
                     ),
                     onCropperChanged: cropImage,
                   ),
@@ -167,7 +167,7 @@ class Example extends State<MyApp> {
             ),
 
             // StreamLoadingImage(
-            //   url: 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png',
+            //   url: 'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
             // ),
           ],
         ),

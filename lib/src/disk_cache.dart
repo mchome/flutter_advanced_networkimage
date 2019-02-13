@@ -22,6 +22,8 @@ class DiskCache {
   factory DiskCache() => _instance;
   DiskCache._internal();
 
+  bool printError = false;
+
   /// Maximum number of entries to store in the cache.
   ///
   /// Once this many entries have been cached, the least-recently-used entry is
@@ -83,7 +85,7 @@ class DiskCache {
       else
         _metadata = {};
     } catch (e) {
-      debugPrint(e.toString());
+      if (printError) debugPrint(e.toString());
       _metadata = {};
     }
   }
@@ -158,7 +160,7 @@ class DiskCache {
         return null;
       }
     } catch (e) {
-      debugPrint(e.toString());
+      if (printError) debugPrint(e.toString());
       return null;
     }
   }
@@ -190,7 +192,7 @@ class DiskCache {
 
       return true;
     } catch (e) {
-      debugPrint(e.toString());
+      if (printError) debugPrint(e.toString());
       return false;
     }
   }
@@ -207,16 +209,25 @@ class DiskCache {
   /// Evicts a single entry from [DiskCache], returning true if successful.
   Future<bool> evict(String uid) async {
     if (_metadata == null) await _initMetaData();
+
     try {
+      File normalCacheFile = File(join(
+          Directory(
+            join((await getTemporaryDirectory()).path, 'imagecache'),
+          ).path,
+          uid));
+
       if (_metadata.containsKey(uid) &&
           File(_metadata[uid]['path']).existsSync()) {
         await File(_metadata[uid]['path']).delete();
         _metadata.remove(uid);
         await _commitMetaData();
+      } else if (normalCacheFile.existsSync()) {
+        await normalCacheFile.delete();
       }
       return true;
     } catch (e) {
-      debugPrint(e.toString());
+      if (printError) debugPrint(e.toString());
       return false;
     }
   }
@@ -235,7 +246,7 @@ class DiskCache {
       if (metadataFile.existsSync()) await metadataFile.delete();
       return true;
     } catch (e) {
-      debugPrint(e.toString());
+      if (printError) debugPrint(e.toString());
       return false;
     }
   }
@@ -254,7 +265,7 @@ class DiskCache {
         appDir.listSync().forEach((var file) => size += file.statSync().size);
       return size;
     } catch (e) {
-      debugPrint(e.toString());
+      if (printError) debugPrint(e.toString());
       return null;
     }
   }

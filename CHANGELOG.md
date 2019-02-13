@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.8]
+
+- `AdvancedNetworkImage`: add `preProcessing` & `postProcessing`.
+
 ## [0.4.7]
 
 - `AdvancedNetworkImage`: add `disableMemoryCache`.

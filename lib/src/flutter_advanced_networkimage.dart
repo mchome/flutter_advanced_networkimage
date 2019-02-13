@@ -2,8 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:ui' as ui show Codec;
-import 'dart:ui' show hashValues;
+import 'dart:ui' as ui show Codec, hashValues;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -15,7 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart' show uid;
 
-typedef Future<Uint8List> ImageTransform(Uint8List data);
+typedef Future<Uint8List> ImageProcessing(Uint8List data);
 
 /// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
@@ -35,7 +34,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.cacheRule,
     this.loadingProgress,
     this.getRealUrl,
-    this.transform,
+    this.preProcessing,
+    this.postProcessing,
     this.disableMemoryCache: false,
     this.printError = false,
   })  : assert(url != null),
@@ -94,10 +94,24 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Extract the real url before fetching.
   final Future<String> getRealUrl;
 
-  /// Receive the data([Uint8List]) and do some modifications.
-  final ImageTransform transform;
+  /// Receive the data([Uint8List]) and do some manipulations before save.
+  final ImageProcessing preProcessing;
+
+  /// Receive the data([Uint8List]) and do some manipulations after save.
+  final ImageProcessing postProcessing;
 
   /// If set to enable, the image provider will be evicted from [ImageCache].
+  ///
+  /// It is not recommended to disable momery cache, because image provider
+  /// will be called a lot of times. If you do not enable [useDiskCache],
+  /// image provider will fetch a lot of times. So, do not use this option
+  /// in production.
+  ///
+  /// If you want to use the same url with different fallbackImage,
+  /// you should make different [hashCode].
+  /// For example, you can set different retryLimit. If you enable [useDiskCache],
+  /// you can set different [url] with the same `Future.value(sameUrl)`
+  /// in [getRealUrl].
   final bool disableMemoryCache;
 
   /// Print error.
@@ -166,31 +180,34 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     if (useDiskCache) {
       try {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
-        if (key.loadedCallback != null) key.loadedCallback();
-        if (key.transform != null)
-          _diskCache = (await key.transform(_diskCache)) ?? _diskCache;
-        return await PaintingBinding.instance.instantiateImageCodec(_diskCache);
+        if (_diskCache != null) {
+          if (key.postProcessing != null)
+            _diskCache = (await key.postProcessing(_diskCache)) ?? _diskCache;
+          if (key.loadedCallback != null) key.loadedCallback();
+          return await PaintingBinding.instance
+              .instantiateImageCodec(_diskCache);
+        }
       } catch (e) {
         if (key.printError) debugPrint(e.toString());
       }
-    }
-
-    Uint8List imageData = await loadFromRemote(
-      key.url,
-      key.header,
-      key.retryLimit,
-      key.retryDuration,
-      key.retryDurationFactor,
-      key.timeoutDuration,
-      key.loadingProgress,
-      key.getRealUrl,
-      printError: key.printError,
-    );
-    if (imageData != null) {
-      if (key.loadedCallback != null) key.loadedCallback();
-      if (key.transform != null)
-        imageData = (await key.transform(imageData)) ?? imageData;
-      return await PaintingBinding.instance.instantiateImageCodec(imageData);
+    } else {
+      Uint8List imageData = await loadFromRemote(
+        key.url,
+        key.header,
+        key.retryLimit,
+        key.retryDuration,
+        key.retryDurationFactor,
+        key.timeoutDuration,
+        key.loadingProgress,
+        key.getRealUrl,
+        printError: key.printError,
+      );
+      if (imageData != null) {
+        if (key.postProcessing != null)
+          imageData = (await key.postProcessing(imageData)) ?? imageData;
+        if (key.loadedCallback != null) key.loadedCallback();
+        return await PaintingBinding.instance.instantiateImageCodec(imageData);
+      }
     }
 
     if (key.loadFailedCallback != null) key.loadFailedCallback();
@@ -220,8 +237,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   @override
-  int get hashCode => hashValues(url, scale, header, useDiskCache, retryLimit,
-      retryDuration, retryDurationFactor, timeoutDuration);
+  int get hashCode => ui.hashValues(url, scale, header, useDiskCache,
+      retryLimit, retryDuration, retryDurationFactor, timeoutDuration);
 
   @override
   String toString() => '$runtimeType('
@@ -268,6 +285,8 @@ Future<Uint8List> _loadFromDiskCache(
       printError: key.printError,
     );
     if (imageData != null) {
+      if (key.preProcessing != null)
+        imageData = (await key.preProcessing(imageData)) ?? imageData;
       await (File(join(_cacheImagesDirectory.path, uId)))
           .writeAsBytes(imageData);
       return imageData;
@@ -289,6 +308,8 @@ Future<Uint8List> _loadFromDiskCache(
       printError: key.printError,
     );
     if (data != null) {
+      if (key.preProcessing != null)
+        data = (await key.preProcessing(data)) ?? data;
       await diskCache.save(uId, data, key.cacheRule);
       return data;
     }

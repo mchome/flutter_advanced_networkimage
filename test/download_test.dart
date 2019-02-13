@@ -7,7 +7,7 @@ void main() {
   group('Download Test', () {
     test('=> good url', () async {
       var url =
-          'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png';
+          'https://images.unsplash.com/photo-1549845003-328fc090e2fe';
       var res = (await http.get(url)).bodyBytes;
 
       expect(
@@ -19,7 +19,7 @@ void main() {
 
     test('=> bad url', () async {
       var url =
-          'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Marks.png';
+          'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png';
 
       expect(
           await loadFromRemote(url, null, 0, const Duration(milliseconds: 100),

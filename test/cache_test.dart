@@ -24,6 +24,8 @@ void main() {
     });
 
     test('=> save and load', () async {
+      DiskCache().printError = true;
+
       expect(
         await DiskCache().save('aaa'.hashCode.toString(), utf8.encode('hello'),
             CacheRule(checksum: true)),
