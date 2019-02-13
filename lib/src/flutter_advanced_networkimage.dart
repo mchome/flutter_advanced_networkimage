@@ -94,10 +94,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Extract the real url before fetching.
   final Future<String> getRealUrl;
 
-  /// Receive the data([Uint8List]) and do some manipulations before save.
+  /// Receive the data([Uint8List]) and do some manipulations before saving.
   final ImageProcessing preProcessing;
 
-  /// Receive the data([Uint8List]) and do some manipulations after save.
+  /// Receive the data([Uint8List]) and do some manipulations after saving.
   final ImageProcessing postProcessing;
 
   /// If set to enable, the image will skip [ImageCache].
@@ -359,7 +359,7 @@ Future<Uint8List> loadFromRemote(
   http.Response _response;
   _response = await run(() async {
     String _url = url;
-    if (getRealUrl != null) _url = await getRealUrl;
+    if (getRealUrl != null) _url = (await getRealUrl) ?? url;
 
     final _req = http.Request('GET', Uri.parse(_url));
     _req.headers.addAll(header ?? {});

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:ui' show hashValues;
+import 'dart:ui' as ui show hashValues;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -166,8 +166,8 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   }
 
   @override
-  int get hashCode => hashValues(url, scale, header, useDiskCache, retryLimit,
-      retryDuration, retryDurationFactor, timeoutDuration);
+  int get hashCode => ui.hashValues(url, scale, header, useDiskCache,
+      retryLimit, retryDuration, retryDurationFactor, timeoutDuration);
 
   @override
   String toString() => '$runtimeType('
@@ -277,7 +277,7 @@ Future<Uint8List> _loadFromRemote(
   http.Response _response;
   _response = await run(() async {
     String _url = url;
-    if (getRealUrl != null) _url = await getRealUrl;
+    if (getRealUrl != null) _url = (await getRealUrl) ?? url;
 
     return await http.get(_url, headers: header).timeout(timeoutDuration);
   }, retryLimit, retryDuration, retryDurationFactor);
