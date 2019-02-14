@@ -29,6 +29,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.timeoutDuration: const Duration(seconds: 5),
     this.loadedCallback,
     this.loadFailedCallback,
+    this.loadedFromDiskCacheCallback,
     this.fallbackAssetImage,
     this.fallbackImage,
     this.cacheRule,
@@ -77,6 +78,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   /// The callback will fire when the image failed to load.
   final VoidCallback loadFailedCallback;
+
+  /// The callback will fire when the image loaded from DiskCache.
+  VoidCallback loadedFromDiskCacheCallback;
 
   /// Displays image from an asset bundle when the image failed to load.
   final String fallbackAssetImage;
@@ -267,6 +271,8 @@ Future<Uint8List> _loadFromDiskCache(
     if (_cacheImagesDirectory.existsSync()) {
       File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
       if (_cacheImageFile.existsSync()) {
+        if (key.loadedFromDiskCacheCallback != null)
+          key.loadedFromDiskCacheCallback();
         return await _cacheImageFile.readAsBytes();
       }
     } else {

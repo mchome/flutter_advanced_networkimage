@@ -27,6 +27,7 @@ class TransitionToImage extends StatefulWidget {
     this.enableRefresh: false,
     this.disableMemoryCache: false,
     this.disableMemoryCacheIfFailed: false,
+    this.disableTransitionIfInDiskCache: false,
     this.loadedCallback,
     this.loadFailedCallback,
     this.forceRebuildWidget: false,
@@ -44,6 +45,7 @@ class TransitionToImage extends StatefulWidget {
         assert(enableRefresh != null),
         assert(disableMemoryCache != null),
         assert(disableMemoryCacheIfFailed != null),
+        assert(disableTransitionIfInDiskCache != null),
         assert(forceRebuildWidget != null),
         assert(printError != null),
         super(key: key);
@@ -166,6 +168,9 @@ class TransitionToImage extends StatefulWidget {
   /// The callback will fire when the image loaded.
   final VoidCallback loadedCallback;
 
+  /// Disable transition if image cached in disk when using [AdvancedNetworkImage].
+  final bool disableTransitionIfInDiskCache;
+
   /// The callback will fire when the image failed to load.
   final VoidCallback loadFailedCallback;
 
@@ -203,6 +208,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   ImageInfo _imageInfo;
   bool _loadFailed = false;
   double _progress = 0.0;
+  bool loadedFromDiskCache = false;
 
   _TransitionStatus _status = _TransitionStatus.start;
 
@@ -252,7 +258,7 @@ class _TransitionToImageState extends State<TransitionToImage>
     setState(() {
       switch (_status) {
         case _TransitionStatus.start:
-          if (_imageInfo == null) {
+          if (_imageInfo == null && !widget.disableTransitionIfInDiskCache) {
             _status = _TransitionStatus.loading;
           } else {
             _status = _TransitionStatus.completed;
@@ -283,16 +289,29 @@ class _TransitionToImageState extends State<TransitionToImage>
 
     final ImageStream oldImageStream = _imageStream;
     if (_imageProvider is AdvancedNetworkImage) {
-      var callback = (_imageProvider as AdvancedNetworkImage).loadingProgress;
+      var loadingProgresscallback =
+          (_imageProvider as AdvancedNetworkImage).loadingProgress;
       (_imageProvider as AdvancedNetworkImage).loadingProgress =
           (double progress) {
         if (mounted)
           setState(() => _progress = progress);
         else
           return oldImageStream?.removeListener(_updateImage);
-        if (callback != null) callback(progress);
+        if (loadingProgresscallback != null) loadingProgresscallback(progress);
+      };
+
+      var loadedFromDiskCachecallback =
+          (_imageProvider as AdvancedNetworkImage).loadedFromDiskCacheCallback;
+      (_imageProvider as AdvancedNetworkImage).loadedFromDiskCacheCallback =
+          () {
+        if (mounted)
+          setState(() => loadedFromDiskCache = true);
+        else
+          return oldImageStream?.removeListener(_updateImage);
+        if (loadedFromDiskCachecallback != null) loadedFromDiskCachecallback();
       };
     }
+
     _imageStream = _imageProvider.resolve(createLocalImageConfiguration(
       context,
       size: widget.width != null && widget.height != null
