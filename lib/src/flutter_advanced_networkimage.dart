@@ -300,7 +300,11 @@ Future<Uint8List> _loadFromDiskCache(
   } else {
     DiskCache diskCache = DiskCache();
     Uint8List data = await diskCache.load(uId);
-    if (data != null) return data;
+    if (data != null) {
+      if (key.loadedFromDiskCacheCallback != null)
+        key.loadedFromDiskCacheCallback();
+      return data;
+    }
 
     data = await loadFromRemote(
       key.url,
