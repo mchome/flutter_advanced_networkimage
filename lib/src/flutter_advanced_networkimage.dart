@@ -380,17 +380,8 @@ Future<Uint8List> loadFromRemote(
     subscription = _res.stream.listen((bytes) {
       try {
         buffer.addAll(bytes);
-        double progress = buffer.length / _res.contentLength;
+        double progress = buffer.length / _res.contentLength ?? 1.0;
         if (progressReport != null) progressReport(progress);
-        if (!_res.isRedirect && _res.statusCode != HttpStatus.ok)
-          throw Exception('status code: ${_res.statusCode}');
-        if (progress >= 1.0)
-          completer.complete(http.Response.bytes(buffer, _res.statusCode,
-              request: _res.request,
-              headers: _res.headers,
-              isRedirect: _res.isRedirect,
-              persistentConnection: _res.persistentConnection,
-              reasonPhrase: _res.reasonPhrase));
       } catch (e) {
         if (printError) debugPrint(e.toString());
         subscription.cancel();
@@ -401,6 +392,13 @@ Future<Uint8List> loadFromRemote(
             persistentConnection: _res.persistentConnection,
             reasonPhrase: _res.reasonPhrase));
       }
+    }, onDone: () {
+      completer.complete(http.Response.bytes(buffer, _res.statusCode,
+          request: _res.request,
+          headers: _res.headers,
+          isRedirect: _res.isRedirect,
+          persistentConnection: _res.persistentConnection,
+          reasonPhrase: _res.reasonPhrase));
     });
     return completer.future;
   }, retryLimit, retryDuration, retryDurationFactor);
