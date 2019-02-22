@@ -1,6 +1,7 @@
 # Flutter Advanced Network Image Provider
 
 [![pub package](https://img.shields.io/pub/v/flutter_advanced_networkimage.svg)](https://pub.dartlang.org/packages/flutter_advanced_networkimage)
+[![donate](https://img.shields.io/badge/Donate-PayPal-green.svg?logo=paypal)](https://www.paypal.me/mchome19)
 
 An advanced image provider provides caching and retrying for flutter app.
 Now with zoomable widget and transition to image widget.

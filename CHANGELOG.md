@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.9]
+
+- `AdvancedNetworkImage`: fix gzip download problem.
+
 ## [0.4.8]
 
 - `AdvancedNetworkImage`: add `preProcessing` & `postProcessing`.
