@@ -7,7 +7,7 @@ void main() {
   group('Download Test', () {
     test('=> good url', () async {
       var url =
-          'https://images.unsplash.com/photo-1549845003-328fc090e2fe';
+          'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
       var res = (await http.get(url)).bodyBytes;
 
       expect(

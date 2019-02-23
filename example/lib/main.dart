@@ -21,6 +21,9 @@ class MyApp extends StatefulWidget {
 }
 
 class Example extends State<MyApp> {
+  final String url =
+      'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+
   ByteData imageCropperData;
 
   cropImage(ByteData data) => setState(() => imageCropperData = data);
@@ -48,7 +51,7 @@ class Example extends State<MyApp> {
           children: <Widget>[
             TransitionToImage(
               image: AdvancedNetworkImage(
-                'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
+                url,
                 // loadedCallback: () => print('It works!'),
                 // loadFailedCallback: () => print('Oh, no!'),
                 // loadingProgress: (double progress) => print(progress),
@@ -80,7 +83,7 @@ class Example extends State<MyApp> {
               autoCenter: true,
               child: Image(
                 image: AdvancedNetworkImage(
-                  'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
+                  url,
                 ),
               ),
               // onZoomChanged: (double value) => print(value),
@@ -97,17 +100,17 @@ class Example extends State<MyApp> {
                   children: <Widget>[
                     Image(
                       image: AdvancedNetworkImage(
-                        'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
+                        url,
                       ),
                     ),
                     Image(
                       image: AdvancedNetworkImage(
-                        'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
+                        url,
                       ),
                     ),
                     Image(
                       image: AdvancedNetworkImage(
-                        'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
+                        url,
                       ),
                     ),
                   ],
@@ -122,7 +125,7 @@ class Example extends State<MyApp> {
                   color: Colors.grey,
                   child: ImageCropper(
                     image: AdvancedNetworkImage(
-                      'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
+                      url,
                     ),
                     onCropperChanged: cropImage,
                   ),
@@ -167,7 +170,7 @@ class Example extends State<MyApp> {
             ),
 
             // StreamLoadingImage(
-            //   url: 'https://images.unsplash.com/photo-1549845003-328fc090e2fe',
+            //   url: url,
             // ),
           ],
         ),

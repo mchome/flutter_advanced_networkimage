@@ -349,7 +349,7 @@ Future<Uint8List> loadFromRemote(
     for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
       try {
         http.Response res = await f();
-        if (res != null) {
+        if (res != null && res.bodyBytes.length > 0) {
           if (res.statusCode == HttpStatus.ok)
             return res;
           else if (printError)
@@ -380,8 +380,9 @@ Future<Uint8List> loadFromRemote(
     subscription = _res.stream.listen((bytes) {
       try {
         buffer.addAll(bytes);
-        double progress = buffer.length / _res.contentLength ?? 1.0;
-        if (progressReport != null) progressReport(progress);
+        double progress = buffer.length / (_res.contentLength ?? 1.0);
+        if (progressReport != null && _res.contentLength != null)
+          progressReport(progress);
       } catch (e) {
         if (printError) debugPrint(e.toString());
         subscription.cancel();
