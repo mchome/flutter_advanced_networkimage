@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.10]
+
+- `AdvancedNetworkImage`: fix missing content-length problem.
+
 ## [0.4.9]
 
 - `AdvancedNetworkImage`: fix gzip download problem.
