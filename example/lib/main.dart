@@ -9,11 +9,13 @@ import 'package:flutter_advanced_networkimage/cropper.dart';
 
 // import 'package:flutter_advanced_networkimage/src/stream_loading_image.dart';
 
-void main() => runApp(MaterialApp(
-      title: 'Flutter Example',
-      theme: ThemeData(primaryColor: Colors.blue),
-      home: MyApp(),
-    ));
+void main() {
+  runApp(MaterialApp(
+    title: 'Flutter Example',
+    theme: ThemeData(primaryColor: Colors.blue),
+    home: MyApp(),
+  ));
+}
 
 class MyApp extends StatefulWidget {
   @override
@@ -24,9 +26,9 @@ class Example extends State<MyApp> {
   final String url =
       'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
 
-  ByteData imageCropperData;
+  Uint8List imageCropperData;
 
-  cropImage(ByteData data) => setState(() => imageCropperData = data);
+  void cropImage(Uint8List data) => setState(() => imageCropperData = data);
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +40,10 @@ class Example extends State<MyApp> {
           bottom: TabBar(
             isScrollable: true,
             tabs: <Widget>[
-              Tab(text: 'load image'),
-              Tab(text: 'zoomable widget'),
-              Tab(text: 'zoomable list'),
-              Tab(text: 'crop image(WIP)'),
+              const Tab(text: 'load image'),
+              const Tab(text: 'zoomable widget'),
+              const Tab(text: 'zoomable list'),
+              const Tab(text: 'crop image(WIP)'),
               // Tab(text: 'stream loading(DEMO)'),
             ],
           ),
@@ -52,13 +54,13 @@ class Example extends State<MyApp> {
             TransitionToImage(
               image: AdvancedNetworkImage(
                 url,
-                // loadedCallback: () => print('It works!'),
-                // loadFailedCallback: () => print('Oh, no!'),
+                loadedCallback: () => print('It works!'),
+                loadFailedCallback: () => print('Oh, no!'),
                 // loadingProgress: (double progress) => print(progress),
                 // disableMemoryCache: true,
               ),
-              loadedCallback: () => print('It works!'),
-              loadFailedCallback: () => print('Oh, no!'),
+              // loadedCallback: () => print('It works!'),
+              // loadFailedCallback: () => print('Oh, no!'),
               // disableMemoryCache: true,
               fit: BoxFit.contain,
               placeholder: Container(
@@ -70,8 +72,9 @@ class Example extends State<MyApp> {
               width: 300.0,
               height: 300.0,
               enableRefresh: true,
-              loadingWidgetBuilder: (progress) =>
-                  Center(child: Text(progress.toString())),
+              loadingWidgetBuilder: (progress) {
+                return Center(child: Text(progress.toString()));
+              },
             ),
 
             ZoomableWidget(
@@ -81,11 +84,7 @@ class Example extends State<MyApp> {
               multiFingersPan: false,
               enableRotate: true,
               autoCenter: true,
-              child: Image(
-                image: AdvancedNetworkImage(
-                  url,
-                ),
-              ),
+              child: Image(image: AdvancedNetworkImage(url)),
               // onZoomChanged: (double value) => print(value),
             ),
 
@@ -98,21 +97,9 @@ class Example extends State<MyApp> {
                   key: _key,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Image(
-                      image: AdvancedNetworkImage(
-                        url,
-                      ),
-                    ),
-                    Image(
-                      image: AdvancedNetworkImage(
-                        url,
-                      ),
-                    ),
-                    Image(
-                      image: AdvancedNetworkImage(
-                        url,
-                      ),
-                    ),
+                    Image(image: AdvancedNetworkImage(url)),
+                    Image(image: AdvancedNetworkImage(url)),
+                    Image(image: AdvancedNetworkImage(url)),
                   ],
                 ),
               );
@@ -124,9 +111,7 @@ class Example extends State<MyApp> {
                   height: 400.0,
                   color: Colors.grey,
                   child: ImageCropper(
-                    image: AdvancedNetworkImage(
-                      url,
-                    ),
+                    image: AdvancedNetworkImage(url),
                     onCropperChanged: cropImage,
                   ),
                 ),
@@ -151,10 +136,7 @@ class Example extends State<MyApp> {
                                 content: SingleChildScrollView(
                                   child: Container(
                                     child: imageCropperData != null
-                                        ? Image.memory(
-                                            Uint8List.view(
-                                                imageCropperData.buffer),
-                                          )
+                                        ? Image.memory(imageCropperData)
                                         : Container(),
                                   ),
                                 ),
