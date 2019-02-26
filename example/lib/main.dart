@@ -6,6 +6,7 @@ import 'package:flutter_advanced_networkimage/transition.dart';
 import 'package:flutter_advanced_networkimage/zoomable.dart';
 import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:flutter_advanced_networkimage/cropper.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 // import 'package:flutter_advanced_networkimage/src/stream_loading_image.dart';
 
@@ -25,6 +26,8 @@ class MyApp extends StatefulWidget {
 class Example extends State<MyApp> {
   final String url =
       'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+  final String svgUrl =
+      'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg';
 
   Uint8List imageCropperData;
 
@@ -51,30 +54,43 @@ class Example extends State<MyApp> {
         body: TabBarView(
           physics: NeverScrollableScrollPhysics(),
           children: <Widget>[
-            TransitionToImage(
-              image: AdvancedNetworkImage(
-                url,
-                loadedCallback: () => print('It works!'),
-                loadFailedCallback: () => print('Oh, no!'),
-                // loadingProgress: (double progress) => print(progress),
-                // disableMemoryCache: true,
-              ),
-              // loadedCallback: () => print('It works!'),
-              // loadFailedCallback: () => print('Oh, no!'),
-              // disableMemoryCache: true,
-              fit: BoxFit.contain,
-              placeholder: Container(
-                width: 300.0,
-                height: 300.0,
-                color: Colors.transparent,
-                child: const Icon(Icons.refresh),
-              ),
-              width: 300.0,
-              height: 300.0,
-              enableRefresh: true,
-              loadingWidgetBuilder: (progress) {
-                return Center(child: Text(progress.toString()));
-              },
+            Column(
+              children: <Widget>[
+                TransitionToImage(
+                  image: AdvancedNetworkImage(
+                    url,
+                    loadedCallback: () => print('It works!'),
+                    loadFailedCallback: () => print('Oh, no!'),
+                    // loadingProgress: (double progress) => print(progress),
+                    // disableMemoryCache: true,
+                  ),
+                  // loadedCallback: () => print('It works!'),
+                  // loadFailedCallback: () => print('Oh, no!'),
+                  // disableMemoryCache: true,
+                  fit: BoxFit.contain,
+                  placeholder: Container(
+                    width: 300.0,
+                    height: 300.0,
+                    color: Colors.transparent,
+                    child: const Icon(Icons.refresh),
+                  ),
+                  width: 300.0,
+                  height: 300.0,
+                  enableRefresh: true,
+                  loadingWidgetBuilder: (progress) {
+                    return Center(child: Text(progress.toString()));
+                  },
+                ),
+                Expanded(
+                  child: SvgPicture(
+                    AdvancedNetworkSvg(
+                      svgUrl,
+                      SvgPicture.svgByteDecoder,
+                      useDiskCache: true,
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             ZoomableWidget(
