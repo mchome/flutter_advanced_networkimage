@@ -1,6 +1,8 @@
 # Flutter Advanced Network Image Provider
 
 [![pub package](https://img.shields.io/pub/v/flutter_advanced_networkimage.svg)](https://pub.dartlang.org/packages/flutter_advanced_networkimage)
+[![build status](https://travis-ci.org/mchome/flutter_advanced_networkimage.svg?branch=master)](https://travis-ci.org/mchome/flutter_advanced_networkimage?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/mchome/flutter_advanced_networkimage/badge.svg?branch=master)](https://coveralls.io/github/mchome/flutter_advanced_networkimage?branch=master)
 [![donate](https://img.shields.io/badge/Donate-PayPal-green.svg?logo=paypal)](https://www.paypal.me/mchome19)
 
 An advanced image provider provides caching and retrying for flutter app.

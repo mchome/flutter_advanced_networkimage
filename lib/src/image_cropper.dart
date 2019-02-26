@@ -81,7 +81,7 @@ class _ImageCropperState extends State<ImageCropper>
     setState(() =>
         _rotation = (_previousRotation + details.rotation).clamp(-pi, pi));
     if (details.scale != 1.0) {
-      setState(() => _zoom = (_previewZoom * details.scale).clamp(1.0, 5.0));
+      setState(() => _zoom = (_previewZoom * details.scale).clamp(1.0, 1.0));
     }
     setState(() {
       Offset _panRealOffset = details.focalPoint -
@@ -130,7 +130,7 @@ class _ImageCropperState extends State<ImageCropper>
             CustomPaint(
               size: Size(_image.image.width.toDouble(),
                   _image.image.height.toDouble()),
-              painter: _GesturePainter(
+              painter: _RecordPainter(
                 _image.image,
                 _zoom,
                 _panOffset,
@@ -181,8 +181,8 @@ class _PreviewPainter extends CustomPainter {
   }
 }
 
-class _GesturePainter extends CustomPainter {
-  const _GesturePainter(
+class _RecordPainter extends CustomPainter {
+  const _RecordPainter(
     this.image,
     this.zoom,
     this.offset,
@@ -206,15 +206,6 @@ class _GesturePainter extends CustomPainter {
     final cropperCanvas = Canvas(recorder, rect);
 
     customPaintImage(
-      canvas: canvas,
-      image: image,
-      size: size,
-      offset: offset,
-      scale: zoom,
-      angle: angle,
-    );
-
-    customPaintImage(
       canvas: cropperCanvas,
       image: image,
       size: size,
@@ -233,7 +224,7 @@ class _GesturePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GesturePainter oldPainter) {
+  bool shouldRepaint(_RecordPainter oldPainter) {
     return oldPainter.image != image ||
         oldPainter.zoom != zoom ||
         oldPainter.offset != offset ||
@@ -257,15 +248,6 @@ void customPaintImage({
   assert(canvas != null);
   assert(image != null);
   assert(flipHorizontally != null);
-
-  final double r =
-      sqrt(image.width * image.width + image.height * image.height) / 2;
-  final alpha = atan(image.height / image.width);
-  final beta = alpha + angle;
-  final shiftY = r * sin(beta);
-  final shiftX = r * cos(beta);
-  final translateX = image.width / 2 - shiftX;
-  final translateY = image.height / 2 - shiftY;
 
   const Alignment alignment = Alignment.center;
   Rect rect = Offset.zero & size;
@@ -296,11 +278,22 @@ void customPaintImage({
     canvas.scale(-1.0, 1.0);
     canvas.translate(dx, 0.0);
   }
+  final Rect sourceRect =
+      alignment.inscribe(sourceSize, Offset.zero & inputSize);
+
+  final canvasDx = destinationSize.width;
+  final canvasDy = destinationSize.height + destinationPosition.dy * 2;
+  final double r = sqrt(canvasDx * canvasDx + canvasDy * canvasDy) / 2;
+  final alpha = atan(canvasDy / canvasDx);
+  final beta = alpha + angle;
+  final shiftY = r * sin(beta);
+  final shiftX = r * cos(beta);
+  final translateX = canvasDx / 2 - shiftX;
+  final translateY = canvasDy / 2 - shiftY;
   canvas.translate(translateX + offset.dx, translateY + offset.dy);
   canvas.scale(scale);
   canvas.rotate(angle);
-  final Rect sourceRect =
-      alignment.inscribe(sourceSize, Offset.zero & inputSize);
+
   canvas.drawImageRect(image, sourceRect, destinationRect, paint);
 
   if (needSave) canvas.restore();
