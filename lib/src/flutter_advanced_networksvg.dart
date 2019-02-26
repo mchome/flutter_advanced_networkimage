@@ -95,7 +95,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   final bool printError;
 
   @override
-  Future<AdvancedNetworkSvg> obtainKey() {
+  Future<AdvancedNetworkSvg> obtainKey(PictureConfiguration picture) {
     return SynchronousFuture<AdvancedNetworkSvg>(this);
   }
 
