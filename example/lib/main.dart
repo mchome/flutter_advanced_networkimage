@@ -24,10 +24,9 @@ class MyApp extends StatefulWidget {
 }
 
 class Example extends State<MyApp> {
-  final String url =
-      'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+  final String url = 'https://flutter.io/images/flutter-logo-sharing.png';
   final String svgUrl =
-      'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg';
+      'https://flutter.dev/assets/flutter-lockup-4cb0ee072ab312e59784d9fbf4fb7ad42688a7fdaea1270ccf6bbf4f34b7e03f.svg';
 
   Uint8List imageCropperData;
 
@@ -78,7 +77,12 @@ class Example extends State<MyApp> {
                   height: 300.0,
                   enableRefresh: true,
                   loadingWidgetBuilder: (progress) {
-                    return Center(child: Text(progress.toString()));
+                    return Container(
+                      width: 300.0,
+                      height: 300.0,
+                      alignment: Alignment.center,
+                      child: Text(progress.toString()),
+                    );
                   },
                 ),
                 Expanded(
@@ -86,7 +90,6 @@ class Example extends State<MyApp> {
                     AdvancedNetworkSvg(
                       svgUrl,
                       SvgPicture.svgByteDecoder,
-                      useDiskCache: true,
                     ),
                   ),
                 ),

@@ -6,15 +6,14 @@ import 'package:flutter_advanced_networkimage/src/flutter_advanced_networkimage.
 void main() {
   group('Download Test', () {
     test('=> good url', () async {
-      var url =
-          'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
-      var res = (await http.get(url)).bodyBytes;
+      var url = 'https://flutter.dev/images/flutter-logo-sharing.png';
+      var result = (await http.get(url)).bodyBytes;
 
       expect(
           await loadFromRemote(url, null, 5, const Duration(milliseconds: 100),
               1.0, const Duration(seconds: 5), null, null,
               printError: true),
-          res);
+          result);
     });
 
     test('=> bad url', () async {

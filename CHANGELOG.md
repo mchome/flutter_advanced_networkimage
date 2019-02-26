@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.11]
+
+- `AdvancedNetworkSvg`: adapt flutter_svg 0.10.4.
+
 ## [0.4.10]
 
 - `AdvancedNetworkImage`: fix missing content-length problem.
