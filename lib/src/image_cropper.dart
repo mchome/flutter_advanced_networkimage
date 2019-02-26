@@ -12,10 +12,15 @@ class ImageCropper extends StatefulWidget {
   ImageCropper({
     Key key,
     @required this.image,
+    this.minScale: 1.0,
+    this.maxScale: 3.0,
     @required this.onCropperChanged,
   });
 
   final ImageProvider image;
+  final double minScale;
+  final double maxScale;
+
   final ValueChanged<Uint8List> onCropperChanged;
 
   @override
@@ -25,8 +30,8 @@ class ImageCropper extends StatefulWidget {
 class _ImageCropperState extends State<ImageCropper>
     with TickerProviderStateMixin {
   double _zoom = 1.0;
-  double _previewZoom = 1.0;
-  Offset _previewPanOffset = Offset.zero;
+  double _previousZoom = 1.0;
+  Offset _previousPanOffset = Offset.zero;
   Offset _panOffset = Offset.zero;
   Offset _zoomOriginOffset = Offset.zero;
   double _rotation = 0.0;
@@ -70,33 +75,24 @@ class _ImageCropperState extends State<ImageCropper>
   void _onScaleStart(ScaleStartDetails details) {
     setState(() {
       _zoomOriginOffset = details.focalPoint;
-      _previewPanOffset = _panOffset;
-      _previewZoom = _zoom;
+      _previousPanOffset = _panOffset;
+      _previousZoom = _zoom;
       _previousRotation = _rotation;
     });
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
     // Size _boundarySize = Size(_image.width / 2, _image.height / 2);
-    setState(() =>
-        _rotation = (_previousRotation + details.rotation).clamp(-pi, pi));
-    if (details.scale != 1.0) {
-      setState(() => _zoom = (_previewZoom * details.scale).clamp(1.0, 1.0));
-    }
     setState(() {
-      Offset _panRealOffset = details.focalPoint -
-          ((_zoomOriginOffset - _previewPanOffset) / _previewZoom) * _zoom;
-
-      _panOffset = _panRealOffset;
-      // _panOffset = Offset(
-      //     _panRealOffset.dx.clamp(
-      //       -_boundarySize.width / _zoom,
-      //       _boundarySize.width / _zoom,
-      //     ),
-      //     _panRealOffset.dy.clamp(
-      //       -_boundarySize.height / _zoom,
-      //       _boundarySize.height / _zoom,
-      //     ));
+      _rotation = (_previousRotation + details.rotation).clamp(-pi, pi);
+      if (details.scale != 1.0) {
+        _zoom = (_previousZoom * details.scale)
+            .clamp(widget.minScale, widget.maxScale);
+      } else {
+        Offset _panRealOffset = details.focalPoint -
+            ((_zoomOriginOffset - _previousPanOffset) / _previousZoom) * _zoom;
+        _panOffset = _panRealOffset;
+      }
     });
   }
 
@@ -117,15 +113,13 @@ class _ImageCropperState extends State<ImageCropper>
       child: ClipRect(
         child: Stack(
           children: <Widget>[
-            CustomPaint(
-              size: Size(_image.image.width.toDouble(),
-                  _image.image.height.toDouble()),
-              painter: _PreviewPainter(
-                _image.image,
-                _zoom,
-                _panOffset,
-                _rotation,
-              ),
+            AnimatedCropper(
+              image: _image,
+              zoom: _zoom,
+              panOffset: _panOffset,
+              rotation: _rotation,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOut,
             ),
             CustomPaint(
               size: Size(_image.image.width.toDouble(),
@@ -145,12 +139,68 @@ class _ImageCropperState extends State<ImageCropper>
   }
 }
 
+class AnimatedCropper extends ImplicitlyAnimatedWidget {
+  const AnimatedCropper({
+    @required this.image,
+    @required this.zoom,
+    this.panOffset: Offset.zero,
+    this.rotation: 0.0,
+    Duration duration,
+    Curve curve = Curves.linear,
+    this.enableRotate: false,
+  }) : super(duration: duration, curve: curve);
+
+  final ImageInfo image;
+  final double zoom;
+  final Offset panOffset;
+  final double rotation;
+  final bool enableRotate;
+
+  @override
+  ImplicitlyAnimatedWidgetState<ImplicitlyAnimatedWidget> createState() =>
+      _AnimatedCropperState();
+}
+
+class _AnimatedCropperState extends AnimatedWidgetBaseState<AnimatedCropper> {
+  _DoubleTween _zoom;
+  _OffsetTween _panOffset;
+  _DoubleTween _rotation;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(
+        widget.image.image.width.toDouble(),
+        widget.image.image.height.toDouble(),
+      ),
+      painter: _PreviewPainter(
+        widget.image.image,
+        _zoom.evaluate(animation),
+        _panOffset.evaluate(animation),
+        _rotation.evaluate(animation),
+        widget.enableRotate,
+      ),
+    );
+  }
+
+  @override
+  void forEachTween(visitor) {
+    _zoom = visitor(
+        _zoom, widget.zoom, (dynamic value) => _DoubleTween(begin: value));
+    _panOffset = visitor(_panOffset, widget.panOffset,
+        (dynamic value) => _OffsetTween(begin: value));
+    _rotation = visitor(_rotation, widget.rotation,
+        (dynamic value) => _DoubleTween(begin: value));
+  }
+}
+
 class _PreviewPainter extends CustomPainter {
   const _PreviewPainter(
     this.image,
     this.zoom,
     this.offset,
     this.angle,
+    this.enableRotate,
   )   : assert(image != null),
         assert(zoom != null),
         assert(offset != null);
@@ -159,6 +209,7 @@ class _PreviewPainter extends CustomPainter {
   final double zoom;
   final Offset offset;
   final double angle;
+  final bool enableRotate;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -177,7 +228,8 @@ class _PreviewPainter extends CustomPainter {
     return oldPainter.image != image ||
         oldPainter.zoom != zoom ||
         oldPainter.offset != offset ||
-        oldPainter.angle != angle;
+        oldPainter.angle != angle ||
+        oldPainter.enableRotate != enableRotate;
   }
 }
 
@@ -252,26 +304,22 @@ void customPaintImage({
   const Alignment alignment = Alignment.center;
   Rect rect = Offset.zero & size;
   if (rect.isEmpty) return;
-  Size outputSize = rect.size;
   Size inputSize = Size(image.width.toDouble(), image.height.toDouble());
-  final FittedSizes fittedSizes = applyBoxFit(fit, inputSize, outputSize);
+  final FittedSizes fittedSizes = applyBoxFit(fit, inputSize, size);
   final Size sourceSize = fittedSizes.source;
   Size destinationSize = fittedSizes.destination;
   final Paint paint = Paint()..isAntiAlias = false;
   if (colorFilter != null) paint.colorFilter = colorFilter;
   if (sourceSize != destinationSize) paint.filterQuality = filterQuality;
   paint.invertColors = invertColors;
-  final double halfWidthDelta =
-      (outputSize.width - destinationSize.width) / 2.0;
-  final double halfHeightDelta =
-      (outputSize.height - destinationSize.height) / 2.0;
+  final double halfWidthDelta = (size.width - destinationSize.width) / 2.0;
+  final double halfHeightDelta = (size.height - destinationSize.height) / 2.0;
   final double dx = halfWidthDelta +
       (flipHorizontally ? -alignment.x : alignment.x) * halfWidthDelta;
   final double dy = halfHeightDelta + alignment.y * halfHeightDelta;
   final Offset destinationPosition = rect.topLeft.translate(dx, dy);
   final Rect destinationRect = destinationPosition & destinationSize;
-  final bool needSave = flipHorizontally;
-  if (needSave) canvas.save();
+  if (flipHorizontally) canvas.save();
   if (flipHorizontally) {
     final double dx = -(rect.left + rect.width / 2.0);
     canvas.translate(-dx, 0.0);
@@ -281,20 +329,35 @@ void customPaintImage({
   final Rect sourceRect =
       alignment.inscribe(sourceSize, Offset.zero & inputSize);
 
-  final canvasDx = destinationSize.width;
-  final canvasDy = destinationSize.height + destinationPosition.dy * 2;
-  final double r = sqrt(canvasDx * canvasDx + canvasDy * canvasDy) / 2;
-  final alpha = atan(canvasDy / canvasDx);
+  final cDx = destinationSize.width;
+  final cDy = destinationSize.height + destinationPosition.dy * 2;
+  final double r = sqrt(cDx * cDx + cDy * cDy) / 2;
+  final alpha = atan(cDy / cDx);
   final beta = alpha + angle;
   final shiftY = r * sin(beta);
   final shiftX = r * cos(beta);
-  final translateX = canvasDx / 2 - shiftX;
-  final translateY = canvasDy / 2 - shiftY;
-  canvas.translate(translateX + offset.dx, translateY + offset.dy);
+  final translateX = cDx / 2 - shiftX;
+  final translateY = cDy / 2 - shiftY;
+  canvas.translate(translateX * scale, translateY * scale);
+  canvas.translate(offset.dx, offset.dy);
   canvas.scale(scale);
   canvas.rotate(angle);
 
   canvas.drawImageRect(image, sourceRect, destinationRect, paint);
 
-  if (needSave) canvas.restore();
+  if (flipHorizontally) canvas.restore();
+}
+
+class _DoubleTween extends Tween<double> {
+  _DoubleTween({double begin, double end}) : super(begin: begin, end: end);
+
+  @override
+  double lerp(double t) => (begin + (end - begin) * t);
+}
+
+class _OffsetTween extends Tween<Offset> {
+  _OffsetTween({Offset begin, Offset end}) : super(begin: begin, end: end);
+
+  @override
+  Offset lerp(double t) => (begin + (end - begin) * t);
 }

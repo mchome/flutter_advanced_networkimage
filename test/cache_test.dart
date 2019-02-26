@@ -51,9 +51,26 @@ void main() {
             utf8.encode('flutter'), CacheRule(checksum: true)),
         true,
       );
+
+      expect(
+        await DiskCache().load('aaa'.hashCode.toString()),
+        utf8.encode('hello'),
+      );
+      expect(
+        await DiskCache().load('bbb'.hashCode.toString()),
+        utf8.encode('world'),
+      );
       expect(
         await DiskCache().load('ccc'.hashCode.toString()),
         utf8.encode('welcome'),
+      );
+      expect(
+        await DiskCache().load('ddd'.hashCode.toString()),
+        utf8.encode('to'),
+      );
+      expect(
+        await DiskCache().load('eee'.hashCode.toString()),
+        utf8.encode('flutter'),
       );
     });
     test('=> reach maxAge', () async {
