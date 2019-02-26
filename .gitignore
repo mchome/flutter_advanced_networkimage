@@ -11,3 +11,4 @@ pubspec.lock
 tmp/
 ref/
 build/
+coverage/
