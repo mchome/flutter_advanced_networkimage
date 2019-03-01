@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:flutter_advanced_networkimage/src/utils.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:test/test.dart';
 import 'package:flutter/services.dart';
 
@@ -163,6 +165,29 @@ void main() {
           utf8.encode('Friday'));
       expect(
           await DiskCache().cacheSize(), 'Thursday'.length + 'Friday'.length);
+      expect(await DiskCache().clear(), true);
+      expect(await DiskCache().cacheSize(), 0);
+    });
+    test('=> keep cache health', () async {
+      expect(await DiskCache().clear(), true);
+      expect(await DiskCache().cacheSize(), 0);
+
+      expect(
+        await DiskCache().save(
+            'ooo'.hashCode.toString(), utf8.encode('Saturday'), CacheRule()),
+        true,
+      );
+      expect(await DiskCache().load('ooo'.hashCode.toString()),
+          utf8.encode('Saturday'));
+      var file = File(
+          join((await getTemporaryDirectory()).path, 'imagecache', uid('ooo')));
+      expect(file.existsSync(), true);
+      file.deleteSync();
+      expect(file.existsSync(), false);
+      expect(DiskCache().currentEntries, 1);
+      await DiskCache().keepCacheHealth();
+      expect(DiskCache().currentEntries, 0);
+
       expect(await DiskCache().clear(), true);
       expect(await DiskCache().cacheSize(), 0);
     });

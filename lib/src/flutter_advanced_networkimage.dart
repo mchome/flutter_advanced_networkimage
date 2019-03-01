@@ -341,6 +341,9 @@ Future<Uint8List> loadFromRemote(
   Future<String> getRealUrl, {
   bool printError = false,
 }) async {
+  assert(url != null);
+  assert(retryLimit != null);
+
   if (retryLimit < 0) retryLimit = 0;
 
   /// Retry mechanism.
@@ -371,37 +374,40 @@ Future<Uint8List> loadFromRemote(
     String _url = url;
     if (getRealUrl != null) _url = (await getRealUrl) ?? url;
 
-    final _req = http.Request('GET', Uri.parse(_url));
-    _req.headers.addAll(header ?? {});
-    final _res = await _req.send().timeout(timeoutDuration);
-    List<int> buffer = [];
-    final Completer<http.Response> completer = Completer<http.Response>();
-    StreamSubscription<List<int>> subscription;
-    subscription = _res.stream.listen((bytes) {
-      try {
-        buffer.addAll(bytes);
-        double progress = buffer.length / (_res.contentLength ?? 1.0);
-        if (progressReport != null && _res.contentLength != null)
-          progressReport(progress);
-      } catch (e) {
-        if (printError) debugPrint(e.toString());
-        subscription.cancel();
-        completer.complete(http.Response.bytes([], _res.statusCode,
+    if (progressReport != null) {
+      final _req = http.Request('GET', Uri.parse(_url));
+      _req.headers.addAll(header ?? {});
+      final _res = await _req.send().timeout(timeoutDuration);
+      List<int> buffer = [];
+      final Completer<http.Response> completer = Completer<http.Response>();
+      StreamSubscription<List<int>> subscription;
+      subscription = _res.stream.listen((bytes) {
+        try {
+          buffer.addAll(bytes);
+          double progress = buffer.length / (_res.contentLength ?? 1.0);
+          if (_res.contentLength != null) progressReport(progress);
+        } catch (e) {
+          if (printError) debugPrint(e.toString());
+          subscription.cancel();
+          completer.complete(http.Response.bytes([], _res.statusCode,
+              request: _res.request,
+              headers: _res.headers,
+              isRedirect: _res.isRedirect,
+              persistentConnection: _res.persistentConnection,
+              reasonPhrase: _res.reasonPhrase));
+        }
+      }, onDone: () {
+        completer.complete(http.Response.bytes(buffer, _res.statusCode,
             request: _res.request,
             headers: _res.headers,
             isRedirect: _res.isRedirect,
             persistentConnection: _res.persistentConnection,
             reasonPhrase: _res.reasonPhrase));
-      }
-    }, onDone: () {
-      completer.complete(http.Response.bytes(buffer, _res.statusCode,
-          request: _res.request,
-          headers: _res.headers,
-          isRedirect: _res.isRedirect,
-          persistentConnection: _res.persistentConnection,
-          reasonPhrase: _res.reasonPhrase));
-    });
-    return completer.future;
+      });
+      return completer.future;
+    } else {
+      return await http.get(_url, headers: header).timeout(timeoutDuration);
+    }
   }, retryLimit, retryDuration, retryDurationFactor);
   if (_response != null) return _response.bodyBytes;
 

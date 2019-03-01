@@ -285,3 +285,9 @@ int crc32(List<int> bytes) {
 
 /// Get uid from hashCode.
 String uid(String str) => str.hashCode.toString();
+
+bool get isInDebugMode {
+  bool inDebugMode = false;
+  assert(inDebugMode = true);
+  return inDebugMode;
+}

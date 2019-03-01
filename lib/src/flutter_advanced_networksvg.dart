@@ -249,6 +249,9 @@ Future<Uint8List> _loadFromRemote(
   Future<String> getRealUrl, {
   bool printError = false,
 }) async {
+  assert(url != null);
+  assert(retryLimit != null);
+
   if (retryLimit < 0) retryLimit = 0;
 
   /// Retry mechanism.

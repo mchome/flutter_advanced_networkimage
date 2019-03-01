@@ -65,7 +65,7 @@ class DiskCache {
   int maxCommitOps = 10;
   int _currentOps = 0;
 
-  int get _currentEntries => _metadata != null ? _metadata.keys.length : 0;
+  int get currentEntries => _metadata != null ? _metadata.keys.length : 0;
   int get _currentSizeBytes {
     int size = 0;
     _metadata.values.forEach((item) => size += item['size']);
@@ -92,8 +92,7 @@ class DiskCache {
 
   Future<void> _commitMetaData([bool force = false]) async {
     if (!force) {
-      if (_currentEntries < maxEntries && _currentSizeBytes < maxEntries)
-        return;
+      if (currentEntries < maxEntries && _currentSizeBytes < maxEntries) return;
       _currentOps += 1;
       if (_currentOps < maxCommitOps) return;
     }
@@ -150,8 +149,7 @@ class DiskCache {
           await _commitMetaData();
           return null;
         }
-        if (_currentEntries >= maxEntries ||
-            _currentSizeBytes >= maxSizeBytes) {
+        if (currentEntries >= maxEntries || _currentSizeBytes >= maxSizeBytes) {
           _metadata[uid] = _metadata.remove(uid);
           await _commitMetaData();
         }
@@ -198,7 +196,7 @@ class DiskCache {
   }
 
   Future<void> _checkCacheSize() async {
-    while (_currentEntries > maxEntries || _currentSizeBytes > maxSizeBytes) {
+    while (currentEntries > maxEntries || _currentSizeBytes > maxSizeBytes) {
       String key = _metadata.keys.first;
       if (File(_metadata[key]['path']).existsSync())
         await File(_metadata[key]['path']).delete();
@@ -244,6 +242,7 @@ class DiskCache {
       if (tempDir.existsSync()) await tempDir.delete(recursive: true);
       if (appDir.existsSync()) await appDir.delete(recursive: true);
       if (metadataFile.existsSync()) await metadataFile.delete();
+      _metadata = {};
       return true;
     } catch (e) {
       if (printError) debugPrint(e.toString());
