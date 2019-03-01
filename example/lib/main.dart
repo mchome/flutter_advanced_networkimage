@@ -137,14 +137,13 @@ class ZoomableImages extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    GlobalKey _key = GlobalKey();
     return ZoomableList(
-      childKey: _key,
       maxScale: 2.0,
       child: Column(
-        key: _key,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          Image(image: AdvancedNetworkImage(url)),
+          Image(image: AdvancedNetworkImage(url)),
           Image(image: AdvancedNetworkImage(url)),
           Image(image: AdvancedNetworkImage(url)),
           Image(image: AdvancedNetworkImage(url)),

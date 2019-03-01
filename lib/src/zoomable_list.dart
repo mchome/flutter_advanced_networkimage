@@ -5,7 +5,7 @@ class ZoomableList extends StatefulWidget {
   ZoomableList({
     Key key,
     @required this.child,
-    @required this.childKey,
+    this.childKey,
     this.maxScale: 1.4,
     this.enablePan: true,
     this.enableZoom: true,
@@ -19,11 +19,11 @@ class ZoomableList extends StatefulWidget {
         assert(enablePan != null),
         assert(enableZoom != null),
         assert(zoomSteps != null),
-        assert(childKey != null),
         assert(enableFling != null),
         assert(flingFactor != null);
 
   final Widget child;
+  @deprecated
   final GlobalKey childKey;
   final double maxScale;
   final bool enableZoom;
@@ -41,6 +41,8 @@ class ZoomableList extends StatefulWidget {
 
 class _ZoomableListState extends State<ZoomableList>
     with TickerProviderStateMixin {
+  final GlobalKey _key = GlobalKey();
+
   double _zoom = 1.0;
   double _previewZoom = 1.0;
   Offset _previewPanOffset = Offset.zero;
@@ -106,7 +108,7 @@ class _ZoomableListState extends State<ZoomableList>
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
     if (!_getContainerSize) {
-      final RenderBox box = widget.childKey.currentContext.findRenderObject();
+      final RenderBox box = _key.currentContext.findRenderObject();
       if (box.size == _containerSize) {
         _getContainerSize = true;
       } else {
@@ -150,7 +152,7 @@ class _ZoomableListState extends State<ZoomableList>
 
   void _onScaleEnd(ScaleEndDetails details) {
     if (!_getContainerSize) {
-      final RenderBox box = widget.childKey.currentContext.findRenderObject();
+      final RenderBox box = _key.currentContext.findRenderObject();
       if (box.size == _containerSize) {
         _getContainerSize = true;
       } else {
@@ -208,7 +210,7 @@ class _ZoomableListState extends State<ZoomableList>
                 transform: Matrix4.identity()
                   ..translate(_panOffset.dx, _panOffset.dy)
                   ..scale(_zoom, _zoom),
-                child: widget.child,
+                child: Container(key: _key, child: widget.child),
               );
             }),
           ),

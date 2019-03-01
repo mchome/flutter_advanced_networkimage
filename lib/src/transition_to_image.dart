@@ -282,7 +282,8 @@ class _TransitionToImageState extends State<TransitionToImage>
     }
 
     final ImageStream oldImageStream = _imageStream;
-    if (_imageProvider is AdvancedNetworkImage) {
+    if (_imageProvider is AdvancedNetworkImage &&
+        widget.loadingWidgetBuilder != null) {
       var callback = (_imageProvider as AdvancedNetworkImage).loadingProgress;
       (_imageProvider as AdvancedNetworkImage).loadingProgress =
           (double progress) {
