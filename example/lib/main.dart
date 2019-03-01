@@ -101,7 +101,7 @@ class Example extends State<MyApp> {
               maxScale: 2.0,
               minScale: 0.5,
               multiFingersPan: false,
-              enableRotate: true,
+              // enableRotate: true,
               autoCenter: true,
               child: Image(image: AdvancedNetworkImage(url)),
               // onZoomChanged: (double value) => print(value),

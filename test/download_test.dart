@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
 
@@ -13,6 +15,26 @@ void main() {
           await loadFromRemote(url, null, 5, const Duration(milliseconds: 100),
               1.0, const Duration(seconds: 5), null, null,
               printError: true),
+          result);
+    });
+
+    test('=> good url with progress', () async {
+      var url = 'this is a label';
+      var realUrl = 'https://flutter.dev/images/flutter-logo-sharing.png';
+      var result = (await http.get(realUrl)).bodyBytes;
+
+      expect(
+          await loadFromRemote(
+            url,
+            null,
+            5,
+            const Duration(milliseconds: 100),
+            1.0,
+            const Duration(seconds: 5),
+            (v) => print(v),
+            Future.value(realUrl),
+            printError: true,
+          ),
           result);
     });
 
