@@ -1,3 +1,11 @@
+import 'dart:io';
+import 'dart:async';
+import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:http/http.dart' as http;
+import 'package:flutter/widgets.dart';
+
 /// Calculate crc32 checksum
 ///
 /// crc table generator:
@@ -283,6 +291,81 @@ int crc32(List<int> bytes) {
   return crc ^ 0xffffffff;
 }
 
+/// Fetch the image from network.
+Future<Uint8List> loadFromRemote(
+  String url,
+  Map<String, String> header,
+  int retryLimit,
+  Duration retryDuration,
+  double retryDurationFactor,
+  Duration timeoutDuration,
+  ValueChanged<double> progressReport,
+  Future<String> getRealUrl, {
+  bool printError = false,
+}) async {
+  assert(url != null);
+  assert(retryLimit != null);
+
+  if (retryLimit < 0) retryLimit = 0;
+
+  /// Retry mechanism.
+  Future<http.Response> run<T>(Future f(), int retryLimit,
+      Duration retryDuration, double retryDurationFactor) async {
+    for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
+      try {
+        http.Response res = await f();
+        if (res != null && res.bodyBytes.length > 0) {
+          if (res.statusCode == HttpStatus.ok)
+            return res;
+          else if (printError)
+            debugPrint('Load error, response status code: ' +
+                res.statusCode.toString());
+        }
+      } catch (e) {
+        if (printError) debugPrint(e.toString());
+      }
+      await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
+    }
+
+    if (retryLimit > 0 && printError) debugPrint('Retry failed!');
+    return null;
+  }
+
+  http.Response _response;
+  _response = await run(() async {
+    String _url = url;
+    if (getRealUrl != null) _url = (await getRealUrl) ?? url;
+
+    if (progressReport != null) {
+      final _req = http.Request('GET', Uri.parse(_url));
+      _req.headers.addAll(header ?? {});
+      final _res = await _req.send().timeout(timeoutDuration);
+      List<int> buffer = [];
+      final Completer<http.Response> completer = Completer<http.Response>();
+      _res.stream.listen((bytes) {
+        buffer.addAll(bytes);
+        if (_res.contentLength != null && _res.contentLength != 0) {
+          final double progress = buffer.length / (_res.contentLength ?? 1);
+          progressReport(progress);
+        }
+      }, onDone: () {
+        completer.complete(http.Response.bytes(buffer, _res.statusCode,
+            request: _res.request,
+            headers: _res.headers,
+            isRedirect: _res.isRedirect,
+            persistentConnection: _res.persistentConnection,
+            reasonPhrase: _res.reasonPhrase));
+      });
+      return completer.future;
+    } else {
+      return await http.get(_url, headers: header).timeout(timeoutDuration);
+    }
+  }, retryLimit, retryDuration, retryDurationFactor);
+  if (_response != null) return _response.bodyBytes;
+
+  return null;
+}
+
 /// Get uid from hashCode.
 String uid(String str) => str.hashCode.toString();
 
@@ -290,4 +373,18 @@ bool get isInDebugMode {
   bool inDebugMode = false;
   assert(inDebugMode = true);
   return inDebugMode;
+}
+
+class DoubleTween extends Tween<double> {
+  DoubleTween({double begin, double end}) : super(begin: begin, end: end);
+
+  @override
+  double lerp(double t) => (begin + (end - begin) * t);
+}
+
+class OffsetTween extends Tween<Offset> {
+  OffsetTween({Offset begin, Offset end}) : super(begin: begin, end: end);
+
+  @override
+  Offset lerp(double t) => (begin + (end - begin) * t);
 }

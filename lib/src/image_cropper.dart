@@ -8,6 +8,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'package:flutter_advanced_networkimage/src/utils.dart';
+
 class ImageCropper extends StatefulWidget {
   ImageCropper({
     Key key,
@@ -162,9 +164,9 @@ class AnimatedCropper extends ImplicitlyAnimatedWidget {
 }
 
 class _AnimatedCropperState extends AnimatedWidgetBaseState<AnimatedCropper> {
-  _DoubleTween _zoom;
-  _OffsetTween _panOffset;
-  _DoubleTween _rotation;
+  DoubleTween _zoom;
+  OffsetTween _panOffset;
+  DoubleTween _rotation;
 
   @override
   Widget build(BuildContext context) {
@@ -186,11 +188,11 @@ class _AnimatedCropperState extends AnimatedWidgetBaseState<AnimatedCropper> {
   @override
   void forEachTween(visitor) {
     _zoom = visitor(
-        _zoom, widget.zoom, (dynamic value) => _DoubleTween(begin: value));
+        _zoom, widget.zoom, (dynamic value) => DoubleTween(begin: value));
     _panOffset = visitor(_panOffset, widget.panOffset,
-        (dynamic value) => _OffsetTween(begin: value));
+        (dynamic value) => OffsetTween(begin: value));
     _rotation = visitor(_rotation, widget.rotation,
-        (dynamic value) => _DoubleTween(begin: value));
+        (dynamic value) => DoubleTween(begin: value));
   }
 }
 
@@ -346,18 +348,4 @@ void customPaintImage({
   canvas.drawImageRect(image, sourceRect, destinationRect, paint);
 
   if (flipHorizontally) canvas.restore();
-}
-
-class _DoubleTween extends Tween<double> {
-  _DoubleTween({double begin, double end}) : super(begin: begin, end: end);
-
-  @override
-  double lerp(double t) => (begin + (end - begin) * t);
-}
-
-class _OffsetTween extends Tween<Offset> {
-  _OffsetTween({Offset begin, Offset end}) : super(begin: begin, end: end);
-
-  @override
-  Offset lerp(double t) => (begin + (end - begin) * t);
 }

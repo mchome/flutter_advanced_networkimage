@@ -1,18 +1,16 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec, hashValues;
 
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
-import 'package:flutter_advanced_networkimage/src/utils.dart' show uid;
+import 'package:flutter_advanced_networkimage/src/utils.dart' show loadFromRemote, uid;
 
 typedef Future<Uint8List> ImageProcessing(Uint8List data);
 
@@ -324,92 +322,6 @@ Future<Uint8List> _loadFromDiskCache(
       return data;
     }
   }
-
-  return null;
-}
-
-/// Fetch the image from network.
-@visibleForTesting
-Future<Uint8List> loadFromRemote(
-  String url,
-  Map<String, String> header,
-  int retryLimit,
-  Duration retryDuration,
-  double retryDurationFactor,
-  Duration timeoutDuration,
-  ValueChanged<double> progressReport,
-  Future<String> getRealUrl, {
-  bool printError = false,
-}) async {
-  assert(url != null);
-  assert(retryLimit != null);
-
-  if (retryLimit < 0) retryLimit = 0;
-
-  /// Retry mechanism.
-  Future<http.Response> run<T>(Future f(), int retryLimit,
-      Duration retryDuration, double retryDurationFactor) async {
-    for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
-      try {
-        http.Response res = await f();
-        if (res != null && res.bodyBytes.length > 0) {
-          if (res.statusCode == HttpStatus.ok)
-            return res;
-          else if (printError)
-            debugPrint('Load error, response status code: ' +
-                res.statusCode.toString());
-        }
-      } catch (e) {
-        if (printError) debugPrint(e.toString());
-      }
-      await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
-    }
-
-    if (retryLimit > 0 && printError) debugPrint('Retry failed!');
-    return null;
-  }
-
-  http.Response _response;
-  _response = await run(() async {
-    String _url = url;
-    if (getRealUrl != null) _url = (await getRealUrl) ?? url;
-
-    if (progressReport != null) {
-      final _req = http.Request('GET', Uri.parse(_url));
-      _req.headers.addAll(header ?? {});
-      final _res = await _req.send().timeout(timeoutDuration);
-      List<int> buffer = [];
-      final Completer<http.Response> completer = Completer<http.Response>();
-      StreamSubscription<List<int>> subscription;
-      subscription = _res.stream.listen((bytes) {
-        try {
-          buffer.addAll(bytes);
-          double progress = buffer.length / (_res.contentLength ?? 1.0);
-          if (_res.contentLength != null) progressReport(progress);
-        } catch (e) {
-          if (printError) debugPrint(e.toString());
-          subscription.cancel();
-          completer.complete(http.Response.bytes([], _res.statusCode,
-              request: _res.request,
-              headers: _res.headers,
-              isRedirect: _res.isRedirect,
-              persistentConnection: _res.persistentConnection,
-              reasonPhrase: _res.reasonPhrase));
-        }
-      }, onDone: () {
-        completer.complete(http.Response.bytes(buffer, _res.statusCode,
-            request: _res.request,
-            headers: _res.headers,
-            isRedirect: _res.isRedirect,
-            persistentConnection: _res.persistentConnection,
-            reasonPhrase: _res.reasonPhrase));
-      });
-      return completer.future;
-    } else {
-      return await http.get(_url, headers: header).timeout(timeoutDuration);
-    }
-  }, retryLimit, retryDuration, retryDurationFactor);
-  if (_response != null) return _response.bodyBytes;
 
   return null;
 }

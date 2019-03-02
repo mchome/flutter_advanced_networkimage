@@ -1,19 +1,18 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui show hashValues;
 
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
-import 'package:flutter_advanced_networkimage/src/utils.dart' show uid;
+import 'package:flutter_advanced_networkimage/src/utils.dart'
+    show loadFromRemote, uid;
 
 /// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
@@ -125,13 +124,14 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       }
     }
 
-    Uint8List imageData = await _loadFromRemote(
+    Uint8List imageData = await loadFromRemote(
       key.url,
       key.header,
       key.retryLimit,
       key.retryDuration,
       key.retryDurationFactor,
       key.timeoutDuration,
+      null,
       key.getRealUrl,
       printError: key.printError,
     );
@@ -201,14 +201,16 @@ Future<Uint8List> _loadFromDiskCache(AdvancedNetworkSvg key, String uId) async {
       await _cacheImagesDirectory.create();
     }
 
-    Uint8List imageData = await _loadFromRemote(
+    Uint8List imageData = await loadFromRemote(
       key.url,
       key.header,
       key.retryLimit,
       key.retryDuration,
       key.retryDurationFactor,
       key.timeoutDuration,
+      null,
       key.getRealUrl,
+      printError: key.printError,
     );
     if (imageData != null) {
       await (File(join(_cacheImagesDirectory.path, uId)))
@@ -220,71 +222,22 @@ Future<Uint8List> _loadFromDiskCache(AdvancedNetworkSvg key, String uId) async {
     Uint8List data = await diskCache.load(uId);
     if (data != null) return data;
 
-    data = await _loadFromRemote(
+    data = await loadFromRemote(
       key.url,
       key.header,
       key.retryLimit,
       key.retryDuration,
       key.retryDurationFactor,
       key.timeoutDuration,
+      null,
       key.getRealUrl,
+      printError: key.printError,
     );
     if (data != null) {
       await diskCache.save(uId, data, key.cacheRule);
       return data;
     }
   }
-
-  return null;
-}
-
-/// Fetch the image from network.
-Future<Uint8List> _loadFromRemote(
-  String url,
-  Map<String, String> header,
-  int retryLimit,
-  Duration retryDuration,
-  double retryDurationFactor,
-  Duration timeoutDuration,
-  Future<String> getRealUrl, {
-  bool printError = false,
-}) async {
-  assert(url != null);
-  assert(retryLimit != null);
-
-  if (retryLimit < 0) retryLimit = 0;
-
-  /// Retry mechanism.
-  Future<http.Response> run<T>(Future f(), int retryLimit,
-      Duration retryDuration, double retryDurationFactor) async {
-    for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
-      try {
-        http.Response res = await f();
-        if (res != null) {
-          if (res.statusCode == HttpStatus.ok)
-            return res;
-          else if (printError)
-            debugPrint('Load error, response status code: ' +
-                res.statusCode.toString());
-        }
-      } catch (e) {
-        if (printError) debugPrint(e.toString());
-      }
-      await Future.delayed(retryDuration * pow(retryDurationFactor, t - 1));
-    }
-
-    if (retryLimit > 0) debugPrint('Retry failed!');
-    return null;
-  }
-
-  http.Response _response;
-  _response = await run(() async {
-    String _url = url;
-    if (getRealUrl != null) _url = (await getRealUrl) ?? url;
-
-    return await http.get(_url, headers: header).timeout(timeoutDuration);
-  }, retryLimit, retryDuration, retryDurationFactor);
-  if (_response != null) return _response.bodyBytes;
 
   return null;
 }
