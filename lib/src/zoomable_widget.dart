@@ -188,14 +188,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
       final Offset endOffset =
           _panOffset + direction * distance * widget.flingFactor * 0.5;
       _panOffset = Offset(
-        endOffset.dx.clamp(
-          -_boundarySize.width / _zoom * widget.panLimit,
-          _boundarySize.width / _zoom * widget.panLimit,
-        ),
-        endOffset.dy.clamp(
-          -_boundarySize.height / _zoom * widget.panLimit,
-          _boundarySize.height / _zoom * widget.panLimit,
-        ),
+        endOffset.dx.clamp(-boundarySize.width / 2, boundarySize.width / 2),
+        endOffset.dy.clamp(-boundarySize.height / 2, boundarySize.height / 2),
       );
     }
     Offset _clampedOffset = Offset(

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.12]
+
+- `ZoomableWidget`: rewrite boundary.
+- `zoomable_list`: `childKey` is now deprecated.
+
 ## [0.4.11]
 
 - `AdvancedNetworkSvg`: adapt flutter_svg 0.10.4.
