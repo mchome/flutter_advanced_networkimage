@@ -118,11 +118,9 @@ class ZoomableImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ZoomableWidget(
-      panLimit: 0.7,
-      maxScale: 2.0,
+      maxScale: 5.0,
       minScale: 0.5,
       multiFingersPan: false,
-      // enableRotate: true,
       autoCenter: true,
       child: Image(image: AdvancedNetworkImage(url)),
       // onZoomChanged: (double value) => print(value),
