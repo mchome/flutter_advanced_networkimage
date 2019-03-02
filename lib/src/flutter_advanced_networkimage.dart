@@ -10,7 +10,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
-import 'package:flutter_advanced_networkimage/src/utils.dart' show loadFromRemote, uid;
+import 'package:flutter_advanced_networkimage/src/utils.dart'
+    show loadFromRemote, uid;
 
 typedef Future<Uint8List> ImageProcessing(Uint8List data);
 
