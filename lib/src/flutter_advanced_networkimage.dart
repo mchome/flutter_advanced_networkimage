@@ -297,8 +297,8 @@ Future<Uint8List> _loadFromDiskCache(
       return imageData;
     }
   } else {
-    DiskCache diskCache = DiskCache();
-    Uint8List data = await diskCache.load(uId);
+    DiskCache diskCache = DiskCache()..printError = key.printError;
+    Uint8List data = await diskCache.load(uId, rule: key.cacheRule);
     if (data != null) {
       if (key.loadedFromDiskCacheCallback != null)
         key.loadedFromDiskCacheCallback();

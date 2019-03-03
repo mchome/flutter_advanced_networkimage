@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'dart:convert';
 
-import 'package:flutter_advanced_networkimage/src/utils.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:test/test.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart' show throwsAssertionError;
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
+import 'package:flutter_advanced_networkimage/src/utils.dart';
 
 void main() {
   group('Cache Test', () {
@@ -25,6 +26,19 @@ void main() {
       return null;
     });
 
+    test('=> non-null test', () {
+      expect(() => CacheRule(maxAge: null), throwsAssertionError);
+      expect(() => CacheRule(storeDirectory: null), throwsAssertionError);
+      expect(() => CacheRule(checksum: null), throwsAssertionError);
+
+      expect(() => DiskCache()..maxEntries = null, throwsAssertionError);
+      expect(() => DiskCache()..maxSizeBytes = null, throwsAssertionError);
+      expect(() => DiskCache()..maxCommitOps = null, throwsAssertionError);
+
+      expect(() => DiskCache()..maxEntries = -1, throwsAssertionError);
+      expect(() => DiskCache()..maxSizeBytes = -1, throwsAssertionError);
+      expect(() => DiskCache()..maxCommitOps = -1, throwsAssertionError);
+    });
     test('=> save and load', () async {
       DiskCache().printError = true;
 
@@ -89,7 +103,35 @@ void main() {
         ),
         true,
       );
+      expect(
+          await DiskCache().load('fff'.hashCode.toString(),
+              rule: CacheRule(
+                storeDirectory: StoreDirectoryType.document,
+                maxAge: Duration(seconds: 1),
+              )),
+          utf8.encode('spring'));
       expect(await DiskCache().load('fff'.hashCode.toString()), null);
+
+      expect(
+        await DiskCache().save(
+          'fff'.hashCode.toString(),
+          utf8.encode('spring'),
+          CacheRule(
+            storeDirectory: StoreDirectoryType.document,
+            maxAge: Duration(
+              seconds: 1,
+            ),
+          ),
+        ),
+        true,
+      );
+      expect(
+          await DiskCache().load('fff'.hashCode.toString(),
+              rule: CacheRule(
+                storeDirectory: StoreDirectoryType.document,
+                maxAge: Duration(milliseconds: 1),
+              )),
+          null);
     });
     test('=> reach maxEntries', () async {
       DiskCache().maxEntries = 1;
@@ -186,6 +228,19 @@ void main() {
       expect(file.existsSync(), false);
       expect(DiskCache().currentEntries, 1);
       await DiskCache().keepCacheHealth();
+      expect(DiskCache().currentEntries, 0);
+
+      expect(
+        await DiskCache().save(
+            'ooo'.hashCode.toString(),
+            utf8.encode('Saturday'),
+            CacheRule(maxAge: const Duration(milliseconds: 1))),
+        true,
+      );
+      expect(file.existsSync(), true);
+      expect(DiskCache().currentEntries, 1);
+      await DiskCache().keepCacheHealth();
+      expect(file.existsSync(), false);
       expect(DiskCache().currentEntries, 0);
 
       expect(await DiskCache().clear(), true);

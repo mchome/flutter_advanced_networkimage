@@ -3,7 +3,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -62,7 +61,15 @@ class DiskCache {
   ///
   /// Once this many operations have been reached,
   /// the metadata will be saved.
-  int maxCommitOps = 10;
+  int _maxCommitOps = 10;
+  int get maxCommitOps => _maxCommitOps;
+  set maxCommitOps(int value) {
+    assert(value != null);
+    assert(value >= 0);
+    if (value == maxCommitOps) return;
+    _maxCommitOps = value;
+  }
+
   int _currentOps = 0;
 
   int get currentEntries => _metadata != null ? _metadata.keys.length : 0;
@@ -85,7 +92,7 @@ class DiskCache {
       else
         _metadata = {};
     } catch (e) {
-      if (printError) debugPrint(e.toString());
+      if (printError) print(e);
       _metadata = {};
     }
   }
@@ -123,7 +130,7 @@ class DiskCache {
   }
 
   /// Load the cache image from [DiskCache].
-  Future<Uint8List> load(String uid) async {
+  Future<Uint8List> load(String uid, {CacheRule rule}) async {
     if (_metadata == null) await _initMetaData();
     try {
       if (_metadata.containsKey(uid)) {
@@ -133,7 +140,10 @@ class DiskCache {
           return null;
         }
         if (DateTime.fromMillisecondsSinceEpoch(
-              _metadata[uid]['createdTime'] + _metadata[uid]['maxAge'],
+              _metadata[uid]['createdTime'] +
+                  (rule != null
+                      ? rule.maxAge.inMilliseconds
+                      : _metadata[uid]['maxAge']),
             ).compareTo(DateTime.now()) <
             0) {
           await File(_metadata[uid]['path']).delete();
@@ -158,7 +168,7 @@ class DiskCache {
         return null;
       }
     } catch (e) {
-      if (printError) debugPrint(e.toString());
+      if (printError) print(e);
       return null;
     }
   }
@@ -190,7 +200,7 @@ class DiskCache {
 
       return true;
     } catch (e) {
-      if (printError) debugPrint(e.toString());
+      if (printError) print(e);
       return false;
     }
   }
@@ -225,7 +235,7 @@ class DiskCache {
       }
       return true;
     } catch (e) {
-      if (printError) debugPrint(e.toString());
+      if (printError) print(e);
       return false;
     }
   }
@@ -245,7 +255,7 @@ class DiskCache {
       _metadata = {};
       return true;
     } catch (e) {
-      if (printError) debugPrint(e.toString());
+      if (printError) print(e);
       return false;
     }
   }
@@ -264,7 +274,7 @@ class DiskCache {
         appDir.listSync().forEach((var file) => size += file.statSync().size);
       return size;
     } catch (e) {
-      if (printError) debugPrint(e.toString());
+      if (printError) print(e);
       return null;
     }
   }
@@ -285,7 +295,7 @@ class CacheRule {
   final Duration maxAge;
 
   /// Determining the type of folder for the cache file.
-  /// Default is temp folder.
+  /// Default is temporary folder.
   final StoreDirectoryType storeDirectory;
 
   /// Checkum(CRC32) for cache file.
