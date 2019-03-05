@@ -42,7 +42,7 @@ void main() {
             1.0,
             const Duration(seconds: 5),
             (v) => print(v),
-            Future.value(realUrl),
+            () => Future.value(realUrl),
             printError: true,
           ),
           result);
@@ -61,7 +61,7 @@ void main() {
             1.0,
             const Duration(seconds: 5),
             (v) => print(v),
-            Future.value(realUrl),
+            () => Future.value(realUrl),
             printError: true,
           ),
           result);

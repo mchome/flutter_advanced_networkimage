@@ -12,7 +12,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart'
-    show loadFromRemote, uid;
+    show UrlResolver, loadFromRemote, uid;
 
 /// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
@@ -88,7 +88,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   final CacheRule cacheRule;
 
   /// Extract the real url before fetching.
-  final Future<String> getRealUrl;
+  final UrlResolver getRealUrl;
 
   /// Print error.
   final bool printError;

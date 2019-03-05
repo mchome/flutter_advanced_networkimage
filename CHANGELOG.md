@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.13]
+
+- `AdvancedNetworkImage`: Replace the future with callback to avoid recall in `getRealUrl`.
+- `AdvancedNetworkSvg`: Replace the future with callback to avoid recall in `getRealUrl`.
+
 ## [0.4.12]
 
 - `ZoomableWidget`: rewrite boundary.

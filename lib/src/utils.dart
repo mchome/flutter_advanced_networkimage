@@ -291,6 +291,8 @@ int crc32(List<int> bytes) {
   return crc ^ 0xffffffff;
 }
 
+typedef Future<String> UrlResolver();
+
 /// Fetch the image from network.
 Future<Uint8List> loadFromRemote(
   String url,
@@ -300,7 +302,7 @@ Future<Uint8List> loadFromRemote(
   double retryDurationFactor,
   Duration timeoutDuration,
   ValueChanged<double> progressReport,
-  Future<String> getRealUrl, {
+  UrlResolver getRealUrl, {
   bool printError = false,
 }) async {
   assert(url != null);
@@ -334,7 +336,7 @@ Future<Uint8List> loadFromRemote(
   http.Response _response;
   _response = await run(() async {
     String _url = url;
-    if (getRealUrl != null) _url = (await getRealUrl) ?? url;
+    if (getRealUrl != null) _url = (await getRealUrl()) ?? url;
 
     if (progressReport != null) {
       final _req = http.Request('GET', Uri.parse(_url));

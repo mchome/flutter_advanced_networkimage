@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart'
-    show loadFromRemote, uid;
+    show UrlResolver, loadFromRemote, uid;
 
 typedef Future<Uint8List> ImageProcessing(Uint8List data);
 
@@ -95,7 +95,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   ValueChanged<double> loadingProgress;
 
   /// Extract the real url before fetching.
-  final Future<String> getRealUrl;
+  final UrlResolver getRealUrl;
 
   /// Receive the data([Uint8List]) and do some manipulations before saving.
   final ImageProcessing preProcessing;
