@@ -185,6 +185,7 @@ enum _TransitionStatus {
   loading,
   animating,
   completed,
+  failed,
 }
 enum TransitionType {
   slide,
@@ -201,7 +202,6 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   ImageStream _imageStream;
   ImageInfo _imageInfo;
-  bool _loadFailed = false;
   double _progress = 0.0;
 
   _TransitionStatus _status = _TransitionStatus.start;
@@ -271,6 +271,8 @@ class _TransitionToImageState extends State<TransitionToImage>
           break;
         case _TransitionStatus.completed:
           break;
+        case _TransitionStatus.failed:
+          break;
       }
     });
   }
@@ -311,10 +313,7 @@ class _TransitionToImageState extends State<TransitionToImage>
       }
       setState(() => _status = _TransitionStatus.completed);
     } else {
-      setState(() {
-        _status = _TransitionStatus.start;
-        _loadFailed = false;
-      });
+      setState(() => _status = _TransitionStatus.start);
       oldImageStream?.removeListener(_updateImage);
       _imageStream.addListener(_updateImage, onError: _catchBadImage);
       _resolveStatus();
@@ -332,7 +331,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   void _catchBadImage(dynamic exception, StackTrace stackTrace) {
     if (widget.printError) debugPrint(exception.toString());
-    setState(() => _loadFailed = true);
+    setState(() => _status = _TransitionStatus.failed);
     _resolveStatus();
     if (widget.loadFailedCallback != null) widget.loadFailedCallback();
     if (widget.disableMemoryCache || widget.disableMemoryCacheIfFailed)
@@ -341,7 +340,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   Widget build(BuildContext context) {
-    return _loadFailed
+    return _status == _TransitionStatus.failed
         ? widget.enableRefresh
             ? GestureDetector(
                 onTap: () => _getImage(reload: true),
