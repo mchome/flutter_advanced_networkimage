@@ -38,6 +38,16 @@ Image(
   ),
   fit: BoxFit.cover,
 )
+// work with precacheImage
+precacheImage(
+  AdvancedNetworkImage(
+    url,
+    header: header,
+    useDiskCache: true,
+    cacheRule: CacheRule(maxAge: const Duration(days: 7)),
+  ),
+  context,
+);
 
 // or svg provider (flutter_svg)
 SvgPicture(
