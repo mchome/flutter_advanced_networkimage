@@ -114,47 +114,25 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// you should make different [hashCode].
   /// For example, you can set different [retryLimit].
   /// If you enable [useDiskCache], you can set different [differentId]
-  /// with the same `Future.value(sameUrl)` in [getRealUrl].
+  /// with the same `() => Future.value(sameUrl)` in [getRealUrl].
   final bool disableMemoryCache;
 
-  /// Print error.
+  /// Print error messages.
   final bool printError;
 
   ImageStream resolve(ImageConfiguration configuration) {
     assert(configuration != null);
     final ImageStream stream = ImageStream();
-    AdvancedNetworkImage obtainedKey;
-    Future<void> handleError(dynamic exception, StackTrace stack) async {
-      await null; // wait an event turn in case a listener has been added to the image stream.
-      final _ErrorImageCompleter imageCompleter = _ErrorImageCompleter();
-      stream.setCompleter(imageCompleter);
-      imageCompleter.setError(
-          exception: exception,
-          stack: stack,
-          context: 'while resolving an image',
-          silent: true, // could be a network error or whatnot
-          informationCollector: (StringBuffer information) {
-            information.writeln('Image provider: $this');
-            information.writeln('Image configuration: $configuration');
-            if (obtainedKey != null) {
-              information.writeln('Image key: $obtainedKey');
-            }
-          });
-    }
-
     obtainKey(configuration).then<void>((AdvancedNetworkImage key) {
-      obtainedKey = key;
       if (key.disableMemoryCache) {
         stream.setCompleter(load(key));
       } else {
         final ImageStreamCompleter completer = PaintingBinding
             .instance.imageCache
-            .putIfAbsent(key, () => load(key), onError: handleError);
-        if (completer != null) {
-          stream.setCompleter(completer);
-        }
+            .putIfAbsent(key, () => load(key));
+        if (completer != null) stream.setCompleter(completer);
       }
-    }).catchError(handleError);
+    });
     return stream;
   }
 
@@ -325,25 +303,4 @@ Future<Uint8List> _loadFromDiskCache(
   }
 
   return null;
-}
-
-// A completer used when resolving an image fails sync.
-class _ErrorImageCompleter extends ImageStreamCompleter {
-  _ErrorImageCompleter();
-
-  void setError({
-    String context,
-    dynamic exception,
-    StackTrace stack,
-    InformationCollector informationCollector,
-    bool silent = false,
-  }) {
-    reportError(
-      context: context,
-      exception: exception,
-      stack: stack,
-      informationCollector: informationCollector,
-      silent: silent,
-    );
-  }
 }
