@@ -27,7 +27,6 @@ void main() {
               printError: true),
           result);
     });
-
     test('=> good url with progress', () async {
       var url = 'this is a label';
       var realUrl = 'https://flutter.dev/images/flutter-logo-sharing.png';
@@ -66,7 +65,6 @@ void main() {
           ),
           result);
     });
-
     test('=> bad url', () async {
       var url =
           'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png';
@@ -77,7 +75,6 @@ void main() {
               printError: true),
           null);
     });
-
     test('=> not a url', () async {
       var url = '/GitHub-Marks.png';
 

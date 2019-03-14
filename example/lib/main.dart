@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:flutter_advanced_networkimage/transition.dart';
 import 'package:flutter_advanced_networkimage/zoomable.dart';
-import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:flutter_advanced_networkimage/cropper.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -44,7 +44,7 @@ class Example extends State<MyApp> {
           ),
         ),
         body: TabBarView(
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           children: <Widget>[
             LoadImage(url: url, svgUrl: svgUrl),
             ZoomableImage(url: url),
@@ -88,12 +88,14 @@ class LoadImage extends StatelessWidget {
           width: 300.0,
           height: 300.0,
           enableRefresh: true,
-          loadingWidgetBuilder: (progress) {
+          loadingWidgetBuilder: (double progress) {
             return Container(
               width: 300.0,
               height: 300.0,
               alignment: Alignment.center,
-              child: Text(progress.toString()),
+              child: CircularProgressIndicator(
+                value: progress == 0.0 ? null : progress,
+              ),
             );
           },
         ),
