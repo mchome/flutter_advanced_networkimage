@@ -111,7 +111,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// in production.
   ///
   /// If you want to use the same url with different [fallbackImage],
-  /// you should make different [hashCode].
+  /// you should make different [==].
   /// For example, you can set different [retryLimit].
   /// If you enable [useDiskCache], you can set different [differentId]
   /// with the same `() => Future.value(sameUrl)` in [getRealUrl].
@@ -210,7 +210,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     final AdvancedNetworkImage typedOther = other;
     return url == typedOther.url &&
         scale == typedOther.scale &&
-        header == typedOther.header &&
         useDiskCache == typedOther.useDiskCache &&
         retryLimit == typedOther.retryLimit &&
         retryDurationFactor == typedOther.retryDurationFactor &&
@@ -218,8 +217,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   @override
-  int get hashCode => ui.hashValues(url, scale, header, useDiskCache,
-      retryLimit, retryDuration, retryDurationFactor, timeoutDuration);
+  int get hashCode => ui.hashValues(url, scale, useDiskCache, retryLimit,
+      retryDuration, retryDurationFactor, timeoutDuration);
 
   @override
   String toString() => '$runtimeType('
