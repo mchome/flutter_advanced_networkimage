@@ -1,17 +1,18 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui show hashValues;
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart'
     show UrlResolver, loadFromRemote, uid;
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
 /// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
@@ -98,12 +99,10 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   }
 
   @override
-  PictureStreamCompleter load(
-    AdvancedNetworkSvg key, {
-    PictureErrorListener onError,
-  }) {
+  PictureStreamCompleter load(AdvancedNetworkSvg key,
+      {PictureErrorListener onError}) {
     return OneFramePictureStreamCompleter(
-      _loadAsync(key),
+      _loadAsync(key, onError: onError),
       informationCollector: (StringBuffer information) {
         information.writeln('Svg provider: $this');
         information.write('Svg provider: $key');
@@ -111,7 +110,8 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     );
   }
 
-  Future<PictureInfo> _loadAsync(AdvancedNetworkSvg key) async {
+  Future<PictureInfo> _loadAsync(AdvancedNetworkSvg key,
+      {PictureErrorListener onError}) async {
     assert(key == this);
 
     String uId = uid(key.url);
@@ -120,9 +120,10 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       try {
         Uint8List _diskCache = await _loadFromDiskCache(key, uId);
         if (key.loadedCallback != null) key.loadedCallback();
-        return await decoder(_diskCache, key.colorFilter, key.toString());
+        return await decode(_diskCache, key.colorFilter, key.toString(),
+            onError: onError);
       } catch (e) {
-        debugPrint(e.toString());
+        if (key.printError) debugPrint(e.toString());
       }
     }
 
@@ -139,19 +140,30 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     );
     if (imageData != null) {
       if (key.loadedCallback != null) key.loadedCallback();
-      return await decoder(imageData, key.colorFilter, key.toString());
+      return await decode(imageData, key.colorFilter, key.toString(),
+          onError: onError);
     }
 
     if (key.loadFailedCallback != null) key.loadFailedCallback();
     if (key.fallbackAssetImage != null) {
       ByteData imageData = await rootBundle.load(key.fallbackAssetImage);
-      return await decoder(
-          imageData.buffer.asUint8List(), key.colorFilter, key.toString());
+      return await decode(
+          imageData.buffer.asUint8List(), key.colorFilter, key.toString(),
+          onError: onError);
     }
     if (key.fallbackImage != null)
-      return await decoder(key.fallbackImage, key.colorFilter, key.toString());
+      return await decode(key.fallbackImage, key.colorFilter, key.toString(),
+          onError: onError);
 
     throw Exception('Failed to load $url.');
+  }
+
+  Future<PictureInfo> decode(
+      Uint8List imageData, ColorFilter colorFilter, String keyString,
+      {PictureErrorListener onError}) {
+    if (onError != null)
+      return decoder(imageData, colorFilter, keyString)..catchError(onError);
+    return decoder(imageData, colorFilter, keyString);
   }
 
   @override
