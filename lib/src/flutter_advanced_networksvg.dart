@@ -1,18 +1,17 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui show hashValues;
 
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart'
     show UrlResolver, loadFromRemote, uid;
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
@@ -99,7 +98,10 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   }
 
   @override
-  PictureStreamCompleter load(AdvancedNetworkSvg key) {
+  PictureStreamCompleter load(
+    AdvancedNetworkSvg key, {
+    PictureErrorListener onError,
+  }) {
     return OneFramePictureStreamCompleter(
       _loadAsync(key),
       informationCollector: (StringBuffer information) {
