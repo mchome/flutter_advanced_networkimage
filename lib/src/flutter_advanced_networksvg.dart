@@ -172,7 +172,6 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     final AdvancedNetworkSvg typedOther = other;
     return url == typedOther.url &&
         scale == typedOther.scale &&
-        header == typedOther.header &&
         useDiskCache == typedOther.useDiskCache &&
         retryLimit == typedOther.retryLimit &&
         retryDurationFactor == typedOther.retryDurationFactor &&
@@ -180,8 +179,8 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   }
 
   @override
-  int get hashCode => ui.hashValues(url, scale, header, useDiskCache,
-      retryLimit, retryDuration, retryDurationFactor, timeoutDuration);
+  int get hashCode => ui.hashValues(url, scale, useDiskCache, retryLimit,
+      retryDuration, retryDurationFactor, timeoutDuration);
 
   @override
   String toString() => '$runtimeType('

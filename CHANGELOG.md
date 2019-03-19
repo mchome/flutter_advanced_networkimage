@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.14]
+
+- Update flutter_svg to 0.12.0.
+- Exclude header in Object.== and Object.hashcode.
+
 ## [0.4.13]
 
 - `AdvancedNetworkImage`: Replace the future with callback to avoid recall in `getRealUrl`.
