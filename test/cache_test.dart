@@ -26,7 +26,9 @@ void main() {
       return null;
     });
 
-    test('=> non-null test', () {
+    test('=> non-null test', () async {
+      await DiskCache().keepCacheHealth();
+
       expect(() => CacheRule(maxAge: null), throwsAssertionError);
       expect(() => CacheRule(storeDirectory: null), throwsAssertionError);
       expect(() => CacheRule(checksum: null), throwsAssertionError);
@@ -223,6 +225,7 @@ void main() {
           utf8.encode('Saturday'));
       var file = File(
           join((await getTemporaryDirectory()).path, 'imagecache', uid('ooo')));
+      await DiskCache().keepCacheHealth();
       expect(file.existsSync(), true);
       file.deleteSync();
       expect(file.existsSync(), false);

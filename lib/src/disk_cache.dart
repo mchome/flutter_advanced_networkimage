@@ -111,6 +111,7 @@ class DiskCache {
 
   /// Clean up the bad cache files in metadata.
   Future<void> keepCacheHealth() async {
+    if (_metadata == null) await _initMetaData();
     _metadata.removeWhere((k, v) {
       if (!File(v['path']).existsSync()) return true;
       if (DateTime.fromMillisecondsSinceEpoch(v['createdTime'] + v['maxAge'])
@@ -124,6 +125,7 @@ class DiskCache {
         File(v['path']).deleteSync();
         return true;
       }
+      return false;
     });
     await _checkCacheSize();
     await _commitMetaData();
