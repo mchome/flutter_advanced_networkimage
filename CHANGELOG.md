@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.15]
+
+- `TransitionToImage`: Adding color property for use with BlendMode.
+- Initial data in `keepCacheHealth`.
+
 ## [0.4.14]
 
 - Update flutter_svg to 0.12.0.

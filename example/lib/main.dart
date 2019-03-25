@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:flutter_advanced_networkimage/transition.dart';
 import 'package:flutter_advanced_networkimage/zoomable.dart';
 import 'package:flutter_advanced_networkimage/cropper.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 void main() {
   runApp(MaterialApp(
