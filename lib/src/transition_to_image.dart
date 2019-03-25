@@ -12,6 +12,7 @@ class TransitionToImage extends StatefulWidget {
     this.width,
     this.height,
     this.borderRadius,
+    this.color,
     this.blendMode,
     this.fit: BoxFit.contain,
     this.alignment = Alignment.center,
@@ -75,10 +76,17 @@ class TransitionToImage extends StatefulWidget {
   /// This value is ignored if [clipper] is non-null.
   final BorderRadius borderRadius;
 
-  /// How to inscribe the image into the space allocated during layout.
+  /// If non-null, this color is blended with each image pixel using [colorBlendMode].
+  final Color color;
+
+  /// Used to combine [color] with this image.
   ///
-  /// The default varies based on the other fields. See the discussion at
-  /// [paintImage].
+  /// The default is [BlendMode.srcIn]. In terms of the blend mode, [color] is
+  /// the source and this image is the destination.
+  ///
+  /// See also:
+  ///
+  ///  * [BlendMode], which includes an illustration of the effect of each blend mode.
   final BlendMode blendMode;
 
   /// How to inscribe the image into the space allocated during layout.
@@ -379,6 +387,7 @@ class _TransitionToImageState extends State<TransitionToImage>
       width: widget.width,
       height: widget.height,
       scale: _imageInfo?.scale ?? 1.0,
+      color: widget.color,
       colorBlendMode: widget.blendMode,
       fit: widget.fit,
       alignment: widget.alignment,
