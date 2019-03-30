@@ -201,7 +201,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       return await PaintingBinding.instance
           .instantiateImageCodec(key.fallbackImage);
 
-    throw Exception('Failed to load $url.');
+    return Future.error(StateError('Failed to load $url.'));
   }
 
   @override
