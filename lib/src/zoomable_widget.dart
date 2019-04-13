@@ -9,6 +9,7 @@ class ZoomableWidget extends StatefulWidget {
     Key key,
     this.minScale: 0.7,
     this.maxScale: 1.4,
+    this.initialScale: 1.0,
     this.enableZoom: true,
     this.panLimit: 1.0,
     this.singleFingerPan: true,
@@ -26,6 +27,7 @@ class ZoomableWidget extends StatefulWidget {
     this.resetCurve: Curves.easeInOut,
   })  : assert(minScale != null),
         assert(maxScale != null),
+        assert(initialScale != null),
         assert(enableZoom != null),
         assert(panLimit != null),
         assert(singleFingerPan != null),
@@ -42,6 +44,9 @@ class ZoomableWidget extends StatefulWidget {
 
   /// The maximum size for scaling.
   final double maxScale;
+
+  /// The initial scale.
+  final double initialScale;
 
   /// Allow zooming the child widget.
   final bool enableZoom;
@@ -108,6 +113,12 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
 
   Duration _duration = const Duration(milliseconds: 100);
   Curve _curve = Curves.easeOut;
+
+  @override
+  void initState() {
+    super.initState();
+    _zoom = widget.initialScale;
+  }
 
   void _onScaleStart(ScaleStartDetails details) {
     if (_childSize == Size.zero) {
