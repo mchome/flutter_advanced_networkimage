@@ -2,7 +2,6 @@
 
 library image_cropper;
 
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -36,8 +35,6 @@ class _ImageCropperState extends State<ImageCropper>
   Offset _previousPanOffset = Offset.zero;
   Offset _panOffset = Offset.zero;
   Offset _zoomOriginOffset = Offset.zero;
-  double _rotation = 0.0;
-  double _previousRotation = 0.0;
 
   ImageStream _imageStream;
   ImageInfo _image;
@@ -79,14 +76,12 @@ class _ImageCropperState extends State<ImageCropper>
       _zoomOriginOffset = details.focalPoint;
       _previousPanOffset = _panOffset;
       _previousZoom = _zoom;
-      _previousRotation = _rotation;
     });
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
     // Size _boundarySize = Size(_image.width / 2, _image.height / 2);
     setState(() {
-      _rotation = (_previousRotation + details.rotation).clamp(-pi, pi);
       if (details.scale != 1.0) {
         _zoom = (_previousZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
@@ -109,7 +104,6 @@ class _ImageCropperState extends State<ImageCropper>
         setState(() {
           _panOffset = Offset.zero;
           _zoom = 1.0;
-          _rotation = 0.0;
         });
       },
       child: ClipRect(
@@ -119,7 +113,6 @@ class _ImageCropperState extends State<ImageCropper>
               image: _image,
               zoom: _zoom,
               panOffset: _panOffset,
-              rotation: _rotation,
               duration: const Duration(milliseconds: 100),
               curve: Curves.easeOut,
             ),
@@ -130,7 +123,6 @@ class _ImageCropperState extends State<ImageCropper>
                 _image.image,
                 _zoom,
                 _panOffset,
-                _rotation,
                 widget.onCropperChanged,
               ),
             ),
@@ -146,17 +138,13 @@ class AnimatedCropper extends ImplicitlyAnimatedWidget {
     @required this.image,
     @required this.zoom,
     this.panOffset: Offset.zero,
-    this.rotation: 0.0,
     Duration duration,
     Curve curve = Curves.linear,
-    this.enableRotate: false,
   }) : super(duration: duration, curve: curve);
 
   final ImageInfo image;
   final double zoom;
   final Offset panOffset;
-  final double rotation;
-  final bool enableRotate;
 
   @override
   ImplicitlyAnimatedWidgetState<ImplicitlyAnimatedWidget> createState() =>
@@ -166,7 +154,6 @@ class AnimatedCropper extends ImplicitlyAnimatedWidget {
 class _AnimatedCropperState extends AnimatedWidgetBaseState<AnimatedCropper> {
   DoubleTween _zoom;
   OffsetTween _panOffset;
-  DoubleTween _rotation;
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +166,6 @@ class _AnimatedCropperState extends AnimatedWidgetBaseState<AnimatedCropper> {
         widget.image.image,
         _zoom.evaluate(animation),
         _panOffset.evaluate(animation),
-        _rotation.evaluate(animation),
-        widget.enableRotate,
       ),
     );
   }
@@ -191,8 +176,6 @@ class _AnimatedCropperState extends AnimatedWidgetBaseState<AnimatedCropper> {
         _zoom, widget.zoom, (dynamic value) => DoubleTween(begin: value));
     _panOffset = visitor(_panOffset, widget.panOffset,
         (dynamic value) => OffsetTween(begin: value));
-    _rotation = visitor(_rotation, widget.rotation,
-        (dynamic value) => DoubleTween(begin: value));
   }
 }
 
@@ -201,8 +184,6 @@ class _PreviewPainter extends CustomPainter {
     this.image,
     this.zoom,
     this.offset,
-    this.angle,
-    this.enableRotate,
   )   : assert(image != null),
         assert(zoom != null),
         assert(offset != null);
@@ -210,8 +191,6 @@ class _PreviewPainter extends CustomPainter {
   final ui.Image image;
   final double zoom;
   final Offset offset;
-  final double angle;
-  final bool enableRotate;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -221,7 +200,6 @@ class _PreviewPainter extends CustomPainter {
       size: size,
       offset: offset,
       scale: zoom,
-      angle: angle,
     );
   }
 
@@ -229,9 +207,7 @@ class _PreviewPainter extends CustomPainter {
   bool shouldRepaint(_PreviewPainter oldPainter) {
     return oldPainter.image != image ||
         oldPainter.zoom != zoom ||
-        oldPainter.offset != offset ||
-        oldPainter.angle != angle ||
-        oldPainter.enableRotate != enableRotate;
+        oldPainter.offset != offset;
   }
 }
 
@@ -240,7 +216,6 @@ class _RecordPainter extends CustomPainter {
     this.image,
     this.zoom,
     this.offset,
-    this.angle,
     this.onImageCropperChanged,
   )   : assert(image != null),
         assert(zoom != null),
@@ -249,7 +224,6 @@ class _RecordPainter extends CustomPainter {
   final ui.Image image;
   final double zoom;
   final Offset offset;
-  final double angle;
   final ValueChanged<Uint8List> onImageCropperChanged;
 
   @override
@@ -265,7 +239,6 @@ class _RecordPainter extends CustomPainter {
       size: size,
       offset: offset,
       scale: zoom,
-      angle: angle,
     );
 
     recorder
@@ -281,8 +254,7 @@ class _RecordPainter extends CustomPainter {
   bool shouldRepaint(_RecordPainter oldPainter) {
     return oldPainter.image != image ||
         oldPainter.zoom != zoom ||
-        oldPainter.offset != offset ||
-        oldPainter.angle != angle;
+        oldPainter.offset != offset;
   }
 }
 
@@ -290,7 +262,6 @@ void customPaintImage({
   @required Canvas canvas,
   @required ui.Image image,
   @required Size size,
-  double angle = 0.0,
   Offset offset = Offset.zero,
   double scale = 1.0,
   ColorFilter colorFilter,
@@ -330,20 +301,6 @@ void customPaintImage({
   }
   final Rect sourceRect =
       alignment.inscribe(sourceSize, Offset.zero & inputSize);
-
-  final cDx = destinationSize.width;
-  final cDy = destinationSize.height + destinationPosition.dy * 2;
-  final double r = sqrt(cDx * cDx + cDy * cDy) / 2;
-  final alpha = atan(cDy / cDx);
-  final beta = alpha + angle;
-  final shiftY = r * sin(beta);
-  final shiftX = r * cos(beta);
-  final translateX = cDx / 2 - shiftX;
-  final translateY = cDy / 2 - shiftY;
-  canvas.translate(translateX * scale, translateY * scale);
-  canvas.translate(offset.dx, offset.dy);
-  canvas.scale(scale);
-  canvas.rotate(angle);
 
   canvas.drawImageRect(image, sourceRect, destinationRect, paint);
 

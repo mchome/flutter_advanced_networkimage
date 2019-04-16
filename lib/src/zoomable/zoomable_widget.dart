@@ -10,6 +10,8 @@ class ZoomableWidget extends StatefulWidget {
     this.minScale: 0.7,
     this.maxScale: 1.4,
     this.initialScale: 1.0,
+    this.initialOffset: Offset.zero,
+    this.initialRotation: 0.0,
     this.enableZoom: true,
     this.panLimit: 1.0,
     this.singleFingerPan: true,
@@ -28,6 +30,8 @@ class ZoomableWidget extends StatefulWidget {
   })  : assert(minScale != null),
         assert(maxScale != null),
         assert(initialScale != null),
+        assert(initialOffset != null),
+        assert(initialRotation != null),
         assert(enableZoom != null),
         assert(panLimit != null),
         assert(singleFingerPan != null),
@@ -47,6 +51,12 @@ class ZoomableWidget extends StatefulWidget {
 
   /// The initial scale.
   final double initialScale;
+
+  /// The initial offset.
+  final Offset initialOffset;
+
+  /// The initial rotation.
+  final double initialRotation;
 
   /// Allow zooming the child widget.
   final bool enableZoom;
@@ -103,7 +113,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
   double _zoom = 1.0;
   double _previousZoom = 1.0;
   Offset _previousPanOffset = Offset.zero;
-  Offset _panOffset = Offset.zero;
+  Offset _pan = Offset.zero;
   Offset _zoomOriginOffset = Offset.zero;
   double _rotation = 0.0;
   double _previousRotation = 0.0;
@@ -118,6 +128,8 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
   void initState() {
     super.initState();
     _zoom = widget.initialScale;
+    _pan = widget.initialOffset;
+    _rotation = widget.initialRotation;
   }
 
   void _onScaleStart(ScaleStartDetails details) {
@@ -127,7 +139,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
     }
     setState(() {
       _zoomOriginOffset = details.focalPoint;
-      _previousPanOffset = _panOffset;
+      _previousPanOffset = _pan;
       _previousZoom = _zoom;
       _previousRotation = _rotation;
     });
@@ -162,7 +174,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
           _zoom;
 
       if (widget.panLimit == 0.0) {
-        _panOffset = _panRealOffset;
+        _pan = _panRealOffset;
       } else {
         Offset _baseOffset = Offset(
           _panRealOffset.dx
@@ -179,7 +191,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
           _marginOffset.dx * _widthFactor * 2,
           _marginOffset.dy * _heightFactor * 2,
         );
-        _panOffset = _baseOffset + _marginOffset;
+        _pan = _baseOffset + _marginOffset;
       }
       setState(() {});
     }
@@ -197,20 +209,20 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
       final Offset direction = velocity / magnitude;
       final double distance = (Offset.zero & context.size).shortestSide;
       final Offset endOffset =
-          _panOffset + direction * distance * widget.flingFactor * 0.5;
-      _panOffset = Offset(
+          _pan + direction * distance * widget.flingFactor * 0.5;
+      _pan = Offset(
         endOffset.dx.clamp(-boundarySize.width / 2, boundarySize.width / 2),
         endOffset.dy.clamp(-boundarySize.height / 2, boundarySize.height / 2),
       );
     }
     Offset _clampedOffset = Offset(
-      _panOffset.dx.clamp(-boundarySize.width / 2, boundarySize.width / 2),
-      _panOffset.dy.clamp(-boundarySize.height / 2, boundarySize.height / 2),
+      _pan.dx.clamp(-boundarySize.width / 2, boundarySize.width / 2),
+      _pan.dy.clamp(-boundarySize.height / 2, boundarySize.height / 2),
     );
     if (_zoom == widget.minScale && widget.autoCenter) {
       _clampedOffset = Offset.zero;
     }
-    setState(() => _panOffset = _clampedOffset);
+    setState(() => _pan = _clampedOffset);
   }
 
   Size get _boundarySize {
@@ -243,7 +255,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
       _zoom = _tmpZoom;
       if (widget.onZoomChanged != null) widget.onZoomChanged(_zoom);
     });
-    setState(() => _panOffset = Offset.zero);
+    setState(() => _pan = Offset.zero);
 
     setState(() => _rotation = 0.0);
 
@@ -269,7 +281,7 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
             duration: _duration,
             curve: _curve,
             zoom: _zoom,
-            panOffset: _panOffset,
+            panOffset: _pan,
             rotation: _rotation,
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
