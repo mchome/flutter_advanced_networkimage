@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.0-alpha.1]
+
+- Update folders.
+
 ## [0.4.15]
 
 - `TransitionToImage`: Adding color property for use with BlendMode.
