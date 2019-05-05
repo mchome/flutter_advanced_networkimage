@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.0-alpha.3]
+
+- Update flutter_svg.
+
 ## [0.5.0-alpha.2]
 
 - Update provider.
