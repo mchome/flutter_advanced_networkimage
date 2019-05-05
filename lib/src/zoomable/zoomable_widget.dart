@@ -148,24 +148,21 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
   void _onScaleUpdate(ScaleUpdateDetails details) {
     Size boundarySize = _boundarySize;
 
-    Size _marginSize = Size(100.0, 100.0);
+    Size _marginSize = const Size(100.0, 100.0);
 
     _duration = const Duration(milliseconds: 50);
     _curve = Curves.easeOut;
 
-    if (widget.enableRotate) {
-      // apply rotate
-      setState(() =>
-          _rotation = (_previousRotation + details.rotation).clamp(-pi, pi));
-    }
-
-    if (widget.enableZoom && details.scale != 1.0) {
-      setState(() {
+    setState(() {
+      if (widget.enableRotate)
+        _rotation = (_previousRotation + details.rotation).clamp(-pi, pi);
+      if (widget.enableZoom && details.scale != 1.0) {
         _zoom = (_previousZoom * details.scale)
             .clamp(widget.minScale, widget.maxScale);
         if (widget.onZoomChanged != null) widget.onZoomChanged(_zoom);
-      });
-    }
+      }
+    });
+
     if ((widget.singleFingerPan && details.scale == 1.0) ||
         (widget.multiFingersPan && details.scale != 1.0)) {
       Offset _panRealOffset = (details.focalPoint -
@@ -251,15 +248,12 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
 
     double _tmpZoom = _zoom + _stepLength;
     if (_tmpZoom > widget.maxScale || _stepLength == 0.0) _tmpZoom = 1.0;
+
     setState(() {
       _zoom = _tmpZoom;
       if (widget.onZoomChanged != null) widget.onZoomChanged(_zoom);
-    });
-    setState(() => _pan = Offset.zero);
-
-    setState(() => _rotation = 0.0);
-
-    setState(() {
+      _pan = Offset.zero;
+      _rotation = 0.0;
       _previousZoom = _tmpZoom;
       if (_tmpZoom == 1.0) {
         _zoomOriginOffset = Offset.zero;

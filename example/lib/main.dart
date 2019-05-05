@@ -29,7 +29,7 @@ class Example extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Flutter Advanced Network Image Example'),
@@ -39,7 +39,7 @@ class Example extends State<MyApp> {
               const Tab(text: 'load image'),
               const Tab(text: 'zoomable widget'),
               const Tab(text: 'zoomable list'),
-              const Tab(text: 'crop image(WIP)'),
+              // const Tab(text: 'crop image(WIP)'),
             ],
           ),
         ),
@@ -175,7 +175,7 @@ class _CropImageState extends State<CropImage> {
           height: 400.0,
           color: Colors.grey,
           child: ImageCropper(
-            image: AdvancedNetworkImage(widget.url),
+            child: Image(image: AdvancedNetworkImage(widget.url)),
             onCropperChanged: cropImage,
           ),
         ),

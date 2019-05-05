@@ -10,6 +10,7 @@ addons:
     sources:
       - ubuntu-toolchain-r-test # if we don't specify this, the libstdc++6 we get is the wrong version
     packages:
+      - lib32stdc++6
       - libstdc++6
       - fonts-droid
 before_script:
@@ -18,7 +19,7 @@ before_script:
   - gem install coveralls-lcov
 script:
   - ./flutter/bin/flutter test --coverage
-  - cd example
+  - cd ./example
   - ../flutter/bin/flutter build aot
 after_success:
   - coveralls-lcov coverage/lcov.info

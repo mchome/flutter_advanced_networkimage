@@ -146,9 +146,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
       scale: key.scale,
-      informationCollector: (StringBuffer information) {
-        information.writeln('Image provider: $this');
-        information.write('Image provider: $key');
+      informationCollector: () sync* {
+        yield DiagnosticsProperty<ImageProvider>('Image provider', this);
+        yield DiagnosticsProperty<AdvancedNetworkImage>('Image key', key);
       },
     );
   }

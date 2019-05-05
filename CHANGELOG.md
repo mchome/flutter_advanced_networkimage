@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.0-alpha.2]
+
+- Update provider.
+
 ## [0.5.0-alpha.1]
 
 - Update folders.

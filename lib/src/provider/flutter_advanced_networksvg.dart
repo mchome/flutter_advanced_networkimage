@@ -103,9 +103,9 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       {PictureErrorListener onError}) {
     return OneFramePictureStreamCompleter(
       _loadAsync(key, onError: onError),
-      informationCollector: (StringBuffer information) {
-        information.writeln('Svg provider: $this');
-        information.write('Svg provider: $key');
+      informationCollector: () sync* {
+        yield DiagnosticsProperty<PictureProvider>('Picture provider', this);
+        yield DiagnosticsProperty<AdvancedNetworkSvg>('Picture key', key);
       },
     );
   }
