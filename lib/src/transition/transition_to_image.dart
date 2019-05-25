@@ -209,12 +209,20 @@ class _TransitionToImageState extends State<TransitionToImage>
       Tween(begin: const Offset(0.0, -1.0), end: Offset.zero);
 
   ImageStream _imageStream;
+  ImageStreamListener _imageStreamListener;
   ImageInfo _imageInfo;
   double _progress = 0.0;
 
   _TransitionStatus _status = _TransitionStatus.start;
 
   ImageProvider get _imageProvider => widget.image;
+
+  _TransitionToImageState() {
+    _imageStreamListener = ImageStreamListener(
+      _updateImage,
+      onError: _catchBadImage,
+    );
+  }
 
   @override
   void initState() {
@@ -251,7 +259,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   void dispose() {
-    _imageStream.removeListener(_updateImage);
+    _imageStream.removeListener(_imageStreamListener);
     _controller.dispose();
     super.dispose();
   }
@@ -300,7 +308,7 @@ class _TransitionToImageState extends State<TransitionToImage>
         if (mounted)
           setState(() => _progress = progress);
         else
-          return oldImageStream?.removeListener(_updateImage);
+          return oldImageStream?.removeListener(_imageStreamListener);
         if (callback != null) callback(progress);
       };
     }
@@ -322,8 +330,8 @@ class _TransitionToImageState extends State<TransitionToImage>
       setState(() => _status = _TransitionStatus.completed);
     } else {
       setState(() => _status = _TransitionStatus.start);
-      oldImageStream?.removeListener(_updateImage);
-      _imageStream.addListener(_updateImage, onError: _catchBadImage);
+      oldImageStream?.removeListener(_imageStreamListener);
+      _imageStream.addListener(_imageStreamListener);
       _resolveStatus();
     }
   }
