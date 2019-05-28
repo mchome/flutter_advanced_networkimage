@@ -1,9 +1,16 @@
 import 'dart:ui';
+import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_advanced_networkimage/provider.dart';
 
-typedef Widget LoadingWidgetBuilder(double progress);
+typedef Widget LoadingWidgetBuilder(
+  BuildContext context,
+  double progress,
+  Uint8List imageData,
+);
 
 class TransitionToImage extends StatefulWidget {
   const TransitionToImage({
@@ -210,11 +217,24 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   ImageStream _imageStream;
   ImageInfo _imageInfo;
+  Uint8List _imageData;
   double _progress = 0.0;
 
   _TransitionStatus _status = _TransitionStatus.start;
 
   ImageProvider get _imageProvider => widget.image;
+
+  // bool _isProgressiveJPEG(List<int> data) {
+  //   if (data.contains(0xFFD8)) {
+  //     int count = 0;
+  //     for (int el in data) {
+  //       if (el == 0xFFDA) count++;
+  //       if (count > 1) return true;
+  //     }
+  //   }
+
+  //   return false;
+  // }
 
   @override
   void initState() {
@@ -251,7 +271,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   void dispose() {
-    _imageStream.removeListener(_updateImage);
+    _imageStream.removeListener(ImageStreamListener(_updateImage));
     _controller.dispose();
     super.dispose();
   }
@@ -288,6 +308,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   void _getImage({bool reload: false}) {
     if (reload) {
       if (widget.printError) debugPrint('Reloading image.');
+
       _imageProvider.evict();
     }
 
@@ -296,12 +317,18 @@ class _TransitionToImageState extends State<TransitionToImage>
         widget.loadingWidgetBuilder != null) {
       var callback = (_imageProvider as AdvancedNetworkImage).loadingProgress;
       (_imageProvider as AdvancedNetworkImage).loadingProgress =
-          (double progress) {
-        if (mounted)
-          setState(() => _progress = progress);
-        else
-          return oldImageStream?.removeListener(_updateImage);
-        if (callback != null) callback(progress);
+          (double progress, List<int> data) {
+        if (mounted) {
+          setState(() {
+            _progress = progress;
+            if (progress > 0.1) _imageData = Uint8List.fromList(data);
+          });
+        } else {
+          return oldImageStream
+              ?.removeListener(ImageStreamListener(_updateImage));
+        }
+
+        if (callback != null) callback(progress, data);
       };
     }
 
@@ -322,8 +349,10 @@ class _TransitionToImageState extends State<TransitionToImage>
       setState(() => _status = _TransitionStatus.completed);
     } else {
       setState(() => _status = _TransitionStatus.start);
-      oldImageStream?.removeListener(_updateImage);
-      _imageStream.addListener(_updateImage, onError: _catchBadImage);
+      oldImageStream?.removeListener(ImageStreamListener(_updateImage));
+      _imageStream.addListener(
+        ImageStreamListener(_updateImage, onError: _catchBadImage),
+      );
       _resolveStatus();
     }
   }
@@ -358,7 +387,7 @@ class _TransitionToImageState extends State<TransitionToImage>
         : _status == _TransitionStatus.start ||
                 _status == _TransitionStatus.loading
             ? widget.loadingWidgetBuilder != null
-                ? widget.loadingWidgetBuilder(_progress)
+                ? widget.loadingWidgetBuilder(context, _progress, _imageData)
                 : widget.loadingWidget
             : widget.transitionType == TransitionType.fade
                 ? FadeTransition(

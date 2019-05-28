@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec, hashValues;
 
@@ -10,8 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
-import 'package:flutter_advanced_networkimage/src/utils.dart'
-    show UrlResolver, loadFromRemote, uid;
+import 'package:flutter_advanced_networkimage/src/utils.dart';
 
 typedef Future<Uint8List> ImageProcessing(Uint8List data);
 
@@ -91,8 +89,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// Disk cache rules for advanced control.
   final CacheRule cacheRule;
 
-  /// Report progress when fetching image.
-  ValueChanged<double> loadingProgress;
+  /// Report loading progress and data when fetching image.
+  LoadingProgress loadingProgress;
 
   /// Extract the real url before fetching.
   final UrlResolver getRealUrl;

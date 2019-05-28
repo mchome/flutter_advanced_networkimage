@@ -292,6 +292,7 @@ int crc32(List<int> bytes) {
 }
 
 typedef Future<String> UrlResolver();
+typedef void LoadingProgress(double progress, List<int> data);
 
 /// Fetch the image from network.
 Future<Uint8List> loadFromRemote(
@@ -301,7 +302,7 @@ Future<Uint8List> loadFromRemote(
   Duration retryDuration,
   double retryDurationFactor,
   Duration timeoutDuration,
-  ValueChanged<double> progressReport,
+  LoadingProgress loadingProgress,
   UrlResolver getRealUrl, {
   bool printError = false,
 }) async {
@@ -338,7 +339,7 @@ Future<Uint8List> loadFromRemote(
     String _url = url;
     if (getRealUrl != null) _url = (await getRealUrl()) ?? url;
 
-    if (progressReport != null) {
+    if (loadingProgress != null) {
       final _req = http.Request('GET', Uri.parse(_url));
       _req.headers.addAll(header ?? {});
       final _res = await _req.send().timeout(timeoutDuration);
@@ -348,7 +349,7 @@ Future<Uint8List> loadFromRemote(
         buffer.addAll(bytes);
         if (_res.contentLength != null && _res.contentLength != 0) {
           final double progress = buffer.length / (_res.contentLength ?? 1);
-          progressReport(progress);
+          loadingProgress(progress, buffer);
         }
       }, onDone: () {
         completer.complete(http.Response.bytes(buffer, _res.statusCode,

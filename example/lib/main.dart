@@ -29,7 +29,7 @@ class Example extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Flutter Advanced Network Image Example'),
@@ -39,7 +39,7 @@ class Example extends State<MyApp> {
               const Tab(text: 'load image'),
               const Tab(text: 'zoomable widget'),
               const Tab(text: 'zoomable list'),
-              // const Tab(text: 'crop image(WIP)'),
+              const Tab(text: 'crop image(WIP)'),
             ],
           ),
         ),
@@ -69,10 +69,12 @@ class LoadImage extends StatelessWidget {
       children: <Widget>[
         TransitionToImage(
           image: AdvancedNetworkImage(
-            url,
+            'https://www.jcc-brooklyn.org/wp-content/uploads/2017/08/Big_Pine_landscape.jpg',
             loadedCallback: () => print('It works!'),
             loadFailedCallback: () => print('Oh, no!'),
-            // loadingProgress: (double progress) => print(progress),
+            // loadingProgress: (double progress, _) => print(progress),
+            timeoutDuration: Duration(seconds: 30),
+            retryLimit: 1,
             // disableMemoryCache: true,
           ),
           // loadedCallback: () => print('It works!'),
@@ -88,7 +90,12 @@ class LoadImage extends StatelessWidget {
           width: 300.0,
           height: 300.0,
           enableRefresh: true,
-          loadingWidgetBuilder: (double progress) {
+          loadingWidgetBuilder: (
+            BuildContext context,
+            double progress,
+            Uint8List imageData,
+          ) {
+            // print(imageData.lengthInBytes);
             return Container(
               width: 300.0,
               height: 300.0,
