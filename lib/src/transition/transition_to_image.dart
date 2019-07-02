@@ -271,7 +271,8 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   @override
   void dispose() {
-    _imageStream.removeListener(ImageStreamListener(_updateImage));
+    _imageStream.removeListener(
+        ImageStreamListener(_updateImage, onError: _catchBadImage));
     _controller.dispose();
     super.dispose();
   }
@@ -324,8 +325,8 @@ class _TransitionToImageState extends State<TransitionToImage>
             if (progress > 0.1) _imageData = Uint8List.fromList(data);
           });
         } else {
-          return oldImageStream
-              ?.removeListener(ImageStreamListener(_updateImage));
+          return oldImageStream?.removeListener(
+              ImageStreamListener(_updateImage, onError: _catchBadImage));
         }
 
         if (callback != null) callback(progress, data);
@@ -349,7 +350,9 @@ class _TransitionToImageState extends State<TransitionToImage>
       setState(() => _status = _TransitionStatus.completed);
     } else {
       setState(() => _status = _TransitionStatus.start);
-      oldImageStream?.removeListener(ImageStreamListener(_updateImage));
+      oldImageStream?.removeListener(
+          ImageStreamListener(_updateImage, onError: _catchBadImage));
+
       _imageStream.addListener(
         ImageStreamListener(_updateImage, onError: _catchBadImage),
       );
@@ -367,9 +370,10 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   void _catchBadImage(dynamic exception, StackTrace stackTrace) {
-    if (widget.printError) debugPrint(exception.toString());
+    if (widget.printError) debugPrint('$exception\n$stackTrace');
     setState(() => _status = _TransitionStatus.failed);
     _resolveStatus();
+
     if (widget.loadFailedCallback != null) widget.loadFailedCallback();
     if (widget.disableMemoryCache || widget.disableMemoryCacheIfFailed)
       _imageProvider.evict();
