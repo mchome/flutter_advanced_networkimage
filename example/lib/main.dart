@@ -69,7 +69,7 @@ class LoadImage extends StatelessWidget {
       children: <Widget>[
         TransitionToImage(
           image: AdvancedNetworkImage(
-            'https://www.jcc-brooklyn.org/wp-content/uploads/2017/08/Big_Pine_landscape.jpg',
+            url,
             loadedCallback: () => print('It works!'),
             loadFailedCallback: () => print('Oh, no!'),
             // loadingProgress: (double progress, _) => print(progress),

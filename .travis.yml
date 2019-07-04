@@ -12,7 +12,7 @@ addons:
     packages:
       - lib32stdc++6
       - libstdc++6
-      - fonts-droid
+      - fonts-droid-fallback
 before_script:
   - git clone https://github.com/flutter/flutter.git -b master --single-branch
   - ./flutter/bin/flutter doctor
