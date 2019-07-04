@@ -345,20 +345,28 @@ Future<Uint8List> loadFromRemote(
       final _res = await _req.send().timeout(timeoutDuration);
       List<int> buffer = [];
       final Completer<http.Response> completer = Completer<http.Response>();
-      _res.stream.listen((bytes) {
-        buffer.addAll(bytes);
-        if (_res.contentLength != null && _res.contentLength != 0) {
-          final double progress = buffer.length / (_res.contentLength ?? 1);
-          loadingProgress(progress, buffer);
-        }
-      }, onDone: () {
-        completer.complete(http.Response.bytes(buffer, _res.statusCode,
-            request: _res.request,
-            headers: _res.headers,
-            isRedirect: _res.isRedirect,
-            persistentConnection: _res.persistentConnection,
-            reasonPhrase: _res.reasonPhrase));
-      });
+      _res.stream.listen(
+        (bytes) {
+          buffer.addAll(bytes);
+          if (_res.contentLength != null && _res.contentLength != 0) {
+            final double progress = buffer.length / (_res.contentLength ?? 1);
+            loadingProgress(progress, buffer);
+          }
+        },
+        onDone: () {
+          completer.complete(http.Response.bytes(buffer, _res.statusCode,
+              request: _res.request,
+              headers: _res.headers,
+              isRedirect: _res.isRedirect,
+              persistentConnection: _res.persistentConnection,
+              reasonPhrase: _res.reasonPhrase));
+        },
+        cancelOnError: true,
+        onError: (e, stackTrace) {
+          completer.completeError(e, stackTrace);
+        },
+      );
+
       return completer.future;
     } else {
       return await http.get(_url, headers: header).timeout(timeoutDuration);
