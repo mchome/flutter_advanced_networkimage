@@ -1,3 +1,4 @@
+import 'dart:ui' show ImageFilter;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -87,6 +88,7 @@ class LoadImage extends StatelessWidget {
             color: Colors.transparent,
             child: const Icon(Icons.refresh),
           ),
+          imageFilter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           width: 300.0,
           height: 300.0,
           enableRefresh: true,

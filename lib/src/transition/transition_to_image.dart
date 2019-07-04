@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'raw_image.dart' show MyRawImage;
+
 import 'package:flutter_advanced_networkimage/provider.dart';
 
 typedef Widget LoadingWidgetBuilder(
@@ -25,6 +27,8 @@ class TransitionToImage extends StatefulWidget {
     this.alignment = Alignment.center,
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
+    this.invertColors = false,
+    this.imageFilter,
     this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -44,6 +48,7 @@ class TransitionToImage extends StatefulWidget {
         assert(alignment != null),
         assert(repeat != null),
         assert(matchTextDirection != null),
+        assert(invertColors != null),
         assert(placeholder != null),
         assert(duration != null),
         assert(curve != null),
@@ -145,6 +150,10 @@ class TransitionToImage extends StatefulWidget {
   /// If this is true, there must be an ambient [Directionality] widget in
   /// scope.
   final bool matchTextDirection;
+
+  final bool invertColors;
+
+  final ImageFilter imageFilter;
 
   /// Widget displayed while the target [image] failed to load.
   final Widget placeholder;
@@ -414,8 +423,8 @@ class _TransitionToImageState extends State<TransitionToImage>
                   );
   }
 
-  RawImage buildRawImage() {
-    return RawImage(
+  MyRawImage buildRawImage() {
+    return MyRawImage(
       image: _imageInfo?.image,
       width: widget.width,
       height: widget.height,
@@ -426,6 +435,8 @@ class _TransitionToImageState extends State<TransitionToImage>
       alignment: widget.alignment,
       repeat: widget.repeat,
       matchTextDirection: widget.matchTextDirection,
+      imageFilter: widget.imageFilter,
+      invertColors: widget.invertColors,
     );
   }
 }
