@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:path/path.dart';
 import 'package:test/test.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_test/flutter_test.dart' show throwsAssertionError;
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
@@ -111,6 +111,8 @@ void main() {
                 storeDirectory: StoreDirectoryType.document,
                 maxAge: Duration(seconds: 1),
               )),
+          utf8.encode('spring'));
+      expect(await DiskCache().load('fff'.hashCode.toString(), force: true),
           utf8.encode('spring'));
       expect(await DiskCache().load('fff'.hashCode.toString()), null);
 

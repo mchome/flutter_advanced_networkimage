@@ -115,8 +115,7 @@ class DiskCache {
     _metadata.removeWhere((k, v) {
       if (!File(v['path']).existsSync()) return true;
       if (DateTime.fromMillisecondsSinceEpoch(v['createdTime'] + v['maxAge'])
-              .compareTo(DateTime.now()) <
-          0) {
+          .isBefore(DateTime.now())) {
         File(v['path']).deleteSync();
         return true;
       }
@@ -131,9 +130,11 @@ class DiskCache {
     await _commitMetaData();
   }
 
-  /// Load the cache image from [DiskCache].
-  Future<Uint8List> load(String uid, {CacheRule rule}) async {
+  /// Load the cache image from [DiskCache], you can use `force` to skip max age check.
+  Future<Uint8List> load(String uid, {CacheRule rule, bool force}) async {
     if (_metadata == null) await _initMetaData();
+    force ??= false;
+
     try {
       if (_metadata.containsKey(uid)) {
         if (!File(_metadata[uid]['path']).existsSync()) {
@@ -146,8 +147,8 @@ class DiskCache {
                   (rule != null
                       ? rule.maxAge.inMilliseconds
                       : _metadata[uid]['maxAge']),
-            ).compareTo(DateTime.now()) <
-            0) {
+            ).isBefore(DateTime.now()) &&
+            !force) {
           await File(_metadata[uid]['path']).delete();
           _metadata.remove(uid);
           await _commitMetaData();
