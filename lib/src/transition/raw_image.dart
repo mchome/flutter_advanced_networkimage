@@ -733,7 +733,7 @@ void myPaintImage({
     paint.filterQuality = filterQuality;
   }
   paint.invertColors = invertColors;
-  paint.imageFilter = imageFilter;
+  // paint.imageFilter = imageFilter;
   final double halfWidthDelta =
       (outputSize.width - destinationSize.width) / 2.0;
   final double halfHeightDelta =

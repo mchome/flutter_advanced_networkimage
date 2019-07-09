@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.0]
+
+- Update dependency.
+- Use new flutter api.
+
 ## [0.5.0-alpha.3]
 
 - Update flutter_svg.

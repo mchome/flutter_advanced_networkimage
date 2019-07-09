@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'raw_image.dart' show MyRawImage;
@@ -28,7 +27,7 @@ class TransitionToImage extends StatefulWidget {
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
     this.invertColors = false,
-    this.imageFilter,
+    // this.imageFilter,
     this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -151,9 +150,18 @@ class TransitionToImage extends StatefulWidget {
   /// scope.
   final bool matchTextDirection;
 
+  /// Whether the colors of the image are inverted when drawn.
+  ///
+  /// inverting the colors of an image applies a new color filter to the paint.
+  /// If there is another specified color filter, the invert will be applied
+  /// after it. This is primarily used for implementing smart invert on iOS.
+  ///
+  /// See also:
+  ///
+  ///  * [Paint.invertColors], for the dart:ui implementation.
   final bool invertColors;
 
-  final ImageFilter imageFilter;
+  // final ImageFilter imageFilter;
 
   /// Widget displayed while the target [image] failed to load.
   final Widget placeholder;
@@ -435,8 +443,8 @@ class _TransitionToImageState extends State<TransitionToImage>
       alignment: widget.alignment,
       repeat: widget.repeat,
       matchTextDirection: widget.matchTextDirection,
-      imageFilter: widget.imageFilter,
       invertColors: widget.invertColors,
+      // imageFilter: widget.imageFilter,
     );
   }
 }
