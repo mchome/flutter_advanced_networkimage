@@ -33,6 +33,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     this.cacheRule,
     this.getRealUrl,
     this.printError = false,
+    this.skipRetryStatusCode,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
@@ -89,8 +90,11 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
   /// Extract the real url before fetching.
   final UrlResolver getRealUrl;
 
-  /// Print error.
+  /// Print error messages.
   final bool printError;
+
+  /// The [HttpStatus] code that you can skip retrying if you meet them.
+  final List<int> skipRetryStatusCode;
 
   @override
   Future<AdvancedNetworkSvg> obtainKey(PictureConfiguration picture) {
@@ -222,6 +226,7 @@ Future<Uint8List> _loadFromDiskCache(AdvancedNetworkSvg key, String uId) async {
       key.timeoutDuration,
       null,
       key.getRealUrl,
+      skipRetryStatusCode: key.skipRetryStatusCode,
       printError: key.printError,
     );
     if (imageData != null) {

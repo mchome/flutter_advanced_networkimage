@@ -304,12 +304,14 @@ Future<Uint8List> loadFromRemote(
   Duration timeoutDuration,
   LoadingProgress loadingProgress,
   UrlResolver getRealUrl, {
+  List<int> skipRetryStatusCode,
   bool printError = false,
 }) async {
   assert(url != null);
   assert(retryLimit != null);
 
   if (retryLimit < 0) retryLimit = 0;
+  skipRetryStatusCode ??= [];
 
   /// Retry mechanism.
   Future<http.Response> run<T>(Future f(), int retryLimit,
@@ -317,12 +319,17 @@ Future<Uint8List> loadFromRemote(
     for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
       try {
         http.Response res = await f();
-        if (res != null && res.bodyBytes.length > 0) {
-          if (res.statusCode == HttpStatus.ok)
+        if (res != null) {
+          if ([HttpStatus.ok, HttpStatus.partialContent]
+                  .contains(res.statusCode) &&
+              res.bodyBytes.length > 0) {
             return res;
-          else if (printError)
-            debugPrint('Load error, response status code: ' +
-                res.statusCode.toString());
+          } else {
+            if (printError)
+              debugPrint(
+                  'Failed to load, response status code: ${res.statusCode.toString()}.');
+            if (skipRetryStatusCode.contains(res.statusCode)) return null;
+          }
         }
       } catch (e) {
         if (printError) debugPrint(e.toString());
@@ -334,6 +341,9 @@ Future<Uint8List> loadFromRemote(
     return null;
   }
 
+  List<int> buffer = [];
+  bool acceptRangesHeader = false;
+
   http.Response _response;
   _response = await run(() async {
     String _url = url;
@@ -342,8 +352,13 @@ Future<Uint8List> loadFromRemote(
     if (loadingProgress != null) {
       final _req = http.Request('GET', Uri.parse(_url));
       _req.headers.addAll(header ?? {});
+      if (!acceptRangesHeader)
+        _req.headers[HttpHeaders.rangeHeader] = 'bytes=${buffer.length}-';
       final _res = await _req.send().timeout(timeoutDuration);
-      List<int> buffer = [];
+      acceptRangesHeader =
+          _res.headers.containsKey(HttpHeaders.acceptRangesHeader) &&
+              _res.headers[HttpHeaders.acceptRangesHeader] == 'bytes';
+      if (!acceptRangesHeader) buffer.clear();
       final Completer<http.Response> completer = Completer<http.Response>();
       _res.stream.listen(
         (bytes) {

@@ -36,6 +36,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.postProcessing,
     this.disableMemoryCache: false,
     this.printError = false,
+    this.skipRetryStatusCode,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
@@ -117,6 +118,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   /// Print error messages.
   final bool printError;
+
+  /// The [HttpStatus] code that you can skip retrying if you meet them.
+  final List<int> skipRetryStatusCode;
 
   ImageStream resolve(ImageConfiguration configuration) {
     assert(configuration != null);
@@ -262,6 +266,7 @@ Future<Uint8List> _loadFromDiskCache(
       key.timeoutDuration,
       key.loadingProgress,
       key.getRealUrl,
+      skipRetryStatusCode: key.skipRetryStatusCode,
       printError: key.printError,
     );
     if (imageData != null) {

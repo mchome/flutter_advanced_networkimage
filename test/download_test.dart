@@ -40,7 +40,7 @@ void main() {
             const Duration(milliseconds: 100),
             1.0,
             const Duration(seconds: 5),
-            (_, v) => print(v),
+            (_, v) => print(v.length),
             () => Future.value(realUrl),
             printError: true,
           ),
@@ -59,20 +59,20 @@ void main() {
             const Duration(milliseconds: 100),
             1.0,
             const Duration(seconds: 5),
-            (_, v) => print(v),
+            (_, v) => print(v.length),
             () => Future.value(realUrl),
             printError: true,
           ),
           result);
     });
-    test('=> bad url', () async {
+    test('=> bad url with skip 404 retry', () async {
       var url =
           'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png';
 
       expect(
-          await loadFromRemote(url, null, 0, const Duration(milliseconds: 100),
+          await loadFromRemote(url, null, 5, const Duration(milliseconds: 100),
               1.0, const Duration(seconds: 5), null, null,
-              printError: true),
+              skipRetryStatusCode: [404], printError: true),
           null);
     });
     test('=> not a url', () async {
