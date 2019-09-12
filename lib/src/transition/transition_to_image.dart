@@ -27,7 +27,7 @@ class TransitionToImage extends StatefulWidget {
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
     this.invertColors = false,
-    // this.imageFilter,
+    this.imageFilter,
     this.placeholder: const Icon(Icons.clear),
     this.duration: const Duration(milliseconds: 300),
     this.tween,
@@ -161,7 +161,7 @@ class TransitionToImage extends StatefulWidget {
   ///  * [Paint.invertColors], for the dart:ui implementation.
   final bool invertColors;
 
-  // final ImageFilter imageFilter;
+  final ImageFilter imageFilter;
 
   /// Widget displayed while the target [image] failed to load.
   final Widget placeholder;
@@ -444,7 +444,7 @@ class _TransitionToImageState extends State<TransitionToImage>
       repeat: widget.repeat,
       matchTextDirection: widget.matchTextDirection,
       invertColors: widget.invertColors,
-      // imageFilter: widget.imageFilter,
+      imageFilter: widget.imageFilter,
     );
   }
 }
