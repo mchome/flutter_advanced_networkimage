@@ -1,7 +1,6 @@
 # Flutter Advanced Network Image Provider
 
 [![Pub Package](https://img.shields.io/pub/v/flutter_advanced_networkimage.svg)](https://pub.dartlang.org/packages/flutter_advanced_networkimage)
-[![Pre Pub Package](https://img.shields.io/pub/vpre/flutter_advanced_networkimage.svg)](https://pub.dartlang.org/packages/flutter_advanced_networkimage)
 [![Build Status](https://travis-ci.org/mchome/flutter_advanced_networkimage.svg?branch=master)](https://travis-ci.org/mchome/flutter_advanced_networkimage?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/mchome/flutter_advanced_networkimage/badge.svg?branch=master)](https://coveralls.io/github/mchome/flutter_advanced_networkimage?branch=master)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?logo=paypal)](https://www.paypal.me/mchome19)
