@@ -13,6 +13,11 @@ typedef Widget LoadingWidgetBuilder(
   Uint8List imageData,
 );
 
+typedef Widget PlaceHolderBuilder(
+  BuildContext context,
+  VoidCallback reloadImage,
+);
+
 class TransitionToImage extends StatefulWidget {
   const TransitionToImage({
     Key key,
@@ -29,6 +34,7 @@ class TransitionToImage extends StatefulWidget {
     this.invertColors = false,
     this.imageFilter,
     this.placeholder: const Icon(Icons.clear),
+    this.placeholderBuilder,
     this.duration: const Duration(milliseconds: 300),
     this.tween,
     this.curve: Curves.easeInOut,
@@ -166,6 +172,10 @@ class TransitionToImage extends StatefulWidget {
   /// Widget displayed while the target [image] failed to load.
   final Widget placeholder;
 
+  /// Widget builder (with reload function) displayed
+  /// while the target [image] failed to load.
+  final PlaceHolderBuilder placeholderBuilder;
+
   /// The duration of the fade-out animation for the result.
   final Duration duration;
 
@@ -182,7 +192,7 @@ class TransitionToImage extends StatefulWidget {
   final Widget loadingWidget;
 
   /// Widget builder (with loading progress) displayed
-  /// when the target [image] is loading and loadingWidget is null.
+  /// when the target [image] is loading.
   final LoadingWidgetBuilder loadingWidgetBuilder;
 
   /// Enable an internal [GestureDetector] for manually refreshing.
@@ -325,7 +335,7 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   void _getImage({bool reload: false}) {
     if (reload) {
-      if (widget.printError) debugPrint('Reloading image.');
+      if (widget.printError) print('Reloading image.');
 
       _imageProvider.evict();
     }
@@ -387,7 +397,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   void _catchBadImage(dynamic exception, StackTrace stackTrace) {
-    if (widget.printError) debugPrint('$exception\n$stackTrace');
+    if (widget.printError) print('$exception\n$stackTrace');
     setState(() => _status = _TransitionStatus.failed);
     _resolveStatus();
 
@@ -399,12 +409,14 @@ class _TransitionToImageState extends State<TransitionToImage>
   @override
   Widget build(BuildContext context) {
     return _status == _TransitionStatus.failed
-        ? widget.enableRefresh
-            ? GestureDetector(
-                onTap: () => _getImage(reload: true),
-                child: widget.placeholder,
-              )
-            : widget.placeholder
+        ? widget.placeholderBuilder != null
+            ? widget.placeholderBuilder(context, () => _getImage(reload: true))
+            : widget.enableRefresh
+                ? GestureDetector(
+                    onTap: () => _getImage(reload: true),
+                    child: widget.placeholder,
+                  )
+                : widget.placeholder
         : _status == _TransitionStatus.start ||
                 _status == _TransitionStatus.loading
             ? widget.loadingWidgetBuilder != null
