@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.0-alpha.1]
+
+- Update dependency.
+- Use new flutter api.
+
 ## [0.5.0]
 
 - Update dependency.
