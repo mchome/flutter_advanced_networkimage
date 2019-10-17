@@ -127,11 +127,11 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     final ImageStream stream = ImageStream();
     obtainKey(configuration).then<void>((AdvancedNetworkImage key) {
       if (key.disableMemoryCache) {
-        stream.setCompleter(load(key));
+        stream.setCompleter(load(key, null));
       } else {
         final ImageStreamCompleter completer = PaintingBinding
             .instance.imageCache
-            .putIfAbsent(key, () => load(key));
+            .putIfAbsent(key, () => load(key, null));
         if (completer != null) stream.setCompleter(completer);
       }
     });
