@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/services.dart';
+import 'package:path/path.dart';
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_test/flutter_test.dart' show TestWidgetsFlutterBinding;
 
 import 'package:flutter_advanced_networkimage/src/utils.dart';
 
@@ -93,6 +97,26 @@ void main() {
           crc32(utf8.encode('The quick brown fox jumps over the lazy dog'))
               .toRadixString(16),
           '414fa339');
+    });
+    test('=> remove from cache', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      const MethodChannel('plugins.flutter.io/path_provider')
+          .setMockMethodCallHandler((MethodCall methodCall) async {
+        if (methodCall.method == 'getApplicationDocumentsDirectory') {
+          Directory dir = Directory(join(Directory.current.path, 'tmp', 'app'));
+          if (!dir.existsSync()) dir.createSync(recursive: true);
+          return dir.path;
+        } else if (methodCall.method == 'getTemporaryDirectory') {
+          Directory dir =
+              Directory(join(Directory.current.path, 'tmp', 'temp'));
+          if (!dir.existsSync()) dir.createSync(recursive: true);
+          return dir.path;
+        }
+        return null;
+      });
+
+      expect(await removeFromCache('hello', useCacheRule: false), false);
+      expect(await removeFromCache('world', useCacheRule: true), false);
     });
   });
 }

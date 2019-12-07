@@ -3,7 +3,10 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/widgets.dart';
 
 /// Calculate crc32 checksum
@@ -294,6 +297,9 @@ int crc32(List<int> bytes) {
 typedef Future<String> UrlResolver();
 typedef void LoadingProgress(double progress, List<int> data);
 
+/// Get uid from hashCode.
+String uid(String str) => str.hashCode.toString();
+
 /// Fetch the image from network.
 Future<Uint8List> loadFromRemote(
   String url,
@@ -392,8 +398,24 @@ Future<Uint8List> loadFromRemote(
   return null;
 }
 
-/// Get uid from hashCode.
-String uid(String str) => str.hashCode.toString();
+Future<bool> removeFromCache(String url, {bool useCacheRule = false}) async {
+  if (url == null) return false;
+
+  String uId = uid(url);
+
+  try {
+    if (useCacheRule) {
+      return await DiskCache().evict(uId);
+    } else {
+      await File(join((await getTemporaryDirectory()).path, 'imagecache', uId))
+          .delete();
+      return true;
+    }
+  } catch (e) {
+    print(e);
+    return false;
+  }
+}
 
 bool get isInDebugMode {
   bool inDebugMode = false;
