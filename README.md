@@ -100,7 +100,7 @@ TransitionToImage(
       print('Now Loading: $progress');
     },
   ),
-  loadingWidgetBuilder: (double progress) => Text(progress.toString()),
+  loadingWidgetBuilder: (_, double progress, __) => Text(progress.toString()),
   fit: BoxFit.contain,
   placeholder: const Icon(Icons.refresh),
   width: 400.0,
