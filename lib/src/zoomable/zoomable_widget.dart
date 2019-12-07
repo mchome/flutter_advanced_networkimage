@@ -347,7 +347,7 @@ class _ZoomableChild extends ImplicitlyAnimatedWidget {
 class _ZoomableChildState extends AnimatedWidgetBaseState<_ZoomableChild> {
   DoubleTween _zoom;
   OffsetTween _panOffset;
-  OffsetTween _zoomOriginOffset;
+  // OffsetTween _zoomOriginOffset;
   DoubleTween _rotation;
 
   @override

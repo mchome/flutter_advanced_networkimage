@@ -7,7 +7,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:flutter_advanced_networkimage/transition.dart';
 import 'package:flutter_advanced_networkimage/zoomable.dart';
-import 'package:flutter_advanced_networkimage/cropper.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -40,7 +39,6 @@ class Example extends State<MyApp> {
               const Tab(text: 'load image'),
               const Tab(text: 'zoomable widget'),
               const Tab(text: 'zoomable list'),
-              const Tab(text: 'crop image(WIP)'),
             ],
           ),
         ),
@@ -50,7 +48,6 @@ class Example extends State<MyApp> {
             LoadImage(url: url, svgUrl: svgUrl),
             ZoomableImage(url: url),
             ZoomableImages(url: url),
-            CropImage(url: url),
           ],
         ),
       ),
@@ -88,7 +85,7 @@ class LoadImage extends StatelessWidget {
             color: Colors.transparent,
             child: const Icon(Icons.refresh),
           ),
-          // imageFilter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          imageFilter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           width: 300.0,
           height: 300.0,
           enableRefresh: true,
@@ -158,70 +155,6 @@ class ZoomableImages extends StatelessWidget {
           Image(image: AdvancedNetworkImage(url)),
         ],
       ),
-    );
-  }
-}
-
-class CropImage extends StatefulWidget {
-  const CropImage({@required this.url});
-
-  final String url;
-
-  @override
-  State<StatefulWidget> createState() => _CropImageState();
-}
-
-class _CropImageState extends State<CropImage> {
-  Uint8List imageCropperData;
-
-  void cropImage(Uint8List data) => setState(() => imageCropperData = data);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Container(
-          height: 400.0,
-          color: Colors.grey,
-          child: ImageCropper(
-            child: Image(image: AdvancedNetworkImage(widget.url)),
-            onCropperChanged: cropImage,
-          ),
-        ),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              IconButton(
-                color: Theme.of(context).primaryColor,
-                icon: Icon(Icons.flip),
-                onPressed: () {},
-              ),
-              IconButton(
-                color: Theme.of(context).primaryColor,
-                icon: Icon(Icons.crop),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('Cropped!'),
-                        content: SingleChildScrollView(
-                          child: Container(
-                            child: imageCropperData != null
-                                ? Image.memory(imageCropperData)
-                                : Container(),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
