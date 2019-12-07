@@ -55,10 +55,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The scale to place in the [ImageInfo] object of the image.
   final double scale;
 
-  /// The width the image should decode to and cache.
+  /// The width the image should decode to and cache in memory.
   final int width;
 
-  /// The height the image should decode to and cache.
+  /// The height the image should decode to and cache in momory.
   final int height;
 
   /// The HTTP headers that will be used with [http] to fetch image from network.
@@ -171,11 +171,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       AdvancedNetworkImage key, DecoderCallback decode) async {
     assert(key == this);
 
-    String uId = uid(key.url);
-
     if (useDiskCache) {
       try {
-        Uint8List _diskCache = await _loadFromDiskCache(key, uId);
+        Uint8List _diskCache = await loadFromDiskCache();
         if (_diskCache != null) {
           if (key.postProcessing != null)
             _diskCache = (await key.postProcessing(_diskCache)) ?? _diskCache;
@@ -232,6 +230,81 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     return Future.error(StateError('Failed to load $url.'));
   }
 
+  /// Load the disk cache
+  ///
+  /// Check the following conditions: (no [CacheRule])
+  /// 1. Check if cache directory exist. If not exist, create it.
+  /// 2. Check if cached file(uid) exist. If yes, load the cache,
+  ///   otherwise go to download step.
+  Future<Uint8List> loadFromDiskCache() async {
+    AdvancedNetworkImage key = this;
+
+    String uId = uid(key.url);
+
+    if (key.cacheRule == null) {
+      Directory _cacheImagesDirectory =
+          Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+      if (_cacheImagesDirectory.existsSync()) {
+        File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
+        if (_cacheImageFile.existsSync()) {
+          if (key.loadedFromDiskCacheCallback != null)
+            key.loadedFromDiskCacheCallback();
+          return await _cacheImageFile.readAsBytes();
+        }
+      } else {
+        await _cacheImagesDirectory.create();
+      }
+
+      Uint8List imageData = await loadFromRemote(
+        key.url,
+        key.header,
+        key.retryLimit,
+        key.retryDuration,
+        key.retryDurationFactor,
+        key.timeoutDuration,
+        key.loadingProgress,
+        key.getRealUrl,
+        skipRetryStatusCode: key.skipRetryStatusCode,
+        printError: key.printError,
+      );
+      if (imageData != null) {
+        if (key.preProcessing != null)
+          imageData = (await key.preProcessing(imageData)) ?? imageData;
+        await (File(join(_cacheImagesDirectory.path, uId)))
+            .writeAsBytes(imageData);
+        return imageData;
+      }
+    } else {
+      DiskCache diskCache = DiskCache()..printError = key.printError;
+      Uint8List data = await diskCache.load(uId, rule: key.cacheRule);
+      if (data != null) {
+        if (key.loadedFromDiskCacheCallback != null)
+          key.loadedFromDiskCacheCallback();
+        return data;
+      }
+
+      data = await loadFromRemote(
+        key.url,
+        key.header,
+        key.retryLimit,
+        key.retryDuration,
+        key.retryDurationFactor,
+        key.timeoutDuration,
+        key.loadingProgress,
+        key.getRealUrl,
+        printError: key.printError,
+      );
+      if (data != null) {
+        if (key.preProcessing != null)
+          data = (await key.preProcessing(data)) ?? data;
+        await diskCache.save(uId, data, key.cacheRule);
+        return data;
+      }
+    }
+
+    return null;
+  }
+
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
@@ -259,76 +332,4 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
       'retryDurationFactor: $retryDurationFactor,'
       'timeoutDuration: $timeoutDuration'
       ')';
-}
-
-/// Load the disk cache
-///
-/// Check the following conditions: (no [CacheRule])
-/// 1. Check if cache directory exist. If not exist, create it.
-/// 2. Check if cached file(uid) exist. If yes, load the cache,
-///   otherwise go to download step.
-Future<Uint8List> _loadFromDiskCache(
-    AdvancedNetworkImage key, String uId) async {
-  if (key.cacheRule == null) {
-    Directory _cacheImagesDirectory =
-        Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-    if (_cacheImagesDirectory.existsSync()) {
-      File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
-      if (_cacheImageFile.existsSync()) {
-        if (key.loadedFromDiskCacheCallback != null)
-          key.loadedFromDiskCacheCallback();
-        return await _cacheImageFile.readAsBytes();
-      }
-    } else {
-      await _cacheImagesDirectory.create();
-    }
-
-    Uint8List imageData = await loadFromRemote(
-      key.url,
-      key.header,
-      key.retryLimit,
-      key.retryDuration,
-      key.retryDurationFactor,
-      key.timeoutDuration,
-      key.loadingProgress,
-      key.getRealUrl,
-      skipRetryStatusCode: key.skipRetryStatusCode,
-      printError: key.printError,
-    );
-    if (imageData != null) {
-      if (key.preProcessing != null)
-        imageData = (await key.preProcessing(imageData)) ?? imageData;
-      await (File(join(_cacheImagesDirectory.path, uId)))
-          .writeAsBytes(imageData);
-      return imageData;
-    }
-  } else {
-    DiskCache diskCache = DiskCache()..printError = key.printError;
-    Uint8List data = await diskCache.load(uId, rule: key.cacheRule);
-    if (data != null) {
-      if (key.loadedFromDiskCacheCallback != null)
-        key.loadedFromDiskCacheCallback();
-      return data;
-    }
-
-    data = await loadFromRemote(
-      key.url,
-      key.header,
-      key.retryLimit,
-      key.retryDuration,
-      key.retryDurationFactor,
-      key.timeoutDuration,
-      key.loadingProgress,
-      key.getRealUrl,
-      printError: key.printError,
-    );
-    if (data != null) {
-      if (key.preProcessing != null)
-        data = (await key.preProcessing(data)) ?? data;
-      await diskCache.save(uId, data, key.cacheRule);
-      return data;
-    }
-  }
-
-  return null;
 }

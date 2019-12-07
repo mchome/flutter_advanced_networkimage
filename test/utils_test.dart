@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
@@ -83,6 +84,15 @@ void main() {
               1.0, const Duration(seconds: 5), null, null,
               printError: true),
           null);
+    });
+  });
+  group('Other Test', () {
+    test('=> crc32', () {
+      expect(crc32(utf8.encode('hello world')), 222957957);
+      expect(
+          crc32(utf8.encode('The quick brown fox jumps over the lazy dog'))
+              .toRadixString(16),
+          '414fa339');
     });
   });
 }

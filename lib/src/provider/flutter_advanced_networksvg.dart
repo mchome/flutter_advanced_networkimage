@@ -117,11 +117,9 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       {PictureErrorListener onError}) async {
     assert(key == this);
 
-    String uId = uid(key.url);
-
     if (useDiskCache) {
       try {
-        Uint8List _diskCache = await _loadFromDiskCache(key, uId);
+        Uint8List _diskCache = await loadFromDiskCache();
         if (key.loadedCallback != null) key.loadedCallback();
         return await decode(_diskCache, key.colorFilter, key.toString(),
             onError: onError);
@@ -169,6 +167,71 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     return decoder(imageData, colorFilter, keyString);
   }
 
+  /// Load the disk cache
+  ///
+  /// Check the following conditions: (no [CacheRule])
+  /// 1. Check if cache directory exist. If not exist, create it.
+  /// 2. Check if cached file(uid) exist. If yes, load the cache,
+  ///   otherwise go to download step.
+  Future<Uint8List> loadFromDiskCache() async {
+    AdvancedNetworkSvg key = this;
+
+    String uId = uid(key.url);
+
+    if (key.cacheRule == null) {
+      Directory _cacheImagesDirectory =
+          Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
+      if (_cacheImagesDirectory.existsSync()) {
+        File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
+        if (_cacheImageFile.existsSync()) {
+          return await _cacheImageFile.readAsBytes();
+        }
+      } else {
+        await _cacheImagesDirectory.create();
+      }
+
+      Uint8List imageData = await loadFromRemote(
+        key.url,
+        key.header,
+        key.retryLimit,
+        key.retryDuration,
+        key.retryDurationFactor,
+        key.timeoutDuration,
+        null,
+        key.getRealUrl,
+        skipRetryStatusCode: key.skipRetryStatusCode,
+        printError: key.printError,
+      );
+      if (imageData != null) {
+        await (File(join(_cacheImagesDirectory.path, uId)))
+            .writeAsBytes(imageData);
+        return imageData;
+      }
+    } else {
+      DiskCache diskCache = DiskCache();
+      Uint8List data = await diskCache.load(uId);
+      if (data != null) return data;
+
+      data = await loadFromRemote(
+        key.url,
+        key.header,
+        key.retryLimit,
+        key.retryDuration,
+        key.retryDurationFactor,
+        key.timeoutDuration,
+        null,
+        key.getRealUrl,
+        printError: key.printError,
+      );
+      if (data != null) {
+        await diskCache.save(uId, data, key.cacheRule);
+        return data;
+      }
+    }
+
+    return null;
+  }
+
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
@@ -196,65 +259,4 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
       'retryDurationFactor: $retryDurationFactor,'
       'timeoutDuration: $timeoutDuration'
       ')';
-}
-
-/// Load the disk cache
-///
-/// Check the following conditions: (no [CacheRule])
-/// 1. Check if cache directory exist. If not exist, create it.
-/// 2. Check if cached file(uid) exist. If yes, load the cache,
-///   otherwise go to download step.
-Future<Uint8List> _loadFromDiskCache(AdvancedNetworkSvg key, String uId) async {
-  if (key.cacheRule == null) {
-    Directory _cacheImagesDirectory =
-        Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-    if (_cacheImagesDirectory.existsSync()) {
-      File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
-      if (_cacheImageFile.existsSync()) {
-        return await _cacheImageFile.readAsBytes();
-      }
-    } else {
-      await _cacheImagesDirectory.create();
-    }
-
-    Uint8List imageData = await loadFromRemote(
-      key.url,
-      key.header,
-      key.retryLimit,
-      key.retryDuration,
-      key.retryDurationFactor,
-      key.timeoutDuration,
-      null,
-      key.getRealUrl,
-      skipRetryStatusCode: key.skipRetryStatusCode,
-      printError: key.printError,
-    );
-    if (imageData != null) {
-      await (File(join(_cacheImagesDirectory.path, uId)))
-          .writeAsBytes(imageData);
-      return imageData;
-    }
-  } else {
-    DiskCache diskCache = DiskCache();
-    Uint8List data = await diskCache.load(uId);
-    if (data != null) return data;
-
-    data = await loadFromRemote(
-      key.url,
-      key.header,
-      key.retryLimit,
-      key.retryDuration,
-      key.retryDurationFactor,
-      key.timeoutDuration,
-      null,
-      key.getRealUrl,
-      printError: key.printError,
-    );
-    if (data != null) {
-      await diskCache.save(uId, data, key.cacheRule);
-      return data;
-    }
-  }
-
-  return null;
 }
