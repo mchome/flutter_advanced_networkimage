@@ -3,9 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import 'raw_image.dart' show MyRawImage;
-
 import 'package:flutter_advanced_networkimage/provider.dart';
+import 'package:flutter_advanced_networkimage/src/utils.dart';
+
+import 'raw_image.dart' show MyRawImage;
 
 typedef Widget LoadingWidgetBuilder(
   BuildContext context,
@@ -42,6 +43,7 @@ class TransitionToImage extends StatefulWidget {
     this.loadingWidget = const Center(child: const CircularProgressIndicator()),
     this.loadingWidgetBuilder,
     this.enableRefresh: false,
+    this.longPressForceRefresh: false,
     this.disableMemoryCache: false,
     this.disableMemoryCacheIfFailed: false,
     this.loadedCallback,
@@ -60,6 +62,7 @@ class TransitionToImage extends StatefulWidget {
         assert(transitionType != null),
         assert(loadingWidget != null),
         assert(enableRefresh != null),
+        assert(longPressForceRefresh != null),
         assert(disableMemoryCache != null),
         assert(disableMemoryCacheIfFailed != null),
         assert(forceRebuildWidget != null),
@@ -195,8 +198,11 @@ class TransitionToImage extends StatefulWidget {
   /// when the target [image] is loading.
   final LoadingWidgetBuilder loadingWidgetBuilder;
 
-  /// Enable an internal [GestureDetector] for manually refreshing.
+  /// Enable manually refreshing for network issues.
   final bool enableRefresh;
+
+  /// force long press to refetch image.
+  final bool longPressForceRefresh;
 
   /// If set to enable, the image provider will be evicted from [ImageCache].
   final bool disableMemoryCache;
@@ -338,6 +344,14 @@ class _TransitionToImageState extends State<TransitionToImage>
       if (widget.printError) print('Reloading image.');
 
       _imageProvider.evict();
+      if (widget.longPressForceRefresh &&
+          _imageProvider is AdvancedNetworkImage) {
+        removeFromCache(
+          uid((_imageProvider as AdvancedNetworkImage).url),
+          useCacheRule:
+              (_imageProvider as AdvancedNetworkImage).cacheRule == null,
+        );
+      }
     }
 
     final ImageStream oldImageStream = _imageStream;
@@ -444,7 +458,7 @@ class _TransitionToImageState extends State<TransitionToImage>
   }
 
   MyRawImage buildRawImage() {
-    return MyRawImage(
+    MyRawImage image = MyRawImage(
       image: _imageInfo?.image,
       width: widget.width,
       height: widget.height,
@@ -458,5 +472,12 @@ class _TransitionToImageState extends State<TransitionToImage>
       invertColors: widget.invertColors,
       imageFilter: widget.imageFilter,
     );
+
+    return widget.longPressForceRefresh
+        ? GestureDetector(
+            onLongPress: () => _getImage(reload: true),
+            child: image,
+          )
+        : image;
   }
 }
