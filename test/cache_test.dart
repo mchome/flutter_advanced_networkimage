@@ -182,6 +182,7 @@ void main() {
       expect(await DiskCache().load('kkk'.hashCode.toString()),
           utf8.encode('Tuesday'));
       expect(await DiskCache().evict('kkk'.hashCode.toString()), true);
+      expect(await DiskCache().evict('kkk'.hashCode.toString()), false);
       expect(await DiskCache().load('kkk'.hashCode.toString()), null);
     });
     test('=> clear cache', () async {

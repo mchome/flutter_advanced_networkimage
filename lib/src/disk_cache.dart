@@ -228,12 +228,11 @@ class DiskCache {
           ).path,
           uid));
 
-      if (_metadata.containsKey(uid) &&
-          File(_metadata[uid]['path']).existsSync()) {
+      if (_metadata.containsKey(uid)) {
         await File(_metadata[uid]['path']).delete();
         _metadata.remove(uid);
         await _commitMetaData();
-      } else if (normalCacheFile.existsSync()) {
+      } else {
         await normalCacheFile.delete();
       }
       return true;
