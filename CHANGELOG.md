@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0]
+
+- Update dependency.
+- Use new flutter api.
+- Add longPressForceRefresh in TranstionToImage.
+- Add removeFromCache.
+- Fix DiskCache().evict() always return true.
+- Expose loadFromRemote for provider.
+- Support range fetch in retry state.
+- Add skipRetryStatusCode.
+- Add imageFilter.
+- Update example.
+
 ## [0.6.0-alpha.1]
 
 - Update dependency.
