@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.1]
+
+- Bump SDK version.
+
 ## [0.6.0]
 
 - Update dependency.
