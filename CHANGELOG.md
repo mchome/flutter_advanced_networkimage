@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.2]
+
+- Fix longPressForceRefresh type issue.
+
 ## [0.6.1]
 
 - Bump SDK version.

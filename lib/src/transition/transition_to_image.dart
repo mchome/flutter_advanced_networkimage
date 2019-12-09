@@ -457,7 +457,7 @@ class _TransitionToImageState extends State<TransitionToImage>
                   );
   }
 
-  MyRawImage buildRawImage() {
+  Widget buildRawImage() {
     MyRawImage image = MyRawImage(
       image: _imageInfo?.image,
       width: widget.width,
