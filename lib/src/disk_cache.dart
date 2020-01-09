@@ -176,7 +176,7 @@ class DiskCache {
     }
   }
 
-  /// Load the cache image save [DiskCache].
+  /// Save the cache image to [DiskCache].
   Future<bool> save(String uid, Uint8List data, CacheRule rule) async {
     if (_metadata == null) await _initMetaData();
     Directory dir = Directory(join(

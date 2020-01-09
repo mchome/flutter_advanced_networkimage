@@ -339,17 +339,17 @@ class _TransitionToImageState extends State<TransitionToImage>
     });
   }
 
-  void _getImage({bool reload: false}) {
+  Future<void> _getImage({bool reload: false}) async {
     if (reload) {
       if (widget.printError) print('Reloading image.');
 
       _imageProvider.evict();
       if (widget.longPressForceRefresh &&
           _imageProvider is AdvancedNetworkImage) {
-        removeFromCache(
+        await removeFromCache(
           uid((_imageProvider as AdvancedNetworkImage).url),
           useCacheRule:
-              (_imageProvider as AdvancedNetworkImage).cacheRule == null,
+              (_imageProvider as AdvancedNetworkImage).cacheRule != null,
         );
       }
     }
