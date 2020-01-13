@@ -359,11 +359,11 @@ class _TransitionToImageState extends State<TransitionToImage>
         widget.loadingWidgetBuilder != null) {
       var callback = (_imageProvider as AdvancedNetworkImage).loadingProgress;
       (_imageProvider as AdvancedNetworkImage).loadingProgress =
-          (double progress, List<int> data) {
+          (double progress, Uint8List data) {
         if (mounted) {
           setState(() {
             _progress = progress;
-            if (progress > 0.1) _imageData = Uint8List.fromList(data);
+            if (progress > 0.1) _imageData = data;
           });
         } else {
           return oldImageStream?.removeListener(

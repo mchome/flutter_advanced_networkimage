@@ -295,7 +295,7 @@ int crc32(List<int> bytes) {
 }
 
 typedef Future<String> UrlResolver();
-typedef void LoadingProgress(double progress, List<int> data);
+typedef void LoadingProgress(double progress, Uint8List data);
 
 /// Get uid from hashCode.
 String uid(String str) => str.hashCode.toString();
@@ -347,7 +347,8 @@ Future<Uint8List> loadFromRemote(
     return null;
   }
 
-  List<int> buffer = [];
+  Uint8List buffer;
+  int bufferPosition = 0;
   bool acceptRangesHeader = false;
 
   http.Response _response;
@@ -357,25 +358,61 @@ Future<Uint8List> loadFromRemote(
 
     if (loadingProgress != null) {
       final _req = http.Request('GET', Uri.parse(_url));
-      _req.headers.addAll(header ?? {});
-      if (!acceptRangesHeader)
-        _req.headers[HttpHeaders.rangeHeader] = 'bytes=${buffer.length}-';
+      if (header != null)
+        _req.headers.addAll(header);
+      if (!acceptRangesHeader && bufferPosition != 0)
+        _req.headers[HttpHeaders.rangeHeader] = 'bytes=$bufferPosition-';
+
       final _res = await _req.send().timeout(timeoutDuration);
       acceptRangesHeader =
           _res.headers.containsKey(HttpHeaders.acceptRangesHeader) &&
               _res.headers[HttpHeaders.acceptRangesHeader] == 'bytes';
-      if (!acceptRangesHeader) buffer.clear();
+
+      if (!acceptRangesHeader && buffer != null) {
+        bufferPosition = 0;
+        buffer.clear();
+        buffer = null;
+      }
+
       final Completer<http.Response> completer = Completer<http.Response>();
+      double _progress;
+
       _res.stream.listen(
         (bytes) {
-          buffer.addAll(bytes);
+          if (buffer == null)
+            buffer = new Uint8List((_res.contentLength != null && _res.contentLength != 0) ? _res.contentLength : 1048576);
+
+          if (buffer.length < bufferPosition + bytes.length) {
+            // Increase buffer size by 512kb if the received bytes don't fit into the buffer
+            var oldBuffer = buffer;
+            buffer = new Uint8List(oldBuffer.length + 524288);
+            buffer.setAll(0, oldBuffer);
+          }
+
+          // Add received bytes to the buffer
+          buffer.setAll(bufferPosition, bytes);
+          bufferPosition += bytes.length;
+
           if (_res.contentLength != null && _res.contentLength != 0) {
-            final double progress = buffer.length / (_res.contentLength ?? 1);
-            loadingProgress(progress, buffer);
+            final double progress = bufferPosition / _res.contentLength;
+            if (_progress == null || (progress - _progress).abs() >= 0.01) {
+              // Trigger loading progress callback every percent change
+              loadingProgress(progress, Uint8List.view(buffer.buffer, 0, bufferPosition));
+              _progress = progress;
+            }
           }
         },
         onDone: () {
-          completer.complete(http.Response.bytes(buffer, _res.statusCode,
+          Uint8List resultData;
+          if (buffer == null) {
+            resultData = new Uint8List(0);
+          } else {
+            resultData = (buffer.length == bufferPosition)
+                ? buffer
+                : Uint8List.view(buffer.buffer, 0, bufferPosition);
+          }
+
+          completer.complete(http.Response.bytes(resultData, _res.statusCode,
               request: _res.request,
               headers: _res.headers,
               isRedirect: _res.isRedirect,
