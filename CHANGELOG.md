@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.3]
+
+- Improve performance of progress-tracked http image download.
+- Update dependency.
+
 ## [0.6.2]
 
 - Fix longPressForceRefresh type issue.
