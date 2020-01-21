@@ -358,8 +358,7 @@ Future<Uint8List> loadFromRemote(
 
     if (loadingProgress != null) {
       final _req = http.Request('GET', Uri.parse(_url));
-      if (header != null)
-        _req.headers.addAll(header);
+      if (header != null) _req.headers.addAll(header);
       if (!acceptRangesHeader && bufferPosition != 0)
         _req.headers[HttpHeaders.rangeHeader] = 'bytes=$bufferPosition-';
 
@@ -380,7 +379,10 @@ Future<Uint8List> loadFromRemote(
       _res.stream.listen(
         (bytes) {
           if (buffer == null)
-            buffer = new Uint8List((_res.contentLength != null && _res.contentLength != 0) ? _res.contentLength : 1048576);
+            buffer = new Uint8List(
+                (_res.contentLength != null && _res.contentLength != 0)
+                    ? _res.contentLength
+                    : 1048576);
 
           if (buffer.length < bufferPosition + bytes.length) {
             // Increase buffer size by 512kb if the received bytes don't fit into the buffer
@@ -397,7 +399,8 @@ Future<Uint8List> loadFromRemote(
             final double progress = bufferPosition / _res.contentLength;
             if (_progress == null || (progress - _progress).abs() >= 0.01) {
               // Trigger loading progress callback every percent change
-              loadingProgress(progress, Uint8List.view(buffer.buffer, 0, bufferPosition));
+              loadingProgress(
+                  progress, Uint8List.view(buffer.buffer, 0, bufferPosition));
               _progress = progress;
             }
           }
