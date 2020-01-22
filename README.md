@@ -75,7 +75,7 @@ ZoomableWidget(
   panLimit: 0.8,
   child: Container(
     child: TransitionToImage(
-      AdvancedNetworkImage(url, timeoutDuration: Duration(minutes: 1)),
+      image: AdvancedNetworkImage(url, timeoutDuration: Duration(minutes: 1)),
       // This is the default placeholder widget at loading status,
       // you can write your own widget with CustomPainter.
       placeholder: CircularProgressIndicator(),
