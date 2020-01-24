@@ -1,6 +1,6 @@
 name: flutter_advanced_networkimage
 description: An advanced image provider provides caching and retrying for flutter app. Now with zoomable widget and transition to image widget.
-version: 0.6.3
+version: 0.6.4
 homepage: https://github.com/mchome/flutter_advanced_networkimage
 
 dependencies:
@@ -9,7 +9,7 @@ dependencies:
   http: ^0.12.0
   path_provider: ^1.5.1
   path: ^1.6.4
-  flutter_svg: ^0.16.1
+  flutter_svg: ^0.17.0
 
 dev_dependencies:
   flutter_test:
