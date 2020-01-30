@@ -4,7 +4,6 @@
 [![Pre Pub Package](https://img.shields.io/pub/vpre/flutter_advanced_networkimage.svg)](https://pub.dev/packages/flutter_advanced_networkimage)
 [![Build Status](https://travis-ci.org/mchome/flutter_advanced_networkimage.svg?branch=master)](https://travis-ci.org/mchome/flutter_advanced_networkimage?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/mchome/flutter_advanced_networkimage/badge.svg?branch=master)](https://coveralls.io/github/mchome/flutter_advanced_networkimage?branch=master)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?logo=paypal)](https://www.paypal.me/mchome19)
 
 An advanced image provider provides caching and retrying for flutter app.
 Now with zoomable widget and transition to image widget.
