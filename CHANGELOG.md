@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.4]
+
+- Update dependency.
+
 ## [0.6.3]
 
 - Improve performance of progress-tracked http image download.
