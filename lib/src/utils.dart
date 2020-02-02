@@ -379,7 +379,7 @@ Future<Uint8List> loadFromRemote(
       _res.stream.listen(
         (bytes) {
           if (buffer == null)
-            buffer = new Uint8List(
+            buffer = Uint8List(
                 (_res.contentLength != null && _res.contentLength != 0)
                     ? _res.contentLength
                     : 1048576);
@@ -387,7 +387,7 @@ Future<Uint8List> loadFromRemote(
           if (buffer.length < bufferPosition + bytes.length) {
             // Increase buffer size by 512kb if the received bytes don't fit into the buffer
             var oldBuffer = buffer;
-            buffer = new Uint8List(oldBuffer.length + 524288);
+            buffer = Uint8List(oldBuffer.length + 524288);
             buffer.setAll(0, oldBuffer);
           }
 
@@ -408,7 +408,7 @@ Future<Uint8List> loadFromRemote(
         onDone: () {
           Uint8List resultData;
           if (buffer == null) {
-            resultData = new Uint8List(0);
+            resultData = Uint8List(0);
           } else {
             resultData = (buffer.length == bufferPosition)
                 ? buffer
