@@ -10,8 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
-import 'package:flutter_advanced_networkimage/src/utils.dart'
-    show UrlResolver, loadFromRemote, uid;
+import 'package:flutter_advanced_networkimage/src/utils.dart';
 
 /// Fetches the given URL from the network, associating it with some options.
 class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {

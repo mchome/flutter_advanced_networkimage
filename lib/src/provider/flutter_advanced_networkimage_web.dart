@@ -1,23 +1,17 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui' as ui show Codec, hashValues;
+import 'dart:ui' as ui;
 
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart';
 
 typedef Future<Uint8List> ImageProcessing(Uint8List data);
 
-/// Fetches the given URL from the network, associating it with some options.
+/// The dart:html implementation of [NetworkImage].
 ///
-/// *Warning*: If you don't use [TransitionToImage], you **have to** set
-/// [fallbackAssetImage] or [fallbackImage] to prevent app crashes in
-/// release mode.
+/// NetworkImage on the web does not support decoding to a specified size.
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   AdvancedNetworkImage(
     this.url, {
@@ -134,26 +128,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The [HttpStatus] code that you can skip retrying if you meet them.
   final List<int> skipRetryStatusCode;
 
-  ImageStream resolve(ImageConfiguration configuration) {
-    assert(configuration != null);
-    final ImageStream stream = ImageStream();
-    obtainKey(configuration).then<void>((AdvancedNetworkImage key) {
-      if (key.disableMemoryCache) {
-        stream.setCompleter(
-          load(key, PaintingBinding.instance.instantiateImageCodec),
-        );
-      } else {
-        final ImageStreamCompleter completer =
-            PaintingBinding.instance.imageCache.putIfAbsent(
-          key,
-          () => load(key, PaintingBinding.instance.instantiateImageCodec),
-        );
-        if (completer != null) stream.setCompleter(completer);
-      }
-    });
-    return stream;
-  }
-
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return SynchronousFuture<AdvancedNetworkImage>(this);
@@ -172,141 +146,13 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   Future<ui.Codec> _loadAsync(
-      AdvancedNetworkImage key, DecoderCallback decode) async {
+      AdvancedNetworkImage key, DecoderCallback decode) {
     assert(key == this);
 
-    if (useDiskCache) {
-      try {
-        Uint8List _diskCache = await loadFromDiskCache();
-        if (_diskCache != null) {
-          if (key.postProcessing != null)
-            _diskCache = (await key.postProcessing(_diskCache)) ?? _diskCache;
-          if (key.loadedCallback != null) key.loadedCallback();
-          return await decode(
-            _diskCache,
-            cacheWidth: key.width,
-            cacheHeight: key.height,
-          );
-        }
-      } catch (e) {
-        if (key.printError) debugPrint(e.toString());
-      }
-    } else {
-      Uint8List imageData = await loadFromRemote(
-        key.url,
-        key.header,
-        key.retryLimit,
-        key.retryDuration,
-        key.retryDurationFactor,
-        key.timeoutDuration,
-        key.loadingProgress,
-        key.getRealUrl,
-        printError: key.printError,
-      );
-      if (imageData != null) {
-        if (key.postProcessing != null)
-          imageData = (await key.postProcessing(imageData)) ?? imageData;
-        if (key.loadedCallback != null) key.loadedCallback();
-        return await decode(
-          imageData,
-          cacheWidth: key.width,
-          cacheHeight: key.height,
-        );
-      }
-    }
+    final Uri resolved = Uri.base.resolve(key.url);
 
-    if (key.loadFailedCallback != null) key.loadFailedCallback();
-    if (key.fallbackAssetImage != null) {
-      ByteData imageData = await rootBundle.load(key.fallbackAssetImage);
-      return await decode(
-        imageData.buffer.asUint8List(),
-        cacheWidth: key.width,
-        cacheHeight: key.height,
-      );
-    }
-    if (key.fallbackImage != null)
-      return await decode(
-        key.fallbackImage,
-        cacheWidth: key.width,
-        cacheHeight: key.height,
-      );
-
-    return Future.error(StateError('Failed to load $url.'));
-  }
-
-  /// Load the disk cache
-  ///
-  /// Check the following conditions: (no [CacheRule])
-  /// 1. Check if cache directory exist. If not exist, create it.
-  /// 2. Check if cached file(uid) exist. If yes, load the cache,
-  ///   otherwise go to download step.
-  Future<Uint8List> loadFromDiskCache() async {
-    AdvancedNetworkImage key = this;
-
-    String uId = uid(key.url);
-
-    if (key.cacheRule == null) {
-      Directory _cacheImagesDirectory =
-          Directory(join((await getTemporaryDirectory()).path, 'imagecache'));
-      if (_cacheImagesDirectory.existsSync()) {
-        File _cacheImageFile = File(join(_cacheImagesDirectory.path, uId));
-        if (_cacheImageFile.existsSync()) {
-          if (key.loadedFromDiskCacheCallback != null)
-            key.loadedFromDiskCacheCallback();
-          return await _cacheImageFile.readAsBytes();
-        }
-      } else {
-        await _cacheImagesDirectory.create();
-      }
-
-      Uint8List imageData = await loadFromRemote(
-        key.url,
-        key.header,
-        key.retryLimit,
-        key.retryDuration,
-        key.retryDurationFactor,
-        key.timeoutDuration,
-        key.loadingProgress,
-        key.getRealUrl,
-        skipRetryStatusCode: key.skipRetryStatusCode,
-        printError: key.printError,
-      );
-      if (imageData != null) {
-        if (key.preProcessing != null)
-          imageData = (await key.preProcessing(imageData)) ?? imageData;
-        await (File(join(_cacheImagesDirectory.path, uId)))
-            .writeAsBytes(imageData);
-        return imageData;
-      }
-    } else {
-      DiskCache diskCache = DiskCache()..printError = key.printError;
-      Uint8List data = await diskCache.load(uId, rule: key.cacheRule);
-      if (data != null) {
-        if (key.loadedFromDiskCacheCallback != null)
-          key.loadedFromDiskCacheCallback();
-        return data;
-      }
-
-      data = await loadFromRemote(
-        key.url,
-        key.header,
-        key.retryLimit,
-        key.retryDuration,
-        key.retryDurationFactor,
-        key.timeoutDuration,
-        key.loadingProgress,
-        key.getRealUrl,
-        printError: key.printError,
-      );
-      if (data != null) {
-        if (key.preProcessing != null)
-          data = (await key.preProcessing(data)) ?? data;
-        await diskCache.save(uId, data, key.cacheRule);
-        return data;
-      }
-    }
-
-    return null;
+    return ui.webOnlyInstantiateImageCodecFromUrl(// ignore: undefined_function
+        resolved) as Future<ui.Codec>;
   }
 
   @override
