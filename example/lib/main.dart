@@ -24,7 +24,7 @@ class MyApp extends StatefulWidget {
 class Example extends State<MyApp> {
   final String url = 'https://flutter.io/images/flutter-logo-sharing.png';
   final String svgUrl =
-      'https://flutter.dev/assets/flutter-lockup-4cb0ee072ab312e59784d9fbf4fb7ad42688a7fdaea1270ccf6bbf4f34b7e03f.svg';
+      'https://github.com/dart-lang/site-shared/raw/master/src/_assets/image/flutter/logo/default.svg';
 
   @override
   Widget build(BuildContext context) {
