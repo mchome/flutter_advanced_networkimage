@@ -1,3 +1,4 @@
+language: ruby
 os:
   - linux
 branches:
@@ -20,8 +21,9 @@ script:
   - ./flutter/bin/flutter test --coverage
   - cd ./example
   - ../flutter/bin/flutter build aot
+  - cd ..
 after_success:
-  - coveralls-lcov ../coverage/lcov.info
+  - coveralls-lcov coverage/lcov.info
 cache:
   directories:
     - $HOME/.pub-cache
