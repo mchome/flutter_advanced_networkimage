@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.0]
+
+- Update dependency.
+- Basic web support for image.
+
 ## [0.6.4]
 
 - Update dependency.
