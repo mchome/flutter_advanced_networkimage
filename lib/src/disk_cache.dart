@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'package:flutter_advanced_networkimage/src/utils.dart' show crc32;
+import 'package:flutter_advanced_networkimage/src/utils.dart' show crc32, uid;
 
 /// Stand for [getTemporaryDirectory] and
 /// [getApplicationDocumentsDirectory] in path_provider plugin.
@@ -303,4 +303,23 @@ class CacheRule {
   /// Checkum(CRC32) for cache file.
   /// Default is disabled;
   final bool checksum;
+}
+
+Future<bool> removeFromCache(String url, {bool useCacheRule = false}) async {
+  if (url == null) return false;
+
+  String uId = uid(url);
+
+  try {
+    if (useCacheRule) {
+      return await DiskCache().evict(uId);
+    } else {
+      await File(join((await getTemporaryDirectory()).path, 'imagecache', uId))
+          .delete();
+      return true;
+    }
+  } catch (e) {
+    print(e);
+    return false;
+  }
 }

@@ -254,5 +254,9 @@ void main() {
       expect(await DiskCache().clear(), true);
       expect(await DiskCache().cacheSize(), 0);
     });
+    test('=> remove from cache', () async {
+      expect(await removeFromCache('hello', useCacheRule: false), false);
+      expect(await removeFromCache('world', useCacheRule: true), false);
+    });
   });
 }

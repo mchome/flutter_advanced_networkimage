@@ -3,10 +3,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/widgets.dart';
 
 /// Calculate crc32 checksum
@@ -436,25 +433,6 @@ Future<Uint8List> loadFromRemote(
   if (_response != null) return _response.bodyBytes;
 
   return null;
-}
-
-Future<bool> removeFromCache(String url, {bool useCacheRule = false}) async {
-  if (url == null) return false;
-
-  String uId = uid(url);
-
-  try {
-    if (useCacheRule) {
-      return await DiskCache().evict(uId);
-    } else {
-      await File(join((await getTemporaryDirectory()).path, 'imagecache', uId))
-          .delete();
-      return true;
-    }
-  } catch (e) {
-    print(e);
-    return false;
-  }
 }
 
 bool get isInDebugMode {
