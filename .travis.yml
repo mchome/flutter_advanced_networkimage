@@ -1,6 +1,5 @@
 os:
   - linux
-sudo: false
 branches:
   only:
   - master
@@ -22,7 +21,7 @@ script:
   - cd ./example
   - ../flutter/bin/flutter build aot
 after_success:
-  - coveralls-lcov coverage/lcov.info
+  - coveralls-lcov ../coverage/lcov.info
 cache:
   directories:
     - $HOME/.pub-cache
