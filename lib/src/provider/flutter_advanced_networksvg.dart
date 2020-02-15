@@ -123,7 +123,7 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
         return await decode(_diskCache, key.colorFilter, key.toString(),
             onError: onError);
       } catch (e) {
-        if (key.printError) debugPrint(e.toString());
+        if (key.printError) print(e);
       }
     }
 

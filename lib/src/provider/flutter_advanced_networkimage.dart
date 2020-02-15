@@ -11,13 +11,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart';
 
-typedef Future<Uint8List> ImageProcessing(Uint8List data);
+typedef Future<Uint8List> _ImageProcessing(Uint8List data);
 
 /// Fetches the given URL from the network, associating it with some options.
-///
-/// *Warning*: If you don't use [TransitionToImage], you **have to** set
-/// [fallbackAssetImage] or [fallbackImage] to prevent app crashes in
-/// release mode.
 class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   AdvancedNetworkImage(
     this.url, {
@@ -40,7 +36,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.getRealUrl,
     this.preProcessing,
     this.postProcessing,
-    this.disableMemoryCache: false,
     this.printError = false,
     this.skipRetryStatusCode,
   })  : assert(url != null),
@@ -50,7 +45,6 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         assert(retryDuration != null),
         assert(retryDurationFactor != null),
         assert(timeoutDuration != null),
-        assert(disableMemoryCache != null),
         assert(printError != null);
 
   /// The URL from which the image will be fetched.
@@ -109,50 +103,16 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   final UrlResolver getRealUrl;
 
   /// Receive the data([Uint8List]) and do some manipulations before saving.
-  final ImageProcessing preProcessing;
+  final _ImageProcessing preProcessing;
 
   /// Receive the data([Uint8List]) and do some manipulations after saving.
-  final ImageProcessing postProcessing;
-
-  /// If set to enable, the image will skip [ImageCache].
-  ///
-  /// It is not recommended to disable momery cache, because image provider
-  /// will be called a lot of times. If you do not enable [useDiskCache],
-  /// image provider will fetch a lot of times. So do not use this option
-  /// in production.
-  ///
-  /// If you want to use the same url with different [fallbackImage],
-  /// you should make different [==].
-  /// For example, you can set different [retryLimit].
-  /// If you enable [useDiskCache], you can set different [differentId]
-  /// with the same `() => Future.value(sameUrl)` in [getRealUrl].
-  final bool disableMemoryCache;
+  final _ImageProcessing postProcessing;
 
   /// Print error messages.
   final bool printError;
 
   /// The [HttpStatus] code that you can skip retrying if you meet them.
   final List<int> skipRetryStatusCode;
-
-  ImageStream resolve(ImageConfiguration configuration) {
-    assert(configuration != null);
-    final ImageStream stream = ImageStream();
-    obtainKey(configuration).then<void>((AdvancedNetworkImage key) {
-      if (key.disableMemoryCache) {
-        stream.setCompleter(
-          load(key, PaintingBinding.instance.instantiateImageCodec),
-        );
-      } else {
-        final ImageStreamCompleter completer =
-            PaintingBinding.instance.imageCache.putIfAbsent(
-          key,
-          () => load(key, PaintingBinding.instance.instantiateImageCodec),
-        );
-        if (completer != null) stream.setCompleter(completer);
-      }
-    });
-    return stream;
-  }
 
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
@@ -189,7 +149,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
           );
         }
       } catch (e) {
-        if (key.printError) debugPrint(e.toString());
+        if (key.printError) print(e);
       }
     } else {
       Uint8List imageData = await loadFromRemote(

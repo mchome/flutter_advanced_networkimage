@@ -73,7 +73,6 @@ class LoadImage extends StatelessWidget {
             // loadingProgress: (double progress, _) => print(progress),
             timeoutDuration: Duration(seconds: 30),
             retryLimit: 1,
-            // disableMemoryCache: true,
           ),
           // loadedCallback: () => print('It works!'),
           // loadFailedCallback: () => print('Oh, no!'),

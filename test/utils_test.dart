@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/painting.dart' show Offset;
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
 
@@ -93,6 +94,22 @@ void main() {
           crc32(utf8.encode('The quick brown fox jumps over the lazy dog'))
               .toRadixString(16),
           '414fa339');
+    });
+    test('=> uid', () {
+      expect(uid('hello world'), '1045060183');
+      expect(uid('The quick brown fox jumps over the lazy dog'), '295604725');
+    });
+    test('=> DoubleTween', () {
+      final DoubleTween tween = DoubleTween(begin: 2, end: 7);
+      expect(tween.lerp(0.3), 3.5);
+      expect(tween.lerp(0.9), 6.5);
+    });
+    test('=> OffsetTween', () {
+      final Offset a = Offset(1, 2);
+      final Offset b = Offset(5, 1);
+      final OffsetTween tween = OffsetTween(begin: a, end: b);
+      expect(tween.lerp(0.1), Offset(1.4, 1.9));
+      expect(tween.lerp(0.6), Offset(3.4, 1.4));
     });
   });
 }

@@ -7,7 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_advanced_networkimage/src/disk_cache.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart';
 
-typedef Future<Uint8List> ImageProcessing(Uint8List data);
+typedef Future<Uint8List> _ImageProcessing(Uint8List data);
 
 /// The dart:html implementation of [NetworkImage].
 ///
@@ -103,10 +103,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   final UrlResolver getRealUrl;
 
   /// Receive the data([Uint8List]) and do some manipulations before saving.
-  final ImageProcessing preProcessing;
+  final _ImageProcessing preProcessing;
 
   /// Receive the data([Uint8List]) and do some manipulations after saving.
-  final ImageProcessing postProcessing;
+  final _ImageProcessing postProcessing;
 
   /// If set to enable, the image will skip [ImageCache].
   ///
