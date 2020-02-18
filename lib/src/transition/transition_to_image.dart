@@ -257,18 +257,6 @@ class _TransitionToImageState extends State<TransitionToImage>
 
   ImageProvider get _imageProvider => widget.image;
 
-  // bool _isProgressiveJPEG(List<int> data) {
-  //   if (data.contains(0xFFD8)) {
-  //     int count = 0;
-  //     for (int el in data) {
-  //       if (el == 0xFFDA) count++;
-  //       if (count > 1) return true;
-  //     }
-  //   }
-
-  //   return false;
-  // }
-
   @override
   void initState() {
     _controller = AnimationController(vsync: this, duration: widget.duration)

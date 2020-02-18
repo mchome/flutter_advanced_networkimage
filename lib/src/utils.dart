@@ -435,12 +435,6 @@ Future<Uint8List> loadFromRemote(
   return null;
 }
 
-bool get isInDebugMode {
-  bool inDebugMode = false;
-  assert(inDebugMode = true);
-  return inDebugMode;
-}
-
 class DoubleTween extends Tween<double> {
   DoubleTween({double begin, double end}) : super(begin: begin, end: end);
 
