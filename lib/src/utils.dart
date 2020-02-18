@@ -356,7 +356,7 @@ Future<Uint8List> loadFromRemote(
 
     if (loadingProgress != null) {
       client ??= http.Client();
-      final _req = http.StreamedRequest('GET', Uri.parse(_url));
+      final _req = http.Request('GET', Uri.parse(_url));
       if (header != null) _req.headers.addAll(header);
       if (!acceptRangesHeader && bufferPosition != 0)
         _req.headers[HttpHeaders.rangeHeader] = 'bytes=$bufferPosition-';
