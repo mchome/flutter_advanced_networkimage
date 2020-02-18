@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/painting.dart' show Offset;
 import 'package:test/test.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/painting.dart' show Offset;
 
 import 'package:flutter_advanced_networkimage/src/utils.dart';
 

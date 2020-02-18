@@ -13,21 +13,23 @@ import 'package:flutter_advanced_networkimage/src/utils.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  group('Cache Test', () {
-    const MethodChannel('plugins.flutter.io/path_provider')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'getApplicationDocumentsDirectory') {
-        Directory dir = Directory(join(Directory.current.path, 'tmp', 'app'));
-        if (!dir.existsSync()) dir.createSync(recursive: true);
-        return dir.path;
-      } else if (methodCall.method == 'getTemporaryDirectory') {
-        Directory dir = Directory(join(Directory.current.path, 'tmp', 'temp'));
-        if (!dir.existsSync()) dir.createSync(recursive: true);
-        return dir.path;
-      }
-      return null;
-    });
+  const MethodChannel('plugins.flutter.io/path_provider')
+      .setMockMethodCallHandler((MethodCall methodCall) async {
+    if (methodCall.method == 'getApplicationDocumentsDirectory') {
+      Directory dir =
+          Directory(join(Directory.current.path, 'test', 'tmp', 'app'));
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      return dir.path;
+    } else if (methodCall.method == 'getTemporaryDirectory') {
+      Directory dir =
+          Directory(join(Directory.current.path, 'test', 'tmp', 'temp'));
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      return dir.path;
+    }
+    return null;
+  });
 
+  group('Cache Test', () {
     test('=> non-null test', () async {
       await DiskCache().keepCacheHealth();
 

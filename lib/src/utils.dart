@@ -309,6 +309,7 @@ Future<Uint8List> loadFromRemote(
   UrlResolver getRealUrl, {
   List<int> skipRetryStatusCode,
   bool printError = false,
+  http.Client client,
 }) async {
   assert(url != null);
   assert(retryLimit != null);
@@ -354,12 +355,13 @@ Future<Uint8List> loadFromRemote(
     if (getRealUrl != null) _url = (await getRealUrl()) ?? url;
 
     if (loadingProgress != null) {
-      final _req = http.Request('GET', Uri.parse(_url));
+      client ??= http.Client();
+      final _req = http.StreamedRequest('GET', Uri.parse(_url));
       if (header != null) _req.headers.addAll(header);
       if (!acceptRangesHeader && bufferPosition != 0)
         _req.headers[HttpHeaders.rangeHeader] = 'bytes=$bufferPosition-';
 
-      final _res = await _req.send().timeout(timeoutDuration);
+      final _res = await client.send(_req).timeout(timeoutDuration);
       acceptRangesHeader =
           _res.headers.containsKey(HttpHeaders.acceptRangesHeader) &&
               _res.headers[HttpHeaders.acceptRangesHeader] == 'bytes';
@@ -370,7 +372,7 @@ Future<Uint8List> loadFromRemote(
         buffer = null;
       }
 
-      final Completer<http.Response> completer = Completer<http.Response>();
+      final completer = Completer<http.Response>();
       double _progress;
 
       _res.stream.listen(
@@ -383,7 +385,7 @@ Future<Uint8List> loadFromRemote(
 
           if (buffer.length < bufferPosition + bytes.length) {
             // Increase buffer size by 512kb if the received bytes don't fit into the buffer
-            var oldBuffer = buffer;
+            Uint8List oldBuffer = buffer;
             buffer = Uint8List(oldBuffer.length + 524288);
             buffer.setAll(0, oldBuffer);
           }
@@ -412,16 +414,21 @@ Future<Uint8List> loadFromRemote(
                 : Uint8List.view(buffer.buffer, 0, bufferPosition);
           }
 
-          completer.complete(http.Response.bytes(resultData, _res.statusCode,
-              request: _res.request,
-              headers: _res.headers,
-              isRedirect: _res.isRedirect,
-              persistentConnection: _res.persistentConnection,
-              reasonPhrase: _res.reasonPhrase));
+          completer.complete(http.Response.bytes(
+            resultData,
+            _res.statusCode,
+            request: _res.request,
+            headers: _res.headers,
+            isRedirect: _res.isRedirect,
+            persistentConnection: _res.persistentConnection,
+            reasonPhrase: _res.reasonPhrase,
+          ));
+          client.close();
         },
         cancelOnError: true,
         onError: (e, stackTrace) {
           completer.completeError(e, stackTrace);
+          client.close();
         },
       );
 
