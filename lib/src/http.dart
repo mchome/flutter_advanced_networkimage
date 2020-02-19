@@ -3,9 +3,12 @@
 /// - [x] redirect
 /// - [x] global cookie management
 /// - [x] accept http proxy
-/// - [ ] request hook
-/// - [ ] response hook
+/// - [ ] request hooks
+/// - [ ] response hooks
+/// - [ ] move redirect and cookie management to hooks
+/// - [ ] resource cache
 /// - [ ] full tests
+/// - [ ] logger
 
 import 'dart:io';
 import 'dart:async';
@@ -67,11 +70,9 @@ class Fetch extends http.BaseClient {
             throw StateError('Response has no Location header for redirect');
           Uri url = Uri.parse(location);
 
-          // String method = response.statusCode == HttpStatus.seeOther &&
-          //         request.method == 'POST'
-          //     ? 'GET'
-          //     : request.method;
-          String method = 'GET';
+          String method = response.statusCode == HttpStatus.seeOther
+              ? 'GET'
+              : request.method;
           for (RedirectInfo redirect in _redirects) {
             if (redirect.location == url)
               return Future.error(
@@ -148,26 +149,26 @@ Future<_Response> _sendRequest(
     if (cookies != null && cookies.length > 0)
       ioRequest.cookies.addAll(cookies);
 
-    var response = await stream.pipe(DelegatingStreamConsumer.typed(ioRequest));
+    var res = await stream.pipe(DelegatingStreamConsumer.typed(ioRequest));
     var headers = <String, String>{};
-    response.headers.forEach((key, values) {
+    res.headers.forEach((key, values) {
       headers[key] = values.join(',');
     });
 
     return _Response(
       http.StreamedResponse(
-          DelegatingStream.typed<List<int>>(response).handleError(
-              (error) => throw http.ClientException(error.message, error.uri),
-              test: (error) => error is HttpException),
-          response.statusCode,
-          contentLength:
-              response.contentLength == -1 ? null : response.contentLength,
-          request: request,
-          headers: headers,
-          isRedirect: response.isRedirect,
-          persistentConnection: response.persistentConnection,
-          reasonPhrase: response.reasonPhrase),
-      response.cookies,
+        DelegatingStream.typed<List<int>>(res).handleError(
+            (error) => throw http.ClientException(error.message, error.uri),
+            test: (error) => error is HttpException),
+        res.statusCode,
+        contentLength: res.contentLength == -1 ? null : res.contentLength,
+        request: request,
+        headers: headers,
+        isRedirect: res.isRedirect,
+        persistentConnection: res.persistentConnection,
+        reasonPhrase: res.reasonPhrase,
+      ),
+      res.cookies,
     );
   } on HttpException catch (error) {
     throw http.ClientException(error.message, error.uri);
