@@ -149,7 +149,8 @@ Future<_Response> _sendRequest(
     if (cookies != null && cookies.length > 0)
       ioRequest.cookies.addAll(cookies);
 
-    var res = await stream.pipe(DelegatingStreamConsumer.typed(ioRequest));
+    HttpClientResponse res =
+        await stream.pipe(DelegatingStreamConsumer.typed(ioRequest));
     var headers = <String, String>{};
     res.headers.forEach((key, values) {
       headers[key] = values.join(',');
@@ -203,6 +204,7 @@ class Cookies {
   }
 
   List<Cookie> _cookies;
+  Map<String, List<Cookies>> _sessions;
   File path;
 
   Future<void> _initCookies() async {

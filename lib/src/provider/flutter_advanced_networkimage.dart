@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec, hashValues;
 
@@ -39,6 +39,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.postProcessing,
     this.printError = false,
     this.skipRetryStatusCode,
+    this.id,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
@@ -85,7 +86,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   final VoidCallback loadFailedCallback;
 
   /// The callback will fire when the image loaded from DiskCache.
-  VoidCallback loadedFromDiskCacheCallback;
+  final VoidCallback loadedFromDiskCacheCallback;
 
   /// Displays image from an asset bundle when the image failed to load.
   final String fallbackAssetImage;
@@ -114,6 +115,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
   /// The [HttpStatus] code that you can skip retrying if you meet them.
   final List<int> skipRetryStatusCode;
+
+  final String id;
 
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
@@ -301,7 +304,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
     final AdvancedNetworkImage typedOther = other;
-    return url == typedOther.url && scale == typedOther.scale;
+    return id == null
+        ? url == typedOther.url && scale == typedOther.scale
+        : id == typedOther.id;
   }
 
   @override

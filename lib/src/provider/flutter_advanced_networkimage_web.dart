@@ -37,6 +37,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     this.disableMemoryCache: false,
     this.printError = false,
     this.skipRetryStatusCode,
+    this.id,
   })  : assert(url != null),
         assert(scale != null),
         assert(useDiskCache != null),
@@ -128,6 +129,8 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   /// The [HttpStatus] code that you can skip retrying if you meet them.
   final List<int> skipRetryStatusCode;
 
+  final String id;
+
   @override
   Future<AdvancedNetworkImage> obtainKey(ImageConfiguration configuration) {
     return SynchronousFuture<AdvancedNetworkImage>(this);
@@ -159,12 +162,9 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
     final AdvancedNetworkImage typedOther = other;
-    return url == typedOther.url &&
-        scale == typedOther.scale &&
-        useDiskCache == typedOther.useDiskCache &&
-        retryLimit == typedOther.retryLimit &&
-        retryDurationFactor == typedOther.retryDurationFactor &&
-        retryDuration == typedOther.retryDuration;
+    return id == null
+        ? url == typedOther.url && scale == typedOther.scale
+        : id == typedOther.id;
   }
 
   @override
