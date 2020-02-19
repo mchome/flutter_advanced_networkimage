@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec, hashValues;
@@ -120,9 +121,33 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   @override
+  Future<bool> evict({
+    ImageCache cache,
+    ImageConfiguration configuration = ImageConfiguration.empty,
+    bool memory = true,
+    bool disk = false,
+  }) async {
+    assert(memory != null);
+    assert(disk != null);
+
+    if (memory) {
+      cache ??= imageCache;
+      final key = await obtainKey(configuration);
+      return cache.evict(key);
+    }
+    if (disk) {
+      return removeFromCache(url);
+    }
+    return false;
+  }
+
+  @override
   ImageStreamCompleter load(AdvancedNetworkImage key, DecoderCallback decode) {
+    final chunkEvents = StreamController<ImageChunkEvent>();
+
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key, decode),
+      codec: _loadAsync(key, decode, chunkEvents),
+      chunkEvents: chunkEvents.stream,
       scale: key.scale,
       informationCollector: () sync* {
         yield DiagnosticsProperty<ImageProvider>('Image provider', this);
@@ -132,7 +157,10 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   }
 
   Future<ui.Codec> _loadAsync(
-      AdvancedNetworkImage key, DecoderCallback decode) async {
+    AdvancedNetworkImage key,
+    DecoderCallback decode,
+    StreamController<ImageChunkEvent> chunkEvents,
+  ) async {
     assert(key == this);
 
     if (useDiskCache) {
@@ -142,7 +170,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
           if (key.postProcessing != null)
             _diskCache = (await key.postProcessing(_diskCache)) ?? _diskCache;
           if (key.loadedCallback != null) key.loadedCallback();
-          return await decode(
+          return decode(
             _diskCache,
             cacheWidth: key.width,
             cacheHeight: key.height,
@@ -167,7 +195,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
         if (key.postProcessing != null)
           imageData = (await key.postProcessing(imageData)) ?? imageData;
         if (key.loadedCallback != null) key.loadedCallback();
-        return await decode(
+        return decode(
           imageData,
           cacheWidth: key.width,
           cacheHeight: key.height,
@@ -178,14 +206,14 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
     if (key.loadFailedCallback != null) key.loadFailedCallback();
     if (key.fallbackAssetImage != null) {
       ByteData imageData = await rootBundle.load(key.fallbackAssetImage);
-      return await decode(
+      return decode(
         imageData.buffer.asUint8List(),
         cacheWidth: key.width,
         cacheHeight: key.height,
       );
     }
     if (key.fallbackImage != null)
-      return await decode(
+      return decode(
         key.fallbackImage,
         cacheWidth: key.width,
         cacheHeight: key.height,
@@ -273,12 +301,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
     final AdvancedNetworkImage typedOther = other;
-    return url == typedOther.url &&
-        scale == typedOther.scale &&
-        useDiskCache == typedOther.useDiskCache &&
-        retryLimit == typedOther.retryLimit &&
-        retryDurationFactor == typedOther.retryDurationFactor &&
-        retryDuration == typedOther.retryDuration;
+    return url == typedOther.url && scale == typedOther.scale;
   }
 
   @override

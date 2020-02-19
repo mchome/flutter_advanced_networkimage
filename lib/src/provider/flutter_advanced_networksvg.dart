@@ -112,6 +112,15 @@ class AdvancedNetworkSvg extends PictureProvider<AdvancedNetworkSvg> {
     );
   }
 
+  Future<bool> evict({bool disk = false}) async {
+    assert(disk != null);
+
+    if (disk) {
+      return removeFromCache(url);
+    }
+    return false;
+  }
+
   Future<PictureInfo> _loadAsync(AdvancedNetworkSvg key,
       {PictureErrorListener onError}) async {
     assert(key == this);
