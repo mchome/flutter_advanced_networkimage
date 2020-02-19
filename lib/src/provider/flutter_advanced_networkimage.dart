@@ -147,7 +147,7 @@ class AdvancedNetworkImage extends ImageProvider<AdvancedNetworkImage> {
 
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode, chunkEvents),
-      chunkEvents: chunkEvents.stream,
+      // chunkEvents: chunkEvents.stream, // TODO
       scale: key.scale,
       informationCollector: () sync* {
         yield DiagnosticsProperty<ImageProvider>('Image provider', this);
