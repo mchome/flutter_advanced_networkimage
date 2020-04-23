@@ -73,9 +73,12 @@ class DiskCache {
   int _currentOps = 0;
 
   int get currentEntries => _metadata != null ? _metadata.keys.length : 0;
+  int get currentSizeBytes => _currentSizeBytes;
   int get _currentSizeBytes {
     int size = 0;
-    _metadata.values.forEach((item) => size += item['size']);
+    if (_metadata != null) {
+      _metadata.values.forEach((item) => size += item['size']);
+    }
     return size;
   }
 
