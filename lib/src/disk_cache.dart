@@ -99,7 +99,7 @@ class DiskCache {
 
   Future<void> _commitMetaData([bool force = false]) async {
     if (!force) {
-      if (currentEntries < maxEntries && _currentSizeBytes < maxEntries) return;
+      if (currentEntries < maxEntries && _currentSizeBytes < maxSizeBytes) return;
       _currentOps += 1;
       if (_currentOps < maxCommitOps) return;
     }
