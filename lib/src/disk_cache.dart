@@ -73,9 +73,12 @@ class DiskCache {
   int _currentOps = 0;
 
   int get currentEntries => _metadata != null ? _metadata.keys.length : 0;
+  int get currentSizeBytes => _currentSizeBytes;
   int get _currentSizeBytes {
     int size = 0;
-    _metadata.values.forEach((item) => size += item['size']);
+    if (_metadata != null) {
+      _metadata.values.forEach((item) => size += item['size']);
+    }
     return size;
   }
 
@@ -99,7 +102,7 @@ class DiskCache {
 
   Future<void> _commitMetaData([bool force = false]) async {
     if (!force) {
-      if (currentEntries < maxEntries && _currentSizeBytes < maxEntries) return;
+      if (currentEntries < maxEntries && _currentSizeBytes < maxSizeBytes) return;
       _currentOps += 1;
       if (_currentOps < maxCommitOps) return;
     }
