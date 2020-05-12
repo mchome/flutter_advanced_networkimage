@@ -5,8 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_advanced_networkimage/src/utils.dart';
 
 class ZoomableWidget extends StatefulWidget {
+  
   ZoomableWidget({
     Key key,
+    this.scaleForDoubleTap: 1.0,
     this.minScale: 0.7,
     this.maxScale: 1.4,
     this.initialScale: 1.0,
@@ -27,7 +29,8 @@ class ZoomableWidget extends StatefulWidget {
     this.onZoomChanged,
     this.resetDuration: const Duration(milliseconds: 250),
     this.resetCurve: Curves.easeInOut,
-  })  : assert(minScale != null),
+  })  : assert(scaleForDoubleTap != null),
+        assert(minScale != null),
         assert(maxScale != null),
         assert(initialScale != null),
         assert(initialOffset != null),
@@ -42,6 +45,9 @@ class ZoomableWidget extends StatefulWidget {
         assert(bounceBackBoundary != null),
         assert(enableFling != null),
         assert(flingFactor != null);
+
+  /// The scale size for double tap
+  final double scaleForDoubleTap;
 
   /// The minimum size for scaling.
   final double minScale;
@@ -244,10 +250,10 @@ class _ZoomableWidgetState extends State<ZoomableWidget> {
     _curve = widget.resetCurve;
 
     if (widget.zoomSteps > 0)
-      _stepLength = (widget.maxScale - 1.0) / widget.zoomSteps;
+      _stepLength = (widget.scaleForDoubleTap - 1.0) / widget.zoomSteps;
 
     double _tmpZoom = _zoom + _stepLength;
-    if (_tmpZoom > widget.maxScale || _stepLength == 0.0) _tmpZoom = 1.0;
+    if (_tmpZoom > widget.scaleForDoubleTap || _stepLength == 0.0) _tmpZoom = 1.0;
 
     setState(() {
       _zoom = _tmpZoom;
